@@ -21,13 +21,14 @@ BitBoards *newBBBoard = new BitBoards;
 
 Ai_Logic::Ai_Logic()
 {
-    newBBBoard->constructBoards();
+
 }
 
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 {
-    //generate all possible moves for one turn // TEST Just create movegen object access move gen from func ugly_moves
+    //generate all possible moves for one turn
 
+    newBBBoard->constructBoards();
 
     //Move timer for ai
     clock_t aiMoveTimerStart = clock();
@@ -42,6 +43,17 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     //generate first possible initial moves
     //newGenMoves->genMoves();
     std::string moves = newBBBoard->genWhosMove(false); //false for is not white, change later to be more versitile
+    ///FOR DEBUGGING
+    std::string a[moves.length()/4];
+    for(int i = 0; i < moves.length(); i+=4){
+        std::string tempMove;
+        tempMove += moves[i];
+        tempMove += moves[i+1];
+        tempMove += moves[i+2];
+        tempMove += moves[i+3];
+        a[i/4] = tempMove;
+
+    }
 
     //sorting not neccasary on first step?????
     int numberOfMoves = moves.length()/4;
@@ -62,15 +74,18 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     for(int i = 0; i < moves.length(); i+=4){
         std::string tempMove;
         //grab ints out of move
-        aiX = (int)moves[0]-0;
-        aiY = (int)moves[1]-0;
-        aiX1 = (int)moves[2]-0;
-        aiY1 = (int)moves[3]-0;
+        aiX = (int)moves[i]-0;
+        aiY = (int)moves[i+1]-0;
+        aiX1 = (int)moves[i+2]-0;
+        aiY1 = (int)moves[i+3]-0;
         //convert move into a single string
-        tempMove += moves[0];
-        tempMove += moves[1];
-        tempMove += moves[2];
-        tempMove += moves[3];
+        tempMove += moves[i];
+        tempMove += moves[i+1];
+        tempMove += moves[i+2];
+        tempMove += moves[i+3];
+
+        //make move on BB ~~!!~~ later get rid of make move on array to increase speed
+        std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
         //change board to move in set of first moves
         boardArr[aiY1][aiX1] = boardArr[aiY][aiX];
@@ -87,6 +102,9 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 
         //test it's value and store it and test if white or black,
         float tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, numberOfMoves);
+
+        //undo move on BB
+        newBBBoard->unmakeMove(tempBBMove);
 
         //Change board to state it was in before all testing of turn
         undo_move1();
@@ -106,6 +124,10 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     std::cout << (double) (aiEndMoveTImer - aiMoveTimerStart) / CLOCKS_PER_SEC << " seconds" << std::endl;
     possible_moves.clear();
     positionCount = 0;
+
+    //make BB move final
+    newBBBoard->makeMove(bestMoveFound);
+
     return bestMoveFound;
 
 }
@@ -142,19 +164,23 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
             std::string tempMove;
+            //grab ints out of move
+            x = (int)moves[i]-0;
+            y = (int)moves[i+1]-0;
+            x1 = (int)moves[i+2]-0;
+            y1 = (int)moves[i+3]-0;
             //convert move into a single string
-            tempMove += moves[0];
-            tempMove += moves[1];
-            tempMove += moves[2];
-            tempMove += moves[3];
-            x = (int)tempMove[0]-0;
-            y = (int)tempMove[1]-0;
-            x1 = (int)tempMove[2]-0;
-            y1 = (int)tempMove[3]-0;
+            tempMove += moves[i];
+            tempMove += moves[i+1];
+            tempMove += moves[i+2];
+            tempMove += moves[i+3];
 
 
             //piece recovery for undo function
             std::string piece1 = boardArr[y][x], piece2 = boardArr[y1][x1];
+
+            //make move on BB ~~!!~~ later get rid of make move on array to increase speed
+            std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
             //set board to test move value and move piece
             boardArr[y1][x1] = boardArr[y][x];
@@ -165,6 +191,9 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
             //undo move by passing it coordinates and pieces moved
             undoMove(x, y, x1, y1, piece1, piece2);
+
+            //undo move on BB
+            newBBBoard->unmakeMove(tempBBMove);
 
             //alpha beta pruning
             alpha = std::max(alpha, bestTempMove);
@@ -188,20 +217,22 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
         for(int i = 0; i <  moves.length(); i+=4){
             //whiteMoves ++;
             std::string tempMove;
-            tempMove += moves[0];
-            tempMove += moves[1];
-            tempMove += moves[2];
-            tempMove += moves[3];
-
-            //change board accoriding to i possible move
-
-            x = (int)tempMove[0]-0;
-            y = (int)tempMove[1]-0;
-            x1 = (int)tempMove[2]-0;
-            y1 = (int)tempMove[3]-0;
+            //grab ints out of move
+            x = (int)moves[i]-0;
+            y = (int)moves[i+1]-0;
+            x1 = (int)moves[i+2]-0;
+            y1 = (int)moves[i+3]-0;
+            //convert move into a single string
+            tempMove += moves[i];
+            tempMove += moves[i+1];
+            tempMove += moves[i+2];
+            tempMove += moves[i+3];
 
             //piece recovery for undo function
             std::string piece1 = boardArr[y][x], piece2 = boardArr[y1][x1];
+
+            //make move on BB ~~!!~~ later get rid of make move on array to increase speed
+            std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
             //set board to test move value and move piece
             boardArr[y1][x1] = boardArr[y][x];
@@ -212,6 +243,9 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
             //undo move by passing it coordinates and pieces moved
             undoMove(x, y, x1, y1, piece1, piece2);
+
+            //undo move on BB
+            newBBBoard->unmakeMove(tempBBMove);
 
             //alpha beta pruning
             beta = std::min(beta, bestTempMove);

@@ -232,7 +232,14 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
 
-    int temp = moveList.length()/4;
+    for(int i = 0; i < moveList.length(); i++){
+        if(moveList[i] == '8' || moveList[i] == '10'){
+            int a;
+            std::cout << "hey2";
+        }
+    }
+
+    //int temp = moveList.length()/4;
     return moveList;
 }
 
@@ -278,11 +285,11 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     removedPinned = removePinnedPieces(pinned, false);
 
     //standard move gen without pinned pieces
-    moveList += possibleBP(wpawns, empty, bking);
-    moveList += possibleR(wrooks, blackpieces, bking);
-    moveList += possibleN(wknights, blackpieces, bking);
-    moveList += possibleB(wbishops, blackpieces, bking);
-    moveList += possibleQ(wqueens, blackpieces, bking);
+    moveList += possibleBP(bpawns, empty, wking);
+    moveList += possibleR(brooks, blackpieces, wking);
+    moveList += possibleN(bknights, blackpieces, wking);
+    moveList += possibleB(bbishops, blackpieces, wking);
+    moveList += possibleQ(bqueens, blackpieces, wking);
     //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
     kingSafeLessKing = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, 0LL);
     //generates legal king moves
@@ -294,7 +301,17 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
 
-    int temp = moveList.length()/4;
+    ///TEST
+    for(int i = 0; i < moveList.length(); i++){
+        if(moveList[i] == '8' || moveList[i] == '10'){
+            int a;
+            std::cout << "hey3";
+        }
+    }
+
+    //int temp = moveList.length()/4;
+    //drawBB(bpawns);
+    //drawBB(blackpieces);
     return moveList;
 }
 
@@ -2404,13 +2421,20 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
     while(j != 0){
         int index = trailingZeros(j);
 
-        list += i%8;
-        list += i/8;
-        list += index%8;
-        list += index/8;
+        list += i % 8;
+        list += i / 8;
+        list += index % 8;
+        list += index / 8;
 
         moves &= ~j;
         j = moves &~ (moves-1);
+    }
+
+    for(int i = 0; i < list.length(); i++){
+        if(list[i] == '8'){
+            int a;
+            std::cout << "hey1";
+        }
     }
 
 return list;
