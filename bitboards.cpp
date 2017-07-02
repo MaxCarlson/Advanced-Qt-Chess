@@ -176,10 +176,18 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //std::clock_t start;
     //double duration;
     //start = std::clock();
-
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
+    }
 
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
-    U64 empty =~ FullTiles, pinned, kingSafeLessKing, unsafeTiles, checkers;
+    U64 empty = ~FullTiles;
+    U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
 
     //for(int i = 0; i < 100000; i++){ //for testing
 
@@ -187,10 +195,30 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
 
     //generate unsafe tiles for in check checking
     unsafeTiles = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
+    }
+
     //if king is in check
     if(wking & unsafeTiles){
         //find out if it's double check
         checkers = checkersBB(wking, true);
+
+        ////TESTTEST
+        if(FullTiles & EmptyTiles){
+            std::cout << "Full and empty off again here!!!" << std::endl;
+            drawBB(FullTiles);
+            drawBB(EmptyTiles);
+            drawBB(FullTiles & EmptyTiles);
+            drawBBA();
+        }
+
         //if we're in double check only generate king moves
         if(isDoubleCheck(checkers)){
             //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
@@ -203,27 +231,51 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
         //take out checking piece or block it's ray if it's a ray
 
         moveList += genInCheckMoves(checkers, wking, true);
+
+        ////TESTTEST
+        if(FullTiles & EmptyTiles){
+            std::cout << "Full and empty off again here!!!" << std::endl;
+            drawBB(FullTiles);
+            drawBB(EmptyTiles);
+            drawBB(FullTiles & EmptyTiles);
+            drawBBA();
+        }
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
         kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
 
+        ////TESTTEST
+        if(FullTiles & EmptyTiles){
+            std::cout << "Full and empty off again here!!!" << std::endl;
+            drawBB(FullTiles);
+            drawBB(EmptyTiles);
+            drawBB(FullTiles & EmptyTiles);
+            drawBBA();
+        }
 
         //generates legal king moves
         moveList += possibleK(wking, whitepieces, kingSafeLessKing);
 
 
-        if(BBWhiteKing & FullTiles){
-
-        } else {
-            std::cout << "king is misaligned with empty here!!" << std::endl;
-            drawBB(BBWhitePieces);
+        ////TESTTEST
+        if(FullTiles & EmptyTiles){
+            std::cout << "Full and empty off again here!!!" << std::endl;
             drawBB(FullTiles);
             drawBB(EmptyTiles);
-            drawBB(BBWhiteKing);
+            drawBB(FullTiles & EmptyTiles);
+            drawBBA();
         }
 
         return moveList;
     }
 
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
+    }
 
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(brooks, bbishops, bqueens, wking);
@@ -241,6 +293,16 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     moveList += possibleQ(wqueens, whitepieces, bking);
     //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
     kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
+    }
+
     //generates legal king moves
     moveList += possibleK(wking, whitepieces, kingSafeLessKing);
 
@@ -250,11 +312,13 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
 
-    for(int i = 0; i < moveList.length(); i++){
-        if(moveList[i] == '8' || moveList[i] == '10'){
-            int a;
-            std::cout << "hey2";
-        }
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
     }
 
     //int temp = moveList.length()/4;
@@ -268,7 +332,6 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
 
     //for(int i = 0; i < 100000; i++){ //for testing
-
 
     std::string moveList, removedPinned;
 
@@ -304,8 +367,6 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     moveList = makePinnedMovesLegal(false, moveList, wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
     //remove pinned pieces from normal piece generation and store into string so can be restored
     removedPinned = removePinnedPieces(pinned, false);
-
-
 
     //standard move gen without pinned pieces
     moveList += possibleBP(bpawns, empty, wking);
