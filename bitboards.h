@@ -120,6 +120,8 @@ public:
 
     //helper funtction to draw out bitboards like chess boards
     void drawBB(U64 board);
+    //draw out bitboards like an array
+    void drawBBA();
 private:
 
 };

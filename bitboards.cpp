@@ -159,6 +159,7 @@ std::string BitBoards::genWhosMove(bool isWhite)
 {
     std::string moves;
 
+
     if(isWhite == true){
         moves = possibleMovesW(BBWhitePieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
     } else {
@@ -175,6 +176,7 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //std::clock_t start;
     //double duration;
     //start = std::clock();
+
 
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
     U64 empty =~ FullTiles, pinned, kingSafeLessKing, unsafeTiles, checkers;
@@ -198,14 +200,30 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
             return moveList;
         }
         //if we're only in single check, generate moves that either,..
-        //take out checking piece or block it's ray if it's a ray piece
+        //take out checking piece or block it's ray if it's a ray
+
         moveList += genInCheckMoves(checkers, wking, true);
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
         kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
+
         //generates legal king moves
         moveList += possibleK(wking, whitepieces, kingSafeLessKing);
+
+
+        if(BBWhiteKing & FullTiles){
+
+        } else {
+            std::cout << "king is misaligned with empty here!!" << std::endl;
+            drawBB(BBWhitePieces);
+            drawBB(FullTiles);
+            drawBB(EmptyTiles);
+            drawBB(BBWhiteKing);
+        }
+
         return moveList;
     }
+
 
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(brooks, bbishops, bqueens, wking);
@@ -251,6 +269,7 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 
     //for(int i = 0; i < 100000; i++){ //for testing
 
+
     std::string moveList, removedPinned;
 
     //generate unsafe tiles for in check checking
@@ -273,7 +292,8 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
         kingSafeLessKing = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, 0LL);
         //generates legal king moves
-        moveList += possibleK(bking, blackpieces, kingSafeLessKing);
+        moveList += possibleK(bking, blackpieces, kingSafeLessKing);   
+
         return moveList;
     }
 
@@ -285,10 +305,7 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     //remove pinned pieces from normal piece generation and store into string so can be restored
     removedPinned = removePinnedPieces(pinned, false);
 
-    //TEST
-    if(BBBlackKing == 0LL){
-        std::cout << "king removed here" << std::endl;
-    }
+
 
     //standard move gen without pinned pieces
     moveList += possibleBP(bpawns, empty, wking);
@@ -306,8 +323,6 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
-
-    //int temp = moveList.length()/4;
 
     return moveList;
 }
@@ -381,6 +396,9 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
     unsafe |= possibles;
     //drawBB(unsafe);
 
+    //resest full tiles so when passed an empty king king isn't removed from full BB
+    FullTiles |= BBWhiteKing | BBBlackKing;
+
     return unsafe;
 }
 
@@ -451,6 +469,9 @@ U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
     }
     unsafe |= possibles;
     //drawBB(BBBlackKing);
+
+    //resest full tiles so when passed an empty king king isn't removed from full BB
+    FullTiles |= BBWhiteKing | BBBlackKing;
 
     return unsafe;
 }
@@ -671,7 +692,7 @@ std::string BitBoards::genTakeOnlys(U64 attacker, U64 ourKing, bool isWhite)
     //rook captures
     for(int i = 0; i < 64; i++){
         if(((rooks>>i) &1) == 1){
-            //map moves that don't collide with friendlys and doesn't illegaly take black king
+            //map moves that don't collide with friendlys and take piece putting us in check
             moves = horizVert(i) & ~friendlys & attacker;
 
             for(int j = 0; j < 64; j++){
@@ -950,6 +971,8 @@ std::string BitBoards::genBlockOrTakes(U64 attacker, U64 ourKing, bool isWhite, 
 //normal move stuff
 std::string BitBoards::makeMove(std::string move)
 {
+
+
     std::string savedMove;
     //parse string move and change to ints
     int x = move[0] - 0;
@@ -961,6 +984,7 @@ std::string BitBoards::makeMove(std::string move)
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
+
 
     //store coordiantes for undoing move
     //final order is x, y, x1, y1, piece moved, piece captured (0 if none)
@@ -993,6 +1017,7 @@ std::string BitBoards::makeMove(std::string move)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+
         } else if (BBWhiteRooks & pieceMaskI){
             //remove piece, test/save capture
             BBWhiteRooks &= ~pieceMaskI;
@@ -1053,6 +1078,7 @@ std::string BitBoards::makeMove(std::string move)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+
         }
     //black pieces
     } else {
@@ -1137,6 +1163,11 @@ std::string BitBoards::makeMove(std::string move)
     } else {
         savedMove += 'b';
     }
+
+    //correct empty tiles to opposite of full tiles
+    EmptyTiles = ~FullTiles;
+    //drawBBA();
+
 
     return savedMove;
 
@@ -1235,200 +1266,125 @@ void BitBoards::unmakeMove(std::string moveKey)
     if(wOrB == 'w'){
         switch(pieceMoved){
             case 'P':
-                //remove piece from where it landed
-                BBWhitePawns &= ~pieceMaskE;
-                //put it back where it started
-                BBWhitePawns |= pieceMaskI;
-                //change color boards same way
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
-                //if piece is captured undo its capture and restore enemy boards
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'b');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    //restore piece to proper place on BB of all pieces
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
+            //remove piece from where it landed
+            BBWhitePawns &= ~pieceMaskE;
+            //put it back where it started
+            BBWhitePawns |= pieceMaskI;
+            //change color boards same way
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
+
             case 'R':
-                BBWhiteRooks &= ~pieceMaskE;
-                BBWhiteRooks |= pieceMaskI;
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
+            BBWhiteRooks &= ~pieceMaskE;
+            BBWhiteRooks |= pieceMaskI;
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
 
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'b');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
             case 'N':
-                BBWhiteKnights &= ~pieceMaskE;
-                BBWhiteKnights |= pieceMaskI;
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
+            BBWhiteKnights &= ~pieceMaskE;
+            BBWhiteKnights |= pieceMaskI;
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
 
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'b');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
             case 'B':
-                BBWhiteBishops &= ~pieceMaskE;
-                BBWhiteBishops |= pieceMaskI;
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
+            BBWhiteBishops &= ~pieceMaskE;
+            BBWhiteBishops |= pieceMaskI;
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
 
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'b');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
             case 'Q':
-                BBWhiteQueens &= ~pieceMaskE;
-                BBWhiteQueens |= pieceMaskI;
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
+            BBWhiteQueens &= ~pieceMaskE;
+            BBWhiteQueens |= pieceMaskI;
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
 
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'b');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
             case 'K':
-                BBWhiteKing &= ~pieceMaskE;
-                BBWhiteKing |= pieceMaskI;
-                BBWhitePieces &= ~pieceMaskE;
-                BBWhitePieces |= pieceMaskI;
-
-            if(pieceCaptured != '0'){
-                undoCapture(pieceMaskE, pieceCaptured, 'b');
-                FullTiles |= pieceMaskI;
-                break;
-            } else{
-                FullTiles &= ~pieceMaskE;
-                FullTiles |= pieceMaskI;
-                break;
-            }
+            BBWhiteKing &= ~pieceMaskE;
+            BBWhiteKing |= pieceMaskI;
+            BBWhitePieces &= ~pieceMaskE;
+            BBWhitePieces |= pieceMaskI;
+            break;
         }
     } else if(wOrB == 'b'){
         switch(pieceMoved){
             case 'p':
-                //remove piece from where it landed
-                BBBlackPawns &= ~pieceMaskE;
-                //put it back where it started
-                BBBlackPawns |= pieceMaskI;
-                //change color boards same way
-                BBBlackPieces &= ~pieceMaskE;
-                BBBlackPieces |= pieceMaskI;
-                //if piece is captured undo its capture and restore enemy boards
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'w');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    //restore piece to proper place on BB of all pieces
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
+            //remove piece from where it landed
+            BBBlackPawns &= ~pieceMaskE;
+            //put it back where it started
+            BBBlackPawns |= pieceMaskI;
+            //change color boards same way
+            BBBlackPieces &= ~pieceMaskE;
+            BBBlackPieces |= pieceMaskI;
+            break;
+
             case 'r':
+            BBBlackRooks &= ~pieceMaskE;
+            BBBlackRooks |= pieceMaskI;
+            BBBlackPieces &= ~pieceMaskE;
+            BBBlackPieces |= pieceMaskI;
+            break;
 
-                BBBlackRooks &= ~pieceMaskE;
-                BBBlackRooks |= pieceMaskI;
-
-                BBBlackPieces &= ~pieceMaskE;
-                BBBlackPieces |= pieceMaskI;
-                if(pieceCaptured != '0'){
-                    undoCapture(pieceMaskE, pieceCaptured, 'w');
-                    FullTiles |= pieceMaskI;
-                    break;
-                } else{
-                    FullTiles &= ~pieceMaskE;
-                    FullTiles |= pieceMaskI;
-                    break;
-                }
             case 'n':
             BBBlackKnights &= ~pieceMaskE;
             BBBlackKnights |= pieceMaskI;
-
             BBBlackPieces &= ~pieceMaskE;
             BBBlackPieces |= pieceMaskI;
-            if(pieceCaptured != '0'){
-                undoCapture(pieceMaskE, pieceCaptured, 'w');
-                FullTiles |= pieceMaskI;
-                break;
-            } else{
-                FullTiles &= ~pieceMaskE;
-                FullTiles |= pieceMaskI;
-                break;
-            }
+            break;
+
             case 'b':
             BBBlackBishops &= ~pieceMaskE;
             BBBlackBishops |= pieceMaskI;
-
             BBBlackPieces &= ~pieceMaskE;
             BBBlackPieces |= pieceMaskI;
-            if(pieceCaptured != '0'){
-                undoCapture(pieceMaskE, pieceCaptured, 'w');
-                FullTiles |= pieceMaskI;
-                break;
-            } else{
-                FullTiles &= ~pieceMaskE;
-                FullTiles |= pieceMaskI;
-                break;
-            }
+            break;
+
             case 'q':
             BBBlackQueens &= ~pieceMaskE;
             BBBlackQueens |= pieceMaskI;
-
             BBBlackPieces &= ~pieceMaskE;
             BBBlackPieces |= pieceMaskI;
-            if(pieceCaptured != '0'){
-                undoCapture(pieceMaskE, pieceCaptured, 'w');
-                FullTiles |= pieceMaskI;
-                break;
-            } else{
-                FullTiles &= ~pieceMaskE;
-                FullTiles |= pieceMaskI;
-                break;
-            }
+            break;
+
             case 'k':
             BBBlackKing &= ~pieceMaskE;
             BBBlackKing |= pieceMaskI;
-
             BBBlackPieces &= ~pieceMaskE;
             BBBlackPieces |= pieceMaskI;
-            if(pieceCaptured != '0'){
-                undoCapture(pieceMaskE, pieceCaptured, 'w');
-                FullTiles |= pieceMaskI;
-                break;
-            } else{
-                FullTiles &= ~pieceMaskE;
-                FullTiles |= pieceMaskI;
-                break;
-            }
+            break;
 
         }
     }
+
+    //correct full tiles and run unmake capture function
+    //if a piece has been captured ///Might have errors in calling unmake
+    //even when a piece hasn't been captured
+    if(wOrB == 'w'){
+        if(pieceCaptured != '0' && pieceCaptured != 0){
+            undoCapture(pieceMaskE, pieceCaptured, 'b');
+            FullTiles |= pieceMaskI;
+        } else{
+            FullTiles &= ~pieceMaskE;
+            FullTiles |= pieceMaskI;
+        }
+    } else {
+        if(pieceCaptured != '0' && pieceCaptured != 0){
+            undoCapture(pieceMaskE, pieceCaptured, 'w');
+            FullTiles |= pieceMaskI;
+
+        } else{
+            FullTiles &= ~pieceMaskE;
+            FullTiles |= pieceMaskI;
+
+        }
+    }
+
+    //correct empty tiles to opposite of full tiles
+    EmptyTiles = ~FullTiles;
 
 }
 
@@ -1460,7 +1416,9 @@ void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
                 BBWhitePieces |= location;
                 break;
             default:
+
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
+
         }
     } else if (whiteOrBlack == 'b') {
         switch(piece){
@@ -1487,9 +1445,11 @@ void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
                 BBBlackPieces |= location;
                 break;
             default:
+
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
         }
     } else {
+
         std::cout << "UNDO CAPTURE ERROR" << std::endl;
     }
 }
@@ -2165,7 +2125,6 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
     U64 PAWN_MOVES = southOne(bpawns) & EmptyTiles;
     for(int i = 0; i < 64; i++){
         if(((PAWN_MOVES>>i)&1)==1){
-            //list+=""+(i/8+1)+(i%8)+(i/8)+(i%8);
             list+=i%8;
             list+=i/8-1;
             list+=i%8;
@@ -2176,6 +2135,10 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 
     //forward two
     PAWN_MOVES = (bpawns<<16) & EmptyTiles &(EmptyTiles<<8) & rank5;
+    if(EmptyTiles & BBBlackPawns){
+        std::cout << "Pawns shifted here" << std::endl;
+        drawBB(BBBlackPawns);
+    }
     for(int i = 0; i < 64; i++){
         if(((PAWN_MOVES>>i)&1)==1){
             list+=i%8;
@@ -2209,7 +2172,7 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 
         }
     }
-    drawBB(EmptyTiles);
+    //drawBB(EmptyTiles);
     return list;
 }
 
@@ -2232,13 +2195,6 @@ std::string BitBoards::possibleR(U64 wOrBrooks, U64 wOrBpieces, U64 oppositeking
                     list+=j/8;
                 }
             }
-        }
-    }
-    ///TEST
-    for(int i = 0; i < list.length(); i++){
-        if(list[i] == '8' || list[i] == '10' || list[i] == '0010' || list[i] == 0x08){
-            int a;
-            std::cout << "heyCASTLE!";
         }
     }
 
@@ -2279,14 +2235,6 @@ std::string BitBoards::possibleN(U64 wOrBknights, U64 wOrBpieces, U64 oppositeki
         }
     }
 
-    ///TEST
-    for(int i = 0; i < list.length(); i++){
-        if(list[i] == '8' || list[i] == '10' || list[i] == '0010' || list[i] == 0x08){
-            int a;
-            std::cout << "heyKNIGHT!";
-        }
-    }
-
     return list;
 }
 
@@ -2309,15 +2257,6 @@ std::string BitBoards::possibleB(U64 wOrBbishops, U64 wOrBpieces, U64 oppositeki
             }
         }
     }
-
-    ///TEST
-    for(int i = 0; i < list.length(); i++){
-        if(list[i] == '8' || list[i] == '10' || list[i] == '0010' || list[i] == 0x08){
-            int a;
-            std::cout << "heyBISHOP!";
-        }
-    }
-
     return list;
 
 }
@@ -2341,15 +2280,6 @@ std::string BitBoards::possibleQ(U64 wOrBqueens, U64 wOrBpieces, U64 oppositekin
                     list+=j/8;
                 }
             }
-        }
-    }
-
-
-    ///TEST
-    for(int i = 0; i < list.length(); i++){
-        if(list[i] == '8' || list[i] == '10' || list[i] == '0010' || list[i] == 0x08){
-            int a;
-            std::cout << "heyQUEEN!";
         }
     }
 
@@ -2382,9 +2312,9 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
     //removing places the king would be unsafe from the moves
     moves &= ~kingSafeLessKing;
 
-    //U64 j = moves &~(moves-1);
+    U64 j = moves &~(moves-1);
 
-/*
+
     while(j != 0){
         int index = trailingZeros(j);
 
@@ -2396,7 +2326,7 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
         moves &= ~j;
         j = moves &~ (moves-1);
     }
-    */
+/*
     for(int j = 0; j < 64; j++){
         if(((moves>>j) &1) == 1){
             list+=i%8;
@@ -2405,21 +2335,7 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
             list+=j/8;
         }
     }
-
-
-
-    for(int i = 0; i < list.length(); i++){
-        if(list[i] == '8' || list[i] == '10' || list[i] == '0010' || list[i] == 0x08){
-            std::cout << "heyKING" << std::endl;
-            drawBB(moves);
-            drawBB(wOrBking);
-            drawBB(BBBlackKing);
-            drawBB(wOrBpieces);
-            drawBB(BBBlackPieces);
-
-            drawBB(kingSafeLessKing);
-        }
-    }
+*/
 
 return list;
 
@@ -2483,6 +2399,21 @@ U64 BitBoards::ReverseBits(U64 input)
 
 void BitBoards::constructBoards()
 {
+    FullTiles = 0LL;
+    BBWhitePawns = 0LL;
+    BBWhitePieces = 0LL;
+    BBWhiteRooks = 0LL;
+    BBWhiteKnights = 0LL;
+    BBWhiteBishops = 0LL;
+    BBWhiteQueens = 0LL;
+    BBWhiteKing = 0LL;
+    BBWhitePieces = 0LL;
+    BBBlackPawns = 0LL;
+    BBBlackRooks = 0LL;
+    BBBlackKnights = 0LL;
+    BBBlackBishops = 0LL;
+    BBBlackQueens = 0LL;
+    BBBlackKing = 0LL;
 
     //seed bitboards
     for(int i = 0; i < 64; i++){
@@ -2539,9 +2470,11 @@ void BitBoards::constructBoards()
 
     }
 
+
     //mark emtpy tiles with 1's
     EmptyTiles = ~FullTiles;
     //drawBB(EmptyTiles);
+    //drawBBA();
 }
 
 void BitBoards::drawBB(U64 board)
@@ -2559,6 +2492,54 @@ void BitBoards::drawBB(U64 board)
     std::cout<< std::endl;
 }
 
+void BitBoards::drawBBA()
+{
+    for(int i = 0; i < 64; i++){
+        if((i)%8 == 0){
+            std::cout<< std::endl;
+        }
+        if(BBWhitePawns & (1ULL<<i)){
+            std::cout << "P" << ", ";
+        }
+        if(BBWhiteRooks & (1ULL<<i)){
+            std::cout << "R" << ", ";
+        }
+        if(BBWhiteKnights & (1ULL<<i)){
+            std::cout << "N" << ", ";
+        }
+        if(BBWhiteBishops & (1ULL<<i)){
+            std::cout << "B" << ", ";
+        }
+        if(BBWhiteQueens & (1ULL<<i)){
+            std::cout << "Q" << ", ";
+        }
+        if(BBWhiteKing & (1ULL<<i)){
+            std::cout << "K" << ", ";
+        }
+        if(BBBlackPawns & (1ULL<<i)){
+            std::cout << "p" << ", ";
+        }
+        if(BBBlackRooks & (1ULL<<i)){
+            std::cout << "r" << ", ";
+        }
+        if(BBBlackKnights & (1ULL<<i)){
+            std::cout << "n" << ", ";
+        }
+        if(BBBlackBishops & (1ULL<<i)){
+            std::cout << "b" << ", ";
+        }
+        if(BBBlackQueens & (1ULL<<i)){
+            std::cout << "q" << ", ";
+        }
+        if(BBBlackKing & (1ULL<<i)){
+            std::cout << "k" << ", ";
+        }
+        if(EmptyTiles & (1ULL<<i)){
+            std::cout << " " << ", ";
+        }
+    }
+    std::cout << std::endl;
+}
 
 //single ray direction functions -- mostly for pinned piece calcs
 U64 BitBoards::up(U64 piece)

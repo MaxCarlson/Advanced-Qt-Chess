@@ -127,6 +127,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 
     //make BB move final
     newBBBoard->makeMove(bestMoveFound);
+    newBBBoard->drawBBA();
 
     return bestMoveFound;
 
