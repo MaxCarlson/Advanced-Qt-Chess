@@ -2209,7 +2209,7 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 
         }
     }
-    drawBB(EmptyTiles);
+    //drawBB(EmptyTiles);
     return list;
 }
 
