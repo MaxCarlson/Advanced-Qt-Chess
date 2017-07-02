@@ -26,13 +26,6 @@ extern int count, numberOfPieceMoved;
 // is ai on
 extern int aiOn;
 
-//ai piece values
-// white then black
-//extern int wPawnV, wRookV, wKnightV, wBishopV, wQueenV, wKingV;
-
-//extern int bPawnV, bRookV, bKnightV, bBishopV, bQueenV, bKingV;
-
-
 //to store pieces while testing best moves
 extern std::string storePiece, storePiece1, storePiece2, storePiece3;
 
@@ -46,9 +39,34 @@ extern std::string board2[8][8];
 
 extern int turnsTemp;
 
-//ai initial x,y and final xy of possible return move
-//extern int aiX, aiY, aiX1, aiY1; NOT NEEDED?
+typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
+#define C64(constantU64) constantU64##ULL
 
-//extern uint64_t WP,WN,WB,WR,WQ,WK,BP,BN,BB,BR,BQ,BK;
+//bitboards
+//board showing where all pieces are + aren't
+extern U64 FullTiles;
+extern U64 EmptyTiles;
+
+extern U64 BBWhitePieces;
+
+extern U64 BBWhitePawns;
+extern U64 BBWhiteRooks;
+extern U64 BBWhiteKnights;
+extern U64 BBWhiteBishops;
+extern U64 BBWhiteQueens;
+extern U64 BBWhiteKing;
+
+
+extern U64 BBBlackPieces;
+
+extern U64 BBBlackPawns;
+extern U64 BBBlackRooks;
+extern U64 BBBlackKnights;
+extern U64 BBBlackBishops;
+extern U64 BBBlackQueens;
+extern U64 BBBlackKing;
+
+
+
 
 #endif // EXTERNS_H

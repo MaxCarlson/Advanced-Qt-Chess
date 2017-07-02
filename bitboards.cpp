@@ -33,29 +33,6 @@ extern const U64 FILE_GH=FileGBB + FileHBB;
 //Bitboard of all king movements that can then be shifted
 extern const U64 KING_SPAN=460039L;
 
-//board showing where all pieces are + aren't
-extern U64 FullTiles;
-extern U64 EmptyTiles;
-
-extern U64 BBWhitePieces;
-
-extern U64 BBWhitePawns;
-extern U64 BBWhiteRooks;
-extern U64 BBWhiteKnights;
-extern U64 BBWhiteBishops;
-extern U64 BBWhiteQueens;
-extern U64 BBWhiteKing;
-
-
-extern U64 BBBlackPieces;
-
-extern U64 BBBlackPawns;
-extern U64 BBBlackRooks;
-extern U64 BBBlackKnights;
-extern U64 BBBlackBishops;
-extern U64 BBBlackQueens;
-extern U64 BBBlackKing;
-
 extern const U64 RankMasks8[8] =/*from rank1 to rank8*/
     {
         0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
@@ -80,8 +57,6 @@ extern const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
 0x804020100000000L, 0x402010000000000L, 0x201000000000000L, 0x100000000000000L
 };
 
-
-
 U64 FullTiles;
 U64 EmptyTiles;
 
@@ -94,7 +69,6 @@ U64 BBWhiteBishops;
 U64 BBWhiteQueens;
 U64 BBWhiteKing;
 
-
 U64 BBBlackPieces;
 
 U64 BBBlackPawns;
@@ -103,6 +77,7 @@ U64 BBBlackKnights;
 U64 BBBlackBishops;
 U64 BBBlackQueens;
 U64 BBBlackKing;
+
 
 std::string chessBoard [8][8]= {
     {"r", "n", "b", "q", "k", "b", "n", "r"},
@@ -176,53 +151,27 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //std::clock_t start;
     //double duration;
     //start = std::clock();
-    ////TESTTEST
-    if(FullTiles & EmptyTiles){
-        std::cout << "Full and empty off again here!!!" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(FullTiles & EmptyTiles);
-        drawBBA();
-    }
 
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
     U64 empty = ~FullTiles;
+    U64 EmptyTiles = ~FullTiles;
     U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
-
-    //for(int i = 0; i < 100000; i++){ //for testing
 
     std::string moveList, removedPinned;
 
     //generate unsafe tiles for in check checking
     unsafeTiles = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
 
-    ////TESTTEST
-    if(FullTiles & EmptyTiles){
-        std::cout << "Full and empty off again here!!!" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(FullTiles & EmptyTiles);
-        drawBBA();
-    }
-
     //if king is in check
     if(wking & unsafeTiles){
         //find out if it's double check
         checkers = checkersBB(wking, true);
 
-        ////TESTTEST
-        if(FullTiles & EmptyTiles){
-            std::cout << "Full and empty off again here!!!" << std::endl;
-            drawBB(FullTiles);
-            drawBB(EmptyTiles);
-            drawBB(FullTiles & EmptyTiles);
-            drawBBA();
-        }
-
         //if we're in double check only generate king moves
         if(isDoubleCheck(checkers)){
             //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
             kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
             //generates legal king moves
             moveList += possibleK(wking, whitepieces, kingSafeLessKing);
             return moveList;
@@ -232,50 +181,15 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
 
         moveList += genInCheckMoves(checkers, wking, true);
 
-        ////TESTTEST
-        if(FullTiles & EmptyTiles){
-            std::cout << "Full and empty off again here!!!" << std::endl;
-            drawBB(FullTiles);
-            drawBB(EmptyTiles);
-            drawBB(FullTiles & EmptyTiles);
-            drawBBA();
-        }
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
         kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
-
-        ////TESTTEST
-        if(FullTiles & EmptyTiles){
-            std::cout << "Full and empty off again here!!!" << std::endl;
-            drawBB(FullTiles);
-            drawBB(EmptyTiles);
-            drawBB(FullTiles & EmptyTiles);
-            drawBBA();
-        }
 
         //generates legal king moves
         moveList += possibleK(wking, whitepieces, kingSafeLessKing);
 
-
-        ////TESTTEST
-        if(FullTiles & EmptyTiles){
-            std::cout << "Full and empty off again here!!!" << std::endl;
-            drawBB(FullTiles);
-            drawBB(EmptyTiles);
-            drawBB(FullTiles & EmptyTiles);
-            drawBBA();
-        }
-
         return moveList;
     }
 
-    ////TESTTEST
-    if(FullTiles & EmptyTiles){
-        std::cout << "Full and empty off again here!!!" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(FullTiles & EmptyTiles);
-        drawBBA();
-    }
 
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(brooks, bbishops, bqueens, wking);
@@ -291,17 +205,9 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     moveList += possibleN(wknights, whitepieces, bking);
     moveList += possibleB(wbishops, whitepieces, bking);
     moveList += possibleQ(wqueens, whitepieces, bking);
+
     //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
     kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
-
-    ////TESTTEST
-    if(FullTiles & EmptyTiles){
-        std::cout << "Full and empty off again here!!!" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(FullTiles & EmptyTiles);
-        drawBBA();
-    }
 
     //generates legal king moves
     moveList += possibleK(wking, whitepieces, kingSafeLessKing);
@@ -312,15 +218,6 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
 
-    ////TESTTEST
-    if(FullTiles & EmptyTiles){
-        std::cout << "Full and empty off again here!!!" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(FullTiles & EmptyTiles);
-        drawBBA();
-    }
-
     //int temp = moveList.length()/4;
     return moveList;
 }
@@ -329,6 +226,7 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 {
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
     U64 empty =~ FullTiles;
+    U64 EmptyTiles = ~FullTiles;
     U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
 
     //for(int i = 0; i < 100000; i++){ //for testing
@@ -353,6 +251,7 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
         //take out checking piece or block it's ray if it's a ray piece
         moveList += genInCheckMoves(checkers, bking, false);
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
+
         kingSafeLessKing = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, 0LL);
         //generates legal king moves
         moveList += possibleK(bking, blackpieces, kingSafeLessKing);   
@@ -391,8 +290,13 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 //king safety stuff
 U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishops, U64 bqueens, U64 bking)
 {
-    U64 unsafe;
+    U64 unsafe, temp;
+
+    temp = FullTiles;
+    EmptyTiles = ~FullTiles;
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
+
+    //wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking
 
     //pawn
     unsafe = ((bpawns << 7) &~ FileHBB); //pawn capture right
@@ -458,14 +362,26 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
     //drawBB(unsafe);
 
     //resest full tiles so when passed an empty king king isn't removed from full BB
-    FullTiles |= BBWhiteKing | BBBlackKing;
+    FullTiles = temp;
+
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(FullTiles & EmptyTiles);
+        drawBBA();
+    }
 
     return unsafe;
 }
 
 U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishop, U64 bqueens, U64 bking)
 {
-    U64 unsafe;
+    U64 unsafe, temp;
+    temp = FullTiles;
+    EmptyTiles = ~FullTiles;
+
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishop | bqueens | bking;
 
     //pawn
@@ -529,10 +445,8 @@ U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
         possibles &= ~ FILE_AB;
     }
     unsafe |= possibles;
-    //drawBB(BBBlackKing);
-
-    //resest full tiles so when passed an empty king king isn't removed from full BB
-    FullTiles |= BBWhiteKing | BBBlackKing;
+    //resest full tiles so when passed an empty king king isn't removed from full BB permanently
+    FullTiles = temp;
 
     return unsafe;
 }
@@ -556,7 +470,7 @@ U64 BitBoards::checkersBB(U64 ourKing, bool isWhite)
         } else {
             attackers &= ~FILE_AB & BBBlackKnights;
         }
-        //black pawn captures from king position -- using opposite pawns
+        //black pawn captures from king position -- using opposite pawn directions
         //capture right
         attackers |= noEaOne(ourKing) & BBBlackPawns;
         //capture left
@@ -602,7 +516,6 @@ bool BitBoards::isDoubleCheck(U64 attackers)
     U64 j = attackers &~(attackers-1);
     int counter = 0;
     while(j != 0){
-        int index = trailingZeros(j);
         attackers &= ~j;
         j = attackers &~ (attackers-1);
         counter ++;
@@ -813,7 +726,7 @@ std::string BitBoards::genTakeOnlys(U64 attacker, U64 ourKing, bool isWhite)
         }
     }
     //queens
-    //loop through and find bishops
+    //loop through and find queens
     for(int i = 0; i < 64; i++){
         if(((queens>>i) &1) == 1){
             //map moves that don't collide with friendlys and doesn't illegaly take black king
@@ -1229,7 +1142,6 @@ std::string BitBoards::makeMove(std::string move)
     EmptyTiles = ~FullTiles;
     //drawBBA();
 
-
     return savedMove;
 
 
@@ -1528,10 +1440,12 @@ std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 
         move += moves[i+2];
         move += moves[i+3];
         //make the move
-        toUndo = makeMove(move);
+        toUndo = makeMove(move);        
         //test if move is legal
         if(isWhite == true){
+
             kingSafe = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks,  bknights, bbishops, bqueens, bking);
+
             if(kingSafe & wking){
                 //not legal move
             } else {
@@ -1539,6 +1453,7 @@ std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 
             }
         } else {
             kingSafe = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks,  bknights, bbishops, bqueens, bking);
+
             if(kingSafe & bking){
                 //not legal move
             } else {
@@ -2387,16 +2302,6 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
         moves &= ~j;
         j = moves &~ (moves-1);
     }
-/*
-    for(int j = 0; j < 64; j++){
-        if(((moves>>j) &1) == 1){
-            list+=i%8;
-            list+=i/8;
-            list+=j%8;
-            list+=j/8;
-        }
-    }
-*/
 
 return list;
 

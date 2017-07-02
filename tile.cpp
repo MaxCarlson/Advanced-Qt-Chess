@@ -113,7 +113,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
 void Tile::aiTurn(){
 
     Ai_Logic *newMove = new Ai_Logic;
-    std::string bestMove = newMove->miniMaxRoot(4, true);
+    std::string bestMove = newMove->miniMaxRoot(5, true);
 
     //ready coordinates to give to Pieces
     //std::string bMove = best_moves[tester];

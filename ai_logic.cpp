@@ -68,7 +68,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     std::string bestMoveFound;
 
     //if small number of root moves increase search depth
-    depth = modifyDepth(depth, numberOfMoves);
+    //depth = modifyDepth(depth, numberOfMoves);
 
     //compare moves
     for(int i = 0; i < moves.length(); i+=4){
@@ -127,6 +127,16 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 
     //make BB move final
     newBBBoard->makeMove(bestMoveFound);
+
+    ////TESTTEST
+    if(FullTiles & EmptyTiles){
+        std::cout << "Full and empty off again here!!!" << std::endl;
+         newBBBoard->drawBB(FullTiles);
+         newBBBoard->drawBB(EmptyTiles);
+         newBBBoard->drawBB(FullTiles & EmptyTiles);
+         newBBBoard->drawBBA();
+    }
+
     newBBBoard->drawBBA();
 
     return bestMoveFound;
