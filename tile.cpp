@@ -25,11 +25,11 @@ void Tile::mousePressEvent(QMouseEvent * event){
     //debugging stuff
     for(int i = 0; i < 8; i++){
         for(int j =0; j < 8; j++){
-            std::cout << boardArr[i][j] << " " ;
+            std::cout << boardArr[i][j] << ", " ;
         }
         std::cout << std::endl;
     }
-
+    std::cout << std::endl;
 
 
 }
@@ -113,7 +113,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
 void Tile::aiTurn(){
 
     Ai_Logic *newMove = new Ai_Logic;
-    std::string bestMove = newMove->miniMaxRoot(5, true);
+    std::string bestMove = newMove->miniMaxRoot(4, true);
 
     //ready coordinates to give to Pieces
     //std::string bMove = best_moves[tester];

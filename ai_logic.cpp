@@ -27,7 +27,6 @@ Ai_Logic::Ai_Logic()
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 {
     //generate all possible moves for one turn
-
     newBBBoard->constructBoards();
 
     //Move timer for ai
@@ -137,7 +136,30 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
          newBBBoard->drawBBA();
     }
 
+    if(EmptyTiles & BBWhiteRooks){
+        std::cout << "wrooks off again here!!!" << std::endl;
+        newBBBoard->drawBB(BBWhiteRooks);
+        newBBBoard->drawBB(EmptyTiles);
+    }
+
+    if(EmptyTiles & BBBlackRooks){
+        std::cout << "brooks off again here!!!" << std::endl;
+        newBBBoard->drawBB(BBBlackRooks);
+        newBBBoard->drawBB(EmptyTiles);
+    }
+    if(EmptyTiles & BBWhitePieces){
+        std::cout << "whitepieces off again here!!!" << std::endl;
+        newBBBoard->drawBB(BBWhitePieces);
+        newBBBoard->drawBB(EmptyTiles);
+    }
+    if(EmptyTiles & BBBlackPieces){
+        std::cout << "blackpieces off again here!!!" << std::endl;
+        newBBBoard->drawBB(BBBlackPieces);
+        newBBBoard->drawBB(EmptyTiles);
+    }
+
     newBBBoard->drawBBA();
+    std::cout << std::endl;
 
     return bestMoveFound;
 
@@ -164,7 +186,7 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
 
     //sort the best six moves into the first six slots of possible moves, improvmes speed by about 30% avg
-    //future_possible_moves = sortMoves(future_possible_moves, isMaximisingPlayer);
+    //moves = sortMoves(moves, isMaximisingPlayer);
 
     numberOfMoves = moves.length()/4;
 
