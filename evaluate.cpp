@@ -81,7 +81,7 @@ float Evaluate::getPieceValue(std::string piece, int x, int y)
     }
     float absoluteValue = getAbsoluteValue(piece, x, y);
 
-    //return negetive value if piece black, positive if white
+    //return negative value if piece black, positive if white
     if(piece == "P" || piece == "R" || piece == "N" || piece == "B" || piece == "Q" || piece == "K"){
         //count number of pawns
         if(piece == "P"){

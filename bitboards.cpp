@@ -14,7 +14,7 @@ const U64 FileHBB = FileABB << 7;
 
 //totally full bitboard
 const U64 full  = 0xffffffffffffffffULL;
-const U64 Totallyempty = 0;
+const U64 Totallyempty = 0LL;
 
 //files to keep pieces from moving left or right off board
 extern const U64 notAFile = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
@@ -180,19 +180,15 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
             return moveList;
         }
         //if we're only in single check, generate moves that either,..
-        //take out checking piece or block it's ray if it's a ray
-
+        //take out checking piece or block it's ray if it's a ray piece
         moveList += genInCheckMoves(checkers, wking, true);
-
         //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
         kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
-
         //generates legal king moves
         moveList += possibleK(wking, whitepieces, kingSafeLessKing);
 
         return moveList;
     }
-
 
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(brooks, bbishops, bqueens, wking);
@@ -208,7 +204,6 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     moveList += possibleN(wknights, whitepieces, bking);
     moveList += possibleB(wbishops, whitepieces, bking);
     moveList += possibleQ(wqueens, whitepieces, bking);
-
 
     //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
     kingSafeLessKing = unsafeForWhite(wpawns, wrooks, wknights, wbishops, wqueens, 0LL, bpawns, brooks, bknights, bbishops, bqueens, bking);
@@ -307,6 +302,7 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
     //pawn
     unsafe = ((bpawns << 7) &~ FileHBB); //pawn capture right
     unsafe |= ((bpawns << 9) &~ FileABB); // left
+    //drawBB(unsafe);
 
     U64 possibles;
     //knights
@@ -376,11 +372,7 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
 
 U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishop, U64 bqueens, U64 bking)
 {
-    if(EmptyTiles & BBBlackPieces){
-       std::cout << "blackpieces off again here!!!" << std::endl;
-       drawBB(BBBlackPieces);
-       drawBB(EmptyTiles);
-    }
+
     U64 unsafe, temp, temp1;
     temp = FullTiles;
     temp1 = EmptyTiles;
@@ -389,8 +381,10 @@ U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
     FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishop | bqueens | bking;
 
     //pawn
-    unsafe = ((wpawns << 7) &~ FileABB); //pawn capture right
-    unsafe |= ((wpawns << 9) &~ FileHBB); // left
+    unsafe = ((wpawns >> 7) &~ FileABB); //pawn capture right
+    unsafe |= ((wpawns >> 9) &~ FileHBB); // left
+    //drawBB(unsafe);
+
 
     U64 possibles;
     //knights
@@ -2368,6 +2362,7 @@ U64 BitBoards::ReverseBits(U64 input)
 void BitBoards::constructBoards()
 {
     FullTiles = 0LL;
+
     BBWhitePawns = 0LL;
     BBWhitePieces = 0LL;
     BBWhiteRooks = 0LL;
@@ -2375,6 +2370,7 @@ void BitBoards::constructBoards()
     BBWhiteBishops = 0LL;
     BBWhiteQueens = 0LL;
     BBWhiteKing = 0LL;
+
     BBBlackPieces = 0LL;
     BBBlackPawns = 0LL;
     BBBlackRooks = 0LL;

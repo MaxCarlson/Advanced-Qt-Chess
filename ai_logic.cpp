@@ -15,7 +15,8 @@ std::string board1[8][8];
 std::string board2[8][8];
 
 
-Evaluate *eval = new Evaluate;
+//Evaluate *eval = new Evaluate;
+evaluateBB *eval = new evaluateBB;
 
 BitBoards *newBBBoard = new BitBoards;
 
@@ -61,7 +62,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     int aiX, aiY, aiX1, aiY1;
 
     //for moves to compete against
-    float bestMoveValue = -9999;
+    float bestMoveValue = -999999;
 
     //best move to return after all calcs
     std::string bestMoveFound;
@@ -100,7 +101,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
         }
 
         //test it's value and store it and test if white or black,
-        float tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, numberOfMoves);
+        float tempValue = miniMax(depth -1, -1000000, 1000000, ! isMaximisingPlayer, numberOfMoves);
 
         //undo move on BB
         newBBBoard->unmakeMove(tempBBMove);
@@ -172,7 +173,8 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
 
     if(depth <= 0){
-        return - eval->evaluateBoard(depth, numberOfMoves);
+        //return - eval->evaluateBoard(depth, numberOfMoves);
+        return eval->evalBoard();
     }
 
     //moveGeneration *newGenMoves = new moveGeneration;
@@ -193,7 +195,7 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
     int x, y, x1, y1;
 
     if(isMaximisingPlayer == true){
-        float bestTempMove = -99999;
+        float bestTempMove = -999999;
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
             std::string tempMove;
@@ -246,7 +248,7 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
     } else {
 
-        float bestTempMove = 99999;
+        float bestTempMove = 999999;
         for(int i = 0; i <  moves.length(); i+=4){
             //whiteMoves ++;
             std::string tempMove;
@@ -300,7 +302,7 @@ float Ai_Logic::miniMax(float depth, float alpha, float beta, bool isMaximisingP
 
 
 }
-
+/*
 std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer)
 {
     //float vector to hold scores
@@ -363,6 +365,7 @@ std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, boo
     return newListA;
 
 }
+*/
 
 int Ai_Logic::modifyDepth(int depth, int numberOfMoves)
 {

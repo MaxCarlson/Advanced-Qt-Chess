@@ -29,7 +29,8 @@ SOURCES += \
     Pieces.cpp \
     ai_logic.cpp \
     bitboards.cpp \
-    evaluate.cpp
+    evaluate.cpp \
+    evaluatebb.cpp
 
 
 HEADERS += \
@@ -38,7 +39,8 @@ HEADERS += \
     Pieces.h \
     ai_logic.h \
     bitboards.h \
-    evaluate.h
+    evaluate.h \
+    evaluatebb.h
 
 
 FORMS +=
