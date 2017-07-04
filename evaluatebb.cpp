@@ -210,10 +210,10 @@ int evaluateBB::getPieceValue(int location)
         } else if(pieceLocation & BBWhiteKing){
             //If both sides have no queens use king end game board
             if((BBWhiteQueens | BBBlackQueens) & full){
-                return 20000 + wKingEndSqT[location];
+                return 9000 + wKingEndSqT[location];
             }
             //if end game conditions fail use mid game king board
-            return 20000 + wKingMidSqT[location];
+            return 9000 + wKingMidSqT[location];
 
         }
     } else if (BBBlackPieces & pieceLocation) {
@@ -229,9 +229,9 @@ int evaluateBB::getPieceValue(int location)
             return -900 -bQueenSqT[location];
         } else if(pieceLocation & BBBlackKing){
             if((BBBlackQueens | BBWhiteQueens) & full){
-                return -20000 -bKingEndSqT[location];
+                return -9000 -bKingEndSqT[location];
             }
-         return -20000 -bKingMidSqT[location];
+         return -9000 -bKingMidSqT[location];
         }
     }
     return 0;

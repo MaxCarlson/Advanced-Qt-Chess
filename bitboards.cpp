@@ -95,7 +95,7 @@ BitBoards::BitBoards()
 {
 
 }
-
+/*
 std::string BitBoards::generatePsMoves()
 {
     std::string moves;
@@ -115,7 +115,7 @@ std::string BitBoards::generatePsMoves()
     std::string f = possibleMovesW(BBWhitePieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
     int c = 5;
 
-    /*
+
     for(int i = 0; i < 64; i++){
         if(a & (1ULL << i)){
             std::cout<< 1 <<", ";
@@ -125,11 +125,11 @@ std::string BitBoards::generatePsMoves()
         if((i+1)%8 == 0){
             std::cout<< std::endl;
         }
-    }*/
+    }
 
 
 }
-
+*/
 std::string BitBoards::genWhosMove(bool isWhite)
 {
     std::string moves;
@@ -1139,7 +1139,13 @@ std::string BitBoards::makeMove(std::string move)
     //correct empty tiles to opposite of full tiles
     EmptyTiles &= ~pieceMaskE;
     EmptyTiles |= pieceMaskI;
+    //EmptyTiles &= ~FullTiles
     //drawBBA();
+
+    if(EmptyTiles & BBBlackPawns){
+        std::cout << "Pawns shifted here" << std::endl;
+        drawBB(BBBlackPawns);
+    }
 
     return savedMove;
 
@@ -1221,6 +1227,11 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
 
 void BitBoards::unmakeMove(std::string moveKey)
 {
+    if(EmptyTiles & BBBlackPawns){
+        std::cout << "Pawns shifted here" << std::endl;
+        drawBB(BBBlackPawns);
+    }
+
     //parse string move and change to ints
     int x = moveKey[0] - 0;
     int y = moveKey[1] - 0;
@@ -1353,8 +1364,20 @@ void BitBoards::unmakeMove(std::string moveKey)
         }
     }
 
+
+
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
+
+    if(EmptyTiles & BBBlackPawns){
+        std::cout << "Pawns shifted here" << std::endl;
+        drawBB(BBBlackPawns);
+        drawBB(EmptyTiles);
+        drawBB(EmptyTiles & BBBlackPawns);
+        drawBBA();
+    }
+
+
 
 }
 
@@ -2506,6 +2529,60 @@ void BitBoards::drawBBA()
         }
     }
     std::cout << std::endl;
+}
+
+bool BitBoards::isLegal(std::string move, bool isWhite)
+{
+    //function used to test if a move is legal or not
+    //used in killer Heuristics right now only
+    U64 unsafe;
+    std::string undoMove;
+    int x,y,x1,y1, xy, xy1;
+
+    //check if move takes own piece
+    x = move[0]-0;
+    y = move[1]-0;
+    x1 = move[2]-0;
+    y1 = move[3]-0;
+    xy = y*8+x; xy1 = y1*8+x;
+    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
+    //pieceMaskI += 1LL<< xy;
+    pieceMaskE += 1LL << xy1;
+
+    if(isWhite == true){
+        //friendly check
+        if(BBWhitePieces & pieceMaskE) {
+            return false;
+        }
+        //make move and get board to test if king is safe
+        undoMove = makeMove(move);
+        unsafe = unsafeForWhite(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+
+        //unmake move
+        drawBB(EmptyTiles);
+        unmakeMove(undoMove);
+
+        if(unsafe & BBWhiteKing){
+            return false;
+        }
+        return true;
+
+    } else {
+        if(BBBlackPieces & pieceMaskE) {
+            return false;
+        }
+        //make move and get board to test if king is safe
+        undoMove = makeMove(move);
+        unsafe = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+
+        unmakeMove(undoMove);
+        if(unsafe & BBBlackKing){
+            return false;
+        }
+        return true;
+    }
+   unmakeMove(undoMove);
+   return false;
 }
 
 //single ray direction functions -- mostly for pinned piece calcs
