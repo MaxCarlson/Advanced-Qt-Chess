@@ -968,6 +968,26 @@ std::string BitBoards::makeMove(std::string move)
     //is piece black or white
     bool wOrB = isWhite(pieceMaskI);
 
+    if((BBBlackBishops & ~BBBlackPieces)){
+        std::cout << "black pieces shifted off" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(BBBlackBishops);
+        drawBB(BBBlackPieces);
+        drawBBA();
+    }
+
+    if((BBBlackPawns | BBBlackRooks | BBBlackKnights | BBBlackBishops | BBBlackQueens | BBBlackKing) & EmptyTiles){
+        std::cout << "black pieces shifted off" << std::endl;
+        drawBB(BBBlackBishops);
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+        drawBB(BBWhiteBishops);
+        drawBB(BBWhitePieces);
+        drawBB(pieceMaskI);
+        drawBBA();
+    }
+
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
 
@@ -1166,7 +1186,7 @@ bool BitBoards::isWhite(U64 pieceMoving)
 
 char BitBoards::isCapture(U64 landing, bool isWhite)
 {
-
+    //if is white doing the capturing
     if(isWhite == true){
         if(landing & BBBlackPieces){
             if(landing & BBBlackPawns){
@@ -1227,8 +1247,8 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
 
 void BitBoards::unmakeMove(std::string moveKey)
 {
-    if(EmptyTiles & BBBlackPawns){
-        std::cout << "Pawns shifted here" << std::endl;
+    if((BBBlackPawns | BBBlackRooks | BBBlackKnights | BBBlackBishops | BBBlackQueens | BBBlackKing) & EmptyTiles){
+        std::cout << "black pieces shifted off" << std::endl;
         drawBB(BBBlackPawns);
     }
 
@@ -1369,11 +1389,12 @@ void BitBoards::unmakeMove(std::string moveKey)
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
 
-    if(EmptyTiles & BBBlackPawns){
-        std::cout << "Pawns shifted here" << std::endl;
-        drawBB(BBBlackPawns);
+    if((BBBlackBishops & ~BBBlackPieces)){
+        std::cout << "black pieces shifted off" << std::endl;
+        drawBB(FullTiles);
         drawBB(EmptyTiles);
-        drawBB(EmptyTiles & BBBlackPawns);
+        drawBB(BBBlackBishops);
+        drawBB(BBBlackPieces);
         drawBBA();
     }
 
@@ -2546,10 +2567,10 @@ bool BitBoards::isLegal(std::string move, bool isWhite)
     y1 = move[3]-0;
     xy = y*8+x; xy1 = y1*8+x;
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    //pieceMaskI += 1LL<< xy;
+    pieceMaskI += 1LL<< xy;
     pieceMaskE += 1LL << xy1;
 
-    if(isWhite == true){
+    if(isWhite == true && (BBWhitePieces & pieceMaskI)){
         //friendly check
         if(BBWhitePieces & pieceMaskE) {
             return false;
@@ -2567,7 +2588,7 @@ bool BitBoards::isLegal(std::string move, bool isWhite)
         }
         return true;
 
-    } else {
+    } else if (BBBlackPieces & pieceMaskI){
         if(BBBlackPieces & pieceMaskE) {
             return false;
         }

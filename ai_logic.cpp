@@ -39,9 +39,6 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     //sorting not neccasary on first step?????
     int numberOfMoves = moves.length()/4;
 
-    // ai temp values for passing to testBoardValues for assessing a board position
-    int aiX, aiY, aiX1, aiY1;
-
     //for moves to compete against
     long bestMoveValue = -999999;
 
@@ -150,7 +147,7 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
     //numberOfMoves = moves.length()/4;
 
     if(isMaximisingPlayer == true){
-        moves = killerHe(depth, moves, false);
+        //moves = killerHe(depth, moves, false);
         long bestTempMove = -999999;
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
@@ -160,6 +157,15 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             tempMove += moves[i+1];
             tempMove += moves[i+2];
             tempMove += moves[i+3];
+
+            if((BBBlackBishops & ~BBBlackPieces)){
+                std::cout << "black pieces shifted off" << std::endl;
+                newBBBoard->drawBB(FullTiles);
+                newBBBoard->drawBB(EmptyTiles);
+                newBBBoard->drawBB(BBBlackBishops);
+                newBBBoard->drawBB(BBBlackPieces);
+                newBBBoard->drawBBA();
+            }
 
             //make move on BB's store data to string so move can be undone
             std::string tempBBMove = newBBBoard->makeMove(tempMove);
@@ -181,7 +187,7 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
         return bestTempMove;
 
     } else {
-        moves = killerHe(depth, moves, true);
+        //moves = killerHe(depth, moves, true);
         long bestTempMove = 999999;
         for(int i = 0; i <  moves.length(); i+=4){
             std::string tempMove;
@@ -190,6 +196,15 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             tempMove += moves[i+1];
             tempMove += moves[i+2];
             tempMove += moves[i+3];
+
+            if((BBBlackBishops & ~BBBlackPieces)){
+                std::cout << "black pieces shifted off" << std::endl;
+                newBBBoard->drawBB(FullTiles);
+                newBBBoard->drawBB(EmptyTiles);
+                newBBBoard->drawBB(BBBlackBishops);
+                newBBBoard->drawBB(BBBlackPieces);
+                newBBBoard->drawBBA();
+            }
 
             //make move on BB
             std::string tempBBMove = newBBBoard->makeMove(tempMove);
@@ -216,23 +231,35 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
 
 std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite)
 {
-    std::string cutoffs, tempMove;
+    std::string cutoffs, tempMove, tempMove1;
     int size = killerHArr[depth].size();
 
+    //if no killer moves, return the same list taken
     if(size == 0){
         return moves;
     }
 
+    //loop through killer moves at given depth and test if they're legal
+    //(done by testing if they're in move list that's already been legally generated
     for(int i = 0; i < size ; ++i){
+        //grab first killer move for given depth
         tempMove = killerHArr[depth].top();
-        //if the move is legal, add it to the front of the possible moves
-        if(newBBBoard->isLegal(tempMove, isWhite) == true){
-            cutoffs += tempMove;
-            killerHArr[depth].pop();
+        for(int j = 0; j < moves.size(); j+=4){
+            tempMove1 = moves[j];
+            tempMove1 += moves[j+1];
+            tempMove1 += moves[j+2];
+            tempMove1 += moves[j+3];
+            //if killer move matches a move in the moveset for current turn, put it at the front of the list
+            if(tempMove == tempMove1){
+                cutoffs += tempMove;
+                break;
+            }
         }
-
+        //remove killer move from depth stack once it's been tested to see if legal or not
+        killerHArr[depth].pop();
     }
-    //add the moves that acheived cutoffs previously at x depth to the front
+
+    //return moves with killer moves in the front
     cutoffs += moves;
     return cutoffs;
 
