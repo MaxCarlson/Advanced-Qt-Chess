@@ -147,8 +147,19 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
     //numberOfMoves = moves.length()/4;
 
     if(isMaximisingPlayer == true){
-        moves = killerHe(depth, moves, false);
         long bestTempMove = -999999;
+
+        //NullMove
+        long nullM = miniMax(depth - 2, alpha, beta, ! isMaximisingPlayer, numberOfMoves);
+        if(nullM > beta){
+            return bestTempMove;
+        }
+
+
+        //push  killer (bad) moves to (eventually just near) front of move list
+        //in order to get a high cutoff as fast as possible
+        moves = killerHe(depth, moves, false);
+
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
             std::string tempMove;
@@ -179,7 +190,9 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             //alpha beta pruning
             alpha = std::max(alpha, bestTempMove);
 
+             //if move causes a beta cutoff (is bad for us) stop searching current branch
             if(beta <= alpha){
+                //push killer move to top of stack for given depth
                 killerHArr[depth].push(tempMove);
                 return bestTempMove;
             }
@@ -187,8 +200,16 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
         return bestTempMove;
 
     } else {
-        moves = killerHe(depth, moves, true);
         long bestTempMove = 999999;
+
+        //NullMove
+        long nullM = miniMax(depth - 2, alpha, beta, ! isMaximisingPlayer, numberOfMoves);
+        if(nullM > beta){
+            return bestTempMove;
+        }
+
+        moves = killerHe(depth, moves, true);
+
         for(int i = 0; i <  moves.length(); i+=4){
             std::string tempMove;
             //convert move into a single string
@@ -240,7 +261,7 @@ std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite)
     }
 
     //loop through killer moves at given depth and test if they're legal
-    //(done by testing if they're in move list that's already been legally generated
+    //(done by testing if they're in move list that's already been legally generated)
     for(int i = 0; i < size ; ++i){
         //grab first killer move for given depth
         tempMove = killerHArr[depth].top();

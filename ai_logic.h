@@ -26,7 +26,10 @@ private:
     long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, int numberOfMoves);
     //killer heuristics function
     std::string killerHe(int depth, std::string moves, bool isWhite);
-    std::stack<std::string> killerHArr[7];
+    std::stack<std::string> killerHArr[7];    
+    //Null move pruning
+    bool nullMovePruning(int depth, bool isMaximisingPlayer, long beta);
+
 
     //counts number of piece postitions tried
     long positionCount = 0;
