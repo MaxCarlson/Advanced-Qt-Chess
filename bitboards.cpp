@@ -217,6 +217,7 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
     //int temp = moveList.length()/4;
+
     return moveList;
 }
 
@@ -372,6 +373,11 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
 
 U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishop, U64 bqueens, U64 bking)
 {
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
 
     U64 unsafe, temp, temp1;
     temp = FullTiles;
@@ -944,6 +950,16 @@ std::string BitBoards::genBlockOrTakes(U64 attacker, U64 ourKing, bool isWhite, 
 //normal move stuff
 std::string BitBoards::makeMove(std::string move)
 {
+    U64 j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
+    int t = 0;
+    while(j != 0){
+        bbbs &= ~j;
+        j = bbbs &~(bbbs-1);
+        t++;
+        if(t>2){
+            drawBBA();
+        }
+    }
 
     std::string savedMove;
     //parse string move and change to ints
@@ -986,6 +1002,12 @@ std::string BitBoards::makeMove(std::string move)
         drawBB(BBWhitePieces);
         drawBB(pieceMaskI);
         drawBBA();
+    }
+
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
     }
 
     //find BB that contains correct piece, remove piece from it's starting pos
@@ -1162,9 +1184,33 @@ std::string BitBoards::makeMove(std::string move)
     //EmptyTiles &= ~FullTiles
     //drawBBA();
 
+
+    if(savedMove.length() != 7){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
+
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
+
     if(EmptyTiles & BBBlackPawns){
         std::cout << "Pawns shifted here" << std::endl;
         drawBB(BBBlackPawns);
+    }
+
+    j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
+    t = 0;
+    while(j != 0){
+        bbbs &= ~j;
+        j = bbbs &~(bbbs-1);
+        t++;
+        if(t>2){
+            drawBBA();
+        }
     }
 
     return savedMove;
@@ -1250,6 +1296,25 @@ void BitBoards::unmakeMove(std::string moveKey)
     if((BBBlackPawns | BBBlackRooks | BBBlackKnights | BBBlackBishops | BBBlackQueens | BBBlackKing) & EmptyTiles){
         std::cout << "black pieces shifted off" << std::endl;
         drawBB(BBBlackPawns);
+    }
+    if((BBBlackBishops & ~BBBlackPieces)){
+        std::cout << "black pieces shifted off" << std::endl;
+        drawBB(FullTiles);
+        drawBB(EmptyTiles);
+        drawBB(BBBlackBishops);
+        drawBB(BBBlackPieces);
+        drawBBA();
+    }
+
+    U64 j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
+    int t = 0;
+    while(j != 0){
+        bbbs &= ~j;
+        j = bbbs &~(bbbs-1);
+        t++;
+        if(t>2){
+            drawBBA();
+        }
     }
 
     //parse string move and change to ints
@@ -1388,6 +1453,17 @@ void BitBoards::unmakeMove(std::string moveKey)
 
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
+
+    j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
+    t = 0;
+    while(j != 0){
+        bbbs &= ~j;
+        j = bbbs &~(bbbs-1);
+        t++;
+        if(t>2){
+            drawBBA();
+        }
+    }
 
     if((BBBlackBishops & ~BBBlackPieces)){
         std::cout << "black pieces shifted off" << std::endl;
@@ -2256,6 +2332,7 @@ std::string BitBoards::possibleN(U64 wOrBknights, U64 wOrBpieces, U64 oppositeki
 
 std::string BitBoards::possibleB(U64 wOrBbishops, U64 wOrBpieces, U64 oppositeking)
 {
+
     std::string list;
     U64 moves;
     //loop through and find bishops
@@ -2483,7 +2560,6 @@ void BitBoards::constructBoards()
     //mark empty tiles with 1's
     EmptyTiles = ~FullTiles;
     //drawBB(EmptyTiles);
-
     std::cout << std::endl;
 
 }
