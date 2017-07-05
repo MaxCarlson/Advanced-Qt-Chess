@@ -223,6 +223,7 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
 
 std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishops, U64 bqueens, U64 bking)
 {
+
     //FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
     U64 empty =~ FullTiles;
     //U64 EmptyTiles = ~FullTiles;
@@ -230,10 +231,22 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 
     //for(int i = 0; i < 100000; i++){ //for testing
 
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
+
     std::string moveList, removedPinned;
 
     //generate unsafe tiles for in check checking
     unsafeTiles = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
 
     //if king is in check
     if(bking & unsafeTiles){
@@ -260,12 +273,30 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
         return moveList;
     }
 
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(wrooks, wbishops, wqueens, bking);
     moveList += pinnedMoves(pinned, bpawns, brooks, bbishops, bqueens, bking, wrooks, wbishops, wqueens, blackpieces, false);
 
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
+
     //test all pinned moves against king safety to be sure they're legal
     moveList = makePinnedMovesLegal(false, moveList, wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
+
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
+
     //remove pinned pieces from normal piece generation and store into string so can be restored
     removedPinned = removePinnedPieces(pinned, false);
 
@@ -278,6 +309,7 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
 
     //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
     kingSafeLessKing = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, 0LL);
+
     //generates legal king moves
     moveList += possibleK(bking, blackpieces, kingSafeLessKing);
 
@@ -285,6 +317,12 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     restorePinnedPieces(removedPinned, false);
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
+
+    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
+        drawBBA();
+        drawBB(BBBlackPawns);
+        drawBB(BBBlackPieces);
+    }
 
     return moveList;
 }
@@ -373,11 +411,6 @@ U64 BitBoards::unsafeForWhite(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops
 
 U64 BitBoards::unsafeForBlack(U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishop, U64 bqueens, U64 bking)
 {
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
 
     U64 unsafe, temp, temp1;
     temp = FullTiles;
@@ -1765,7 +1798,7 @@ void BitBoards::restorePinnedPieces(std::string pieces, bool wOrB)
             }
         }
     } else {
-        for(int i = 0; i < pieces.length()/3; i += 3){
+        for(int i = 0; i < pieces.length(); i += 3){
             x = pieces[i+1] - 0;
             y = pieces[i+2] - 0;
             xy = y*8 + x;
@@ -2625,7 +2658,7 @@ void BitBoards::drawBBA()
             std::cout << " " << ", ";
         }
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;;
 }
 
 bool BitBoards::isLegal(std::string move, bool isWhite)

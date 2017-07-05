@@ -147,7 +147,7 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
     //numberOfMoves = moves.length()/4;
 
     if(isMaximisingPlayer == true){
-        //moves = killerHe(depth, moves, false);
+        moves = killerHe(depth, moves, false);
         long bestTempMove = -999999;
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
@@ -187,7 +187,7 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
         return bestTempMove;
 
     } else {
-        //moves = killerHe(depth, moves, true);
+        moves = killerHe(depth, moves, true);
         long bestTempMove = 999999;
         for(int i = 0; i <  moves.length(); i+=4){
             std::string tempMove;
