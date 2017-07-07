@@ -30,7 +30,8 @@ SOURCES += \
     ai_logic.cpp \
     bitboards.cpp \
     evaluate.cpp \
-    evaluatebb.cpp
+    evaluatebb.cpp \
+    zobristh.cpp
 
 
 HEADERS += \
@@ -40,7 +41,8 @@ HEADERS += \
     ai_logic.h \
     bitboards.h \
     evaluate.h \
-    evaluatebb.h
+    evaluatebb.h \
+    zobristh.h
 
 
 FORMS +=

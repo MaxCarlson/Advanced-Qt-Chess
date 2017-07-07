@@ -229,24 +229,10 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     //U64 EmptyTiles = ~FullTiles;
     U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
 
-    //for(int i = 0; i < 100000; i++){ //for testing
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
-
     std::string moveList, removedPinned;
 
     //generate unsafe tiles for in check checking
     unsafeTiles = unsafeForBlack(wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
 
     //if king is in check
     if(bking & unsafeTiles){
@@ -273,29 +259,12 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
         return moveList;
     }
 
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
     //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
     pinned = pinnedBB(wrooks, wbishops, wqueens, bking);
     moveList += pinnedMoves(pinned, bpawns, brooks, bbishops, bqueens, bking, wrooks, wbishops, wqueens, blackpieces, false);
 
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
-
     //test all pinned moves against king safety to be sure they're legal
     moveList = makePinnedMovesLegal(false, moveList, wpawns, wrooks, wknights, wbishops, wqueens, wking, bpawns, brooks, bknights, bbishops, bqueens, bking);
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
 
     //remove pinned pieces from normal piece generation and store into string so can be restored
     removedPinned = removePinnedPieces(pinned, false);
@@ -317,12 +286,6 @@ std::string BitBoards::possibleMovesB(U64 blackpieces, U64 wpawns, U64 wrooks, U
     restorePinnedPieces(removedPinned, false);
     //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
     //std::cout<<"printf: "<< duration <<'\n';
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
 
     return moveList;
 }
@@ -983,16 +946,6 @@ std::string BitBoards::genBlockOrTakes(U64 attacker, U64 ourKing, bool isWhite, 
 //normal move stuff
 std::string BitBoards::makeMove(std::string move)
 {
-    U64 j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
-    int t = 0;
-    while(j != 0){
-        bbbs &= ~j;
-        j = bbbs &~(bbbs-1);
-        t++;
-        if(t>2){
-            drawBBA();
-        }
-    }
 
     std::string savedMove;
     //parse string move and change to ints
@@ -1016,32 +969,6 @@ std::string BitBoards::makeMove(std::string move)
 
     //is piece black or white
     bool wOrB = isWhite(pieceMaskI);
-
-    if((BBBlackBishops & ~BBBlackPieces)){
-        std::cout << "black pieces shifted off" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(BBBlackBishops);
-        drawBB(BBBlackPieces);
-        drawBBA();
-    }
-
-    if((BBBlackPawns | BBBlackRooks | BBBlackKnights | BBBlackBishops | BBBlackQueens | BBBlackKing) & EmptyTiles){
-        std::cout << "black pieces shifted off" << std::endl;
-        drawBB(BBBlackBishops);
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-        drawBB(BBWhiteBishops);
-        drawBB(BBWhitePieces);
-        drawBB(pieceMaskI);
-        drawBBA();
-    }
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
 
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
@@ -1217,35 +1144,6 @@ std::string BitBoards::makeMove(std::string move)
     //EmptyTiles &= ~FullTiles
     //drawBBA();
 
-
-    if(savedMove.length() != 7){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
-
-    if(BBBlackPieces & ~(BBBlackPawns | BBBlackRooks | BBBlackBishops | BBBlackKnights | BBBlackQueens | BBBlackKing)){
-        drawBBA();
-        drawBB(BBBlackPawns);
-        drawBB(BBBlackPieces);
-    }
-
-    if(EmptyTiles & BBBlackPawns){
-        std::cout << "Pawns shifted here" << std::endl;
-        drawBB(BBBlackPawns);
-    }
-
-    j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
-    t = 0;
-    while(j != 0){
-        bbbs &= ~j;
-        j = bbbs &~(bbbs-1);
-        t++;
-        if(t>2){
-            drawBBA();
-        }
-    }
-
     return savedMove;
 
 
@@ -1326,30 +1224,6 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
 
 void BitBoards::unmakeMove(std::string moveKey)
 {
-    if((BBBlackPawns | BBBlackRooks | BBBlackKnights | BBBlackBishops | BBBlackQueens | BBBlackKing) & EmptyTiles){
-        std::cout << "black pieces shifted off" << std::endl;
-        drawBB(BBBlackPawns);
-    }
-    if((BBBlackBishops & ~BBBlackPieces)){
-        std::cout << "black pieces shifted off" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(BBBlackBishops);
-        drawBB(BBBlackPieces);
-        drawBBA();
-    }
-
-    U64 j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
-    int t = 0;
-    while(j != 0){
-        bbbs &= ~j;
-        j = bbbs &~(bbbs-1);
-        t++;
-        if(t>2){
-            drawBBA();
-        }
-    }
-
     //parse string move and change to ints
     int x = moveKey[0] - 0;
     int y = moveKey[1] - 0;
@@ -1483,31 +1357,8 @@ void BitBoards::unmakeMove(std::string moveKey)
     }
 
 
-
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
-
-    j = BBBlackBishops &~(BBBlackBishops-1), bbbs = BBBlackBishops;
-    t = 0;
-    while(j != 0){
-        bbbs &= ~j;
-        j = bbbs &~(bbbs-1);
-        t++;
-        if(t>2){
-            drawBBA();
-        }
-    }
-
-    if((BBBlackBishops & ~BBBlackPieces)){
-        std::cout << "black pieces shifted off" << std::endl;
-        drawBB(FullTiles);
-        drawBB(EmptyTiles);
-        drawBB(BBBlackBishops);
-        drawBB(BBBlackPieces);
-        drawBBA();
-    }
-
-
 
 }
 

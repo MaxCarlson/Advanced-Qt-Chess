@@ -1,9 +1,11 @@
 #include "ai_logic.h"
+#include "zobristh.h"
 
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
 #include "bitboards.h"
+
 
 
 //best overall move as calced
@@ -20,9 +22,13 @@ evaluateBB *eval = new evaluateBB;
 
 BitBoards *newBBBoard = new BitBoards;
 
+//zorbirst key gen for transposition tables
+ZobristH *newKey = new ZobristH;
+
 Ai_Logic::Ai_Logic()
 {
-
+    //newKey->random64();
+    newKey->testDistibution();
 }
 
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
@@ -61,7 +67,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
         std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
         //test it's value and store it and test if white or black,
-        long tempValue = miniMax(depth -1, -10000, 10000, ! isMaximisingPlayer, numberOfMoves);
+        long tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, numberOfMoves);
 
         //undo move on BB
         newBBBoard->unmakeMove(tempBBMove);
@@ -145,17 +151,20 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
     //moves = sortMoves(moves, isMaximisingPlayer);
 
     //numberOfMoves = moves.length()/4;
+    //NullMove ~~ possibly not correctly implemented
+    /*
+    long nullM = nullMovePruning(depth, alpha, beta, !isMaximisingPlayer);
+    if(nullM > beta){
+        if(isMaximisingPlayer == true){
+            return -999999;
+        } else {
+            return 999999;
+        }
+    }
+    */
 
     if(isMaximisingPlayer == true){
         long bestTempMove = -999999;
-
-        //NullMove
-        long nullM = miniMax(depth - 2, alpha, beta, ! isMaximisingPlayer, numberOfMoves);
-        if(nullM > beta){
-            return bestTempMove;
-        }
-
-
         //push  killer (bad) moves to (eventually just near) front of move list
         //in order to get a high cutoff as fast as possible
         moves = killerHe(depth, moves, false);
@@ -201,12 +210,6 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
 
     } else {
         long bestTempMove = 999999;
-
-        //NullMove
-        long nullM = miniMax(depth - 2, alpha, beta, ! isMaximisingPlayer, numberOfMoves);
-        if(nullM > beta){
-            return bestTempMove;
-        }
 
         moves = killerHe(depth, moves, true);
 
@@ -284,6 +287,12 @@ std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite)
     cutoffs += moves;
     return cutoffs;
 
+}
+
+long Ai_Logic::nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer)
+{
+    long move = miniMax(depth-2, alpha, beta, ! isMaximisingPlayer, 0);
+    return move;
 }
 /*
 std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer)

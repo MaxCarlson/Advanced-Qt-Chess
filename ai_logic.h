@@ -28,7 +28,7 @@ private:
     std::string killerHe(int depth, std::string moves, bool isWhite);
     std::stack<std::string> killerHArr[7];    
     //Null move pruning
-    bool nullMovePruning(int depth, bool isMaximisingPlayer, long beta);
+    long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
 
 
     //counts number of piece postitions tried
