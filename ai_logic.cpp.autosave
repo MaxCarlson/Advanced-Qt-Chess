@@ -303,6 +303,23 @@ long Ai_Logic::nullMovePruning(int depth, long alpha, long beta, bool isMaximisi
     long move = miniMax(depth-2, alpha, beta, ! isMaximisingPlayer, 0);
     return move;
 }
+
+bool Ai_Logic::checkTTable(int depth, int eval)
+{
+    //get hash of current zobrist key
+    int hash = ZKey % (2^20+7);
+    
+    //is position in hash table
+    if (transpositionT[hash] == NULL){
+        //add position to the table
+        transpositionT[hash].zobrist = ZKey;
+        transpositionT[hash].depth = depth;
+        transpositionT[hash].eval = eval;      
+    }
+    
+    
+    
+}
 /*
 std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer)
 {

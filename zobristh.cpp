@@ -17,6 +17,9 @@ U64 zArray[2][6][64];
 //U64 zCastle[4];
 U64 zBlackMove;
 
+
+U64 zobKey;
+
 ZobristH::ZobristH()
 {
 
@@ -56,6 +59,96 @@ void ZobristH::zobristFill()
     */
     //random is it blacks turn or not
     zBlackMove = random64();
+}
+
+void ZobristH::UpdateKey(int start, int end, std::string moveKey)
+{
+    //gather piece, capture, and w or b info from movekey
+    char piece = moveKey[4];
+    char captured = moveKey[5];
+    char wB = moveKey[6];
+
+    //if a piece was captured XOR that location with randomkey at array location end
+    if(captured != '0' || captured != 0){
+        if(wB == 'w') {
+            if(captured == 'P'){
+                zobKey ^= zArray[0][0][end];
+            } else if(captured == 'R'){
+                zobKey ^= zArray[0][1][end];
+            } else if(captured == 'N'){
+                zobKey ^= zArray[0][2][end];
+            } else if(captured == 'B'){
+                zobKey ^= zArray[0][3][end];
+            } else if(captured == 'Q'){
+                zobKey ^= zArray[0][4][end];
+            }
+        } else if (wB == 'b'){
+            if(captured == 'p'){
+                zobKey ^= zArray[1][0][end];
+            } else if(captured == 'r'){
+                zobKey ^= zArray[1][1][end];
+            } else if(captured == 'n'){
+                zobKey ^= zArray[1][2][end];
+            } else if(captured == 'b'){
+                zobKey ^= zArray[1][3][end];
+            } else if(captured == 'q'){
+                zobKey ^= zArray[1][4][end];
+            }
+        }
+    }
+
+    //XOR zobKey with zArray number at piece start end then end location
+    //if piece is white..
+    if(wB == 'w') {
+        if(piece == 'P'){
+            zobKey ^= zArray[0][0][start];
+            zobKey ^= zArray[0][0][end];
+        } else if(piece == 'R'){
+            zobKey ^= zArray[0][1][start];
+            zobKey ^= zArray[0][1][end];
+        } else if(piece == 'N'){
+            zobKey ^= zArray[0][2][start];
+            zobKey ^= zArray[0][2][end];
+        } else if(piece == 'B'){
+            zobKey ^= zArray[0][3][start];
+            zobKey ^= zArray[0][3][end];
+        } else if(piece == 'Q'){
+            zobKey ^= zArray[0][4][start];
+            zobKey ^= zArray[0][4][end];
+        } else if(piece == 'K'){
+            zobKey ^= zArray[0][5][start];
+            zobKey ^= zArray[0][5][end];
+        }
+    //black
+    } else if (wB == 'b'){
+
+        if(piece == 'p'){
+            zobKey ^= zArray[1][0][start];
+            zobKey ^= zArray[1][0][end];
+        } else if(piece == 'r'){
+            zobKey ^= zArray[1][1][start];
+            zobKey ^= zArray[1][1][end];
+        } else if(piece == 'n'){
+            zobKey ^= zArray[1][2][start];
+            zobKey ^= zArray[1][2][end];
+        } else if(piece == 'b'){
+            zobKey ^= zArray[1][3][start];
+            zobKey ^= zArray[1][3][end];
+        } else if(piece == 'q'){
+            zobKey ^= zArray[1][4][start];
+            zobKey ^= zArray[1][4][end];
+        } else if(piece == 'k'){
+            zobKey ^= zArray[1][5][start];
+            zobKey ^= zArray[1][5][end];
+        }
+
+    }
+    //zobKey ^= zBlackMove;
+}
+
+void ZobristH::UpdateColor()
+{
+    zobKey ^= zBlackMove;
 }
 
 U64 ZobristH::getZobristHash(bool isWhiteTurn)
@@ -129,8 +222,12 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
         returnZKey ^= zBlackMove;
     }
 
+    zobKey = returnZKey;
+
     return returnZKey;
 }
+
+
 
 void ZobristH::testDistibution()
 {

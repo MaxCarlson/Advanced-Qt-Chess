@@ -31,7 +31,8 @@ SOURCES += \
     bitboards.cpp \
     evaluate.cpp \
     evaluatebb.cpp \
-    zobristh.cpp
+    zobristh.cpp \
+    hashentry.cpp
 
 
 HEADERS += \
@@ -42,7 +43,8 @@ HEADERS += \
     bitboards.h \
     evaluate.h \
     evaluatebb.h \
-    zobristh.h
+    zobristh.h \
+    hashentry.h
 
 
 FORMS +=

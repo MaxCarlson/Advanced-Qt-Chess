@@ -163,6 +163,7 @@ int main(int argc, char *argv[])
 
     newBBBoard->constructBoards();
     ZKey->zobristFill();
+    ZKey->getZobristHash(true);
 
     //buttons and other stylings
     buttons(myWidget);

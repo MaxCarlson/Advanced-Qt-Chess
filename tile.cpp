@@ -21,7 +21,7 @@ void Tile::mousePressEvent(QMouseEvent * event){
     //qDebug() << "My Tile knows that you clicked on it!";
     moveChecking(this, ++count);
 
-    std::cout << ZKey->getZobristHash(true) << std::endl;
+    //std::cout << ZKey->getZobristHash(true) << std::endl;
 
     //debugging stuff
     for(int i = 0; i < 8; i++){
