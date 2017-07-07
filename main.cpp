@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <tile.h>
 #include <externs.h>
+#include <hashentry.h>
 #include <iostream>
 
 //create an object array to to represent chess board tiles
@@ -26,10 +27,11 @@ int aiOn = 1;
 
 //zorbist key object
 //zorbirst key gen for transposition tables
-
 ZobristH *ZKey;
-
+//bit boards object
 BitBoards *newBBBoard;
+//transposition table array
+HashEntry transpositionT[(2^20)+7];
 
 
 //color piece arrays

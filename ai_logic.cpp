@@ -93,7 +93,8 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     possible_moves.clear();
     positionCount = 0;
 
-    std::cout << zobKey << std::endl;
+    //add best move to transpositon table
+    addMoveTT(bestMoveFound, depth, bestMoveValue);
 
     //make BB move final
     newBBBoard->makeMove(bestMoveFound);
@@ -131,7 +132,6 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     }
     */
 
-    std::cout << zobKey << std::endl;
 
     newBBBoard->drawBBA();
     std::cout << std::endl;
@@ -302,6 +302,30 @@ long Ai_Logic::nullMovePruning(int depth, long alpha, long beta, bool isMaximisi
 {
     long move = miniMax(depth-2, alpha, beta, ! isMaximisingPlayer, 0);
     return move;
+}
+
+bool Ai_Logic::checkTTable(int depth, int eval)
+{
+    //get hash of current zobrist key
+    int hash =(int)ZKey % (2^20+7);
+
+
+
+}
+
+void Ai_Logic::addMoveTT(std::string bestmove, int depth, int eval)
+{
+    //get hash of current zobrist key
+    int hash =(int)zobKey % (2^20+7);
+    //if current depth is greather than depth of TT enrty, replace it
+    if(transpositionT[hash].depth < depth){
+        //add position to the table
+        transpositionT[hash].zobrist = zobKey;
+        transpositionT[hash].depth = depth;
+        transpositionT[hash].eval = eval;
+        transpositionT[hash].move = bestmove;
+    }
+
 }
 /*
 std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer)

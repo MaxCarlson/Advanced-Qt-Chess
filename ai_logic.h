@@ -29,6 +29,11 @@ private:
     std::stack<std::string> killerHArr[7];    
     //Null move pruning
     long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
+    //Check transposition table for a move and decide whether or not to use value
+    bool checkTTable(int depth, int eval);
+
+    //add best move to TT
+    void addMoveTT(std::string bestmove, int depth, int eval);
 
 
     //counts number of piece postitions tried
