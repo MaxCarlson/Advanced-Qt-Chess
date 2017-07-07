@@ -5,6 +5,7 @@
 #include <time.h>
 #include <iostream>
 #include "bitboards.h"
+#include "tile.h"
 
 
 
@@ -20,19 +21,21 @@ std::string board2[8][8];
 //Evaluate *eval = new Evaluate;
 evaluateBB *eval = new evaluateBB;
 
-BitBoards *newBBBoard = new BitBoards;
 
-//zorbirst key gen for transposition tables
-ZobristH *newKey = new ZobristH;
+
+
+
 
 Ai_Logic::Ai_Logic()
 {
-    //newKey->random64();
-    newKey->testDistibution();
+    //newZKey->random64();
+    //newZKey->testDistibution();
+
 }
 
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 {
+
     //generate all possible moves for one turn
     newBBBoard->constructBoards();
 
@@ -124,6 +127,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     }
     */
 
+    std::cout << ZKey->getZobristHash(false);
     newBBBoard->drawBBA();
     std::cout << std::endl;
 

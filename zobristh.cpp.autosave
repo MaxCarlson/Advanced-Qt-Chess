@@ -17,6 +17,8 @@ U64 zArray[2][6][64];
 //U64 zCastle[4];
 U64 zBlackMove;
 
+U64 zobKey;
+
 ZobristH::ZobristH()
 {
 
@@ -56,6 +58,63 @@ void ZobristH::zobristFill()
     */
     //random is it blacks turn or not
     zBlackMove = random64();
+}
+
+void ZobristH::updateKey(int start, int end, char captured)
+{
+    U64 s = 1LL << start;
+    U64 e = 1LL << end;
+    //if piece is white..
+    if(BBWhitePieces & s) {
+        if(BBWhitePawns & s){
+            zobKey ^= zArray[0][0][start];
+            zobKey ^= zArray[0][0][end];
+        } else if(BBWhiteRooks & s){
+            zobKey ^= zArray[0][1][start];
+            zobKey ^= zArray[0][1][end];
+        } else if(BBWhiteKnights & s){
+            zobKey ^= zArray[0][2][start];
+            zobKey ^= zArray[0][2][end];
+        } else if(BBWhiteBishops & s){
+            zobKey ^= zArray[0][3][start];
+            zobKey ^= zArray[0][3][end];
+        } else if(BBWhiteQueens & s){
+            zobKey ^= zArray[0][4][start];
+            zobKey ^= zArray[0][4][end];
+        } else if(BBWhiteKing & s){
+            zobKey ^= zArray[0][5][start];
+            zobKey ^= zArray[0][5][end];
+        }     
+    } else if (BBBlackPieces & s){
+        zobKey ^= zBlackMove;
+        if(BBBlackPawns & s){
+            zobKey ^= zArray[1][0][start];
+            zobKey ^= zArray[1][0][end];
+        } else if(BBBlackRooks & s){
+            zobKey ^= zArray[1][1][start];
+            zobKey ^= zArray[1][1][end];
+        } else if(BBBlackKnights & s){
+            zobKey ^= zArray[1][2][start];
+            zobKey ^= zArray[1][2][end];
+        } else if(BBBlackBishops & s){
+            zobKey ^= zArray[1][3][start];
+            zobKey ^= zArray[1][3][end];
+        } else if(BBBlackQueens & s){
+            zobKey ^= zArray[1][4][start];
+            zobKey ^= zArray[1][4][end];
+        } else if(BBBlackKing & s){
+            zobKey ^= zArray[1][5][start];
+            zobKey ^= zArray[1][5][end];
+        } 
+        
+    }  
+    
+    if(captured != '0' || captured != 0){
+        
+    }
+    
+    
+    zobKey ^= zBlackMove;
 }
 
 U64 ZobristH::getZobristHash(bool isWhiteTurn)
@@ -129,8 +188,12 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
         returnZKey ^= zBlackMove;
     }
 
+    zobKey = returnZKey;
+    
     return returnZKey;
 }
+
+
 
 void ZobristH::testDistibution()
 {

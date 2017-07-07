@@ -1,8 +1,12 @@
 #ifndef EXTERNS_H
 #define EXTERNS_H
+typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
+#define C64(constantU64) constantU64##ULL
 
 #include <vector>
 #include <string>
+#include "zobristh.h"
+#include "bitboards.h"
 
 //chess board represented
 extern std::string boardArr[8][8];
@@ -39,9 +43,6 @@ extern std::string board2[8][8];
 
 extern int turnsTemp;
 
-typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
-#define C64(constantU64) constantU64##ULL
-
 //bitboards
 //board showing where all pieces are + aren't
 extern U64 FullTiles;
@@ -66,7 +67,9 @@ extern U64 BBBlackBishops;
 extern U64 BBBlackQueens;
 extern U64 BBBlackKing;
 
+//external zorbist object
+extern ZobristH *ZKey;
 
-
+extern BitBoards *newBBBoard;
 
 #endif // EXTERNS_H

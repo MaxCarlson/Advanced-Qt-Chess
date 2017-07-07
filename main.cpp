@@ -24,6 +24,13 @@ int tempx, tempy, tempx2, tempy2;
 //whether ai is on  //FUTURE and which side it's playing
 int aiOn = 1;
 
+//zorbist key object
+//zorbirst key gen for transposition tables
+
+ZobristH *ZKey;
+
+BitBoards *newBBBoard;
+
 
 //color piece arrays
 
@@ -146,21 +153,20 @@ void chessBoard(QWidget *baseWidget, Tile *rect[8][8]){
     }
 }
 
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-
     //create widget + set  intial size
     QWidget *myWidget = new QWidget();
     myWidget->setGeometry(0,0,1370,700);
-    //myWidget->setSizeIncrement(500, 500);
+
+    newBBBoard->constructBoards();
+    ZKey->zobristFill();
 
     //buttons and other stylings
     buttons(myWidget);
     accessories(myWidget);
-
-
 
     //create board
     chessBoard(myWidget, rect);

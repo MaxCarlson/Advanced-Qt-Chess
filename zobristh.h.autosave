@@ -20,6 +20,10 @@ public:
     //get zorbist key by XOR ing all pieces random numbers with Zkey
     U64 getZobristHash(bool isWhiteTurn);
 
+    void updateKey(int start, int end, char captured);
+    
+    //print out how many times a number in the array is created
+    //use excel to graph results
     void testDistibution();
 
 };

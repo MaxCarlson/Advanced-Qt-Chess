@@ -13,14 +13,15 @@ extern QWidget *myWidget;
 
 Tile *click1;
 
-
 // NOTE!!!!!
 //Castling doesn't move the rook on the GUI only on the array of the board
 
 void Tile::mousePressEvent(QMouseEvent * event){
+
     //qDebug() << "My Tile knows that you clicked on it!";
     moveChecking(this, ++count);
 
+    std::cout << ZKey->getZobristHash(true) << std::endl;
 
     //debugging stuff
     for(int i = 0; i < 8; i++){
