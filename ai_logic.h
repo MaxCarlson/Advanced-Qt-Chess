@@ -33,7 +33,11 @@ private:
     bool checkTTable(int depth, int eval);
 
     //add best move to TT
-    void addMoveTT(std::string bestmove, int depth, int eval);
+    void addMoveTT(std::string bestmove, int depth, long eval);
+    //look up if board state has been evaluated and stored to table previously, if so add best move first ~~ possibly only use best move for search
+    std::string lookUpTTable(int depth);
+    std::string debug(std::string ttMove, std::string moves);
+
 
 
     //counts number of piece postitions tried

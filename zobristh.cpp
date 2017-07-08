@@ -16,8 +16,7 @@ U64 zArray[2][6][64];
 //U64 zEnPassasnt[8]; ~~restore once implemented
 //U64 zCastle[4];
 U64 zBlackMove;
-
-
+//actual key reprenting game state
 U64 zobKey;
 
 ZobristH::ZobristH()
@@ -143,7 +142,6 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
         }
 
     }
-    //zobKey ^= zBlackMove;
 }
 
 void ZobristH::UpdateColor()
@@ -215,12 +213,14 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
             returnZKey ^= zArray[1][5][square];
         }
     }
-    //EnPassant and castling stuff
+    //EnPassant and castling stuff add later
 
+    /*
     //if it isn't whites turn, XOR zobrist key with black move U64
     if(!isWhiteTurn){
         returnZKey ^= zBlackMove;
     }
+    */
 
     zobKey = returnZKey;
 

@@ -1144,9 +1144,8 @@ std::string BitBoards::makeMove(std::string move)
     //EmptyTiles &= ~FullTiles
     //drawBBA();
 
-    //Update zobrist hash and color
+    //Update zobrist hash
     ZKey->UpdateKey(xyI, xyE, savedMove);
-    ZKey->UpdateColor();
 
     return savedMove;
 
@@ -1364,9 +1363,8 @@ void BitBoards::unmakeMove(std::string moveKey)
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
 
-    //update zobrist hash and color
+    //update zobrist hash
     ZKey->UpdateKey(xyI, xyE, moveKey);
-    ZKey->UpdateColor();
 
 }
 

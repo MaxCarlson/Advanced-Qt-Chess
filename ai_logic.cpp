@@ -17,8 +17,7 @@ std::string board1[8][8];
 //holds state of initial board + 1 move
 std::string board2[8][8];
 
-
-//Evaluate *eval = new Evaluate;
+//evaluation object
 evaluateBB *eval = new evaluateBB;
 
 
@@ -28,8 +27,6 @@ evaluateBB *eval = new evaluateBB;
 
 Ai_Logic::Ai_Logic()
 {
-    //newZKey->random64();
-    //newZKey->testDistibution();
 
 }
 
@@ -45,7 +42,8 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     clock_t aiMoveTimerStart = clock();
 
     //generate first possible initial moves
-    std::string moves = newBBBoard->genWhosMove(false); //false for is not white, change later to be more versitile
+    std::string tmoves = newBBBoard->genWhosMove(false); //false for is not white, change later to be more versitile
+    std::string moves;
 
     //sorting not neccasary on first step?????
     int numberOfMoves = moves.length()/4;
@@ -56,8 +54,13 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     //best move to return after all calcs
     std::string bestMoveFound;
 
-    //if small number of root moves increase search depth
-    //depth = modifyDepth(depth, numberOfMoves);
+    //update zobrist hash to correct color
+    ZKey->UpdateColor();
+    //lookup whether board position has been input into TTable if so add it to front of moves
+    //moves = lookUpTTable(depth);
+    //moves += tmoves;
+
+    moves = debug(lookUpTTable(depth), tmoves);
 
     //compare moves
     for(int i = 0; i < moves.length(); i+=4){
@@ -68,7 +71,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
         tempMove += moves[i+2];
         tempMove += moves[i+3];
 
-        //make move on BB ~~!!~~ later get rid of make move on array to increase speed
+        //make move on BB
         std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
         //test it's value and store it and test if white or black,
@@ -76,6 +79,9 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 
         //undo move on BB
         newBBBoard->unmakeMove(tempBBMove);
+
+        //add move to transpositon table
+        addMoveTT(tempBBMove, depth, tempValue);
 
         //if move is better then the best one store it
         if(tempValue >= bestMoveValue){
@@ -85,16 +91,12 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
         }
 
     }
-
-    clock_t aiEndMoveTImer = clock();
-
+    //postion count and time it took to find move
+    clock_t aiEndMoveTImer = clock();    
     std::cout << positionCount << std::endl;
     std::cout << (double) (aiEndMoveTImer - aiMoveTimerStart) / CLOCKS_PER_SEC << " seconds" << std::endl;
     possible_moves.clear();
     positionCount = 0;
-
-    //add best move to transpositon table
-    addMoveTT(bestMoveFound, depth, bestMoveValue);
 
     //make BB move final
     newBBBoard->makeMove(bestMoveFound);
@@ -135,6 +137,8 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
 
     newBBBoard->drawBBA();
     std::cout << std::endl;
+    //update zobrist hash to correct color
+    ZKey->UpdateColor();
 
     return bestMoveFound;
 
@@ -148,35 +152,28 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
         return - eval->evalBoard();
     }
 
-    std::string moves;
+    std::string moves, tmoves;
 
     if(isMaximisingPlayer == true){
        moves = newBBBoard->genWhosMove(false); //still just using bool values for what should be white or black dependant
     } else{
        moves = newBBBoard->genWhosMove(true);
     }
-
-    //sort the best six moves into the first six slots of possible moves, improvmes speed by about 30% avg
-    //moves = sortMoves(moves, isMaximisingPlayer);
-
-    //numberOfMoves = moves.length()/4;
-    //NullMove ~~ possibly not correctly implemented
-    /*
-    long nullM = nullMovePruning(depth, alpha, beta, !isMaximisingPlayer);
-    if(nullM > beta){
-        if(isMaximisingPlayer == true){
-            return -999999;
-        } else {
-            return 999999;
-        }
-    }
-    */
+    //possible sorting later??
 
     if(isMaximisingPlayer == true){
         long bestTempMove = -999999;
         //push  killer (better) moves to (eventually just near) front of move list
         //in order to get a high cutoff as fast as possible
-        moves = killerHe(depth, moves, false);
+        tmoves = killerHe(depth, moves, false);
+
+        //update zobrist hash to correct color
+        ZKey->UpdateColor();
+        //lookup whether board position has been input into TTable if so add it to front of moves
+        //moves = lookUpTTable(depth);
+        //moves += tmoves;
+        //debug
+        moves = debug(lookUpTTable(depth), tmoves);
 
         for(int i = 0; i < moves.length(); i+=4){
             //change board accoriding to i possible move
@@ -187,15 +184,6 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             tempMove += moves[i+2];
             tempMove += moves[i+3];
 
-            if((BBBlackBishops & ~BBBlackPieces)){
-                std::cout << "black pieces shifted off" << std::endl;
-                newBBBoard->drawBB(FullTiles);
-                newBBBoard->drawBB(EmptyTiles);
-                newBBBoard->drawBB(BBBlackBishops);
-                newBBBoard->drawBB(BBBlackPieces);
-                newBBBoard->drawBBA();
-            }
-
             //make move on BB's store data to string so move can be undone
             std::string tempBBMove = newBBBoard->makeMove(tempMove);
 
@@ -205,22 +193,36 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             //undo move on BB's
             newBBBoard->unmakeMove(tempBBMove);
 
+            //add move to transpositon table
+            addMoveTT(tempBBMove, depth, bestTempMove);
+
             //alpha beta pruning
             alpha = std::max(alpha, bestTempMove);
 
              //if move causes a beta cutoff (is bad for us) stop searching current branch
             if(beta <= alpha){
+                //update zobrist hash to correct color
+                ZKey->UpdateColor();
                 //push killer move to top of stack for given depth
                 killerHArr[depth].push(tempMove);
                 return bestTempMove;
             }
         }
+        //update zobrist hash to correct color
+        ZKey->UpdateColor();
         return bestTempMove;
 
     } else {
         long bestTempMove = 999999;
 
-        moves = killerHe(depth, moves, true);
+        tmoves = killerHe(depth, moves, false);
+        //update zobrist hash to correct color
+        ZKey->UpdateColor();
+        //lookup whether board position has been input into TTable if so add it to front of moves
+        //moves = lookUpTTable(depth);
+        //moves += tmoves;
+        //debug
+        moves = debug(lookUpTTable(depth), tmoves);
 
         for(int i = 0; i <  moves.length(); i+=4){
             std::string tempMove;
@@ -229,15 +231,6 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             tempMove += moves[i+1];
             tempMove += moves[i+2];
             tempMove += moves[i+3];
-
-            if((BBBlackBishops & ~BBBlackPieces)){
-                std::cout << "black pieces shifted off" << std::endl;
-                newBBBoard->drawBB(FullTiles);
-                newBBBoard->drawBB(EmptyTiles);
-                newBBBoard->drawBB(BBBlackBishops);
-                newBBBoard->drawBB(BBBlackPieces);
-                newBBBoard->drawBBA();
-            }
 
             //make move on BB
             std::string tempBBMove = newBBBoard->makeMove(tempMove);
@@ -248,14 +241,21 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
             //undo move on BB
             newBBBoard->unmakeMove(tempBBMove);
 
+            //add move to transpositon table
+            addMoveTT(tempBBMove, depth, bestTempMove);
+
             //alpha beta pruning
             beta = std::min(beta, bestTempMove);
 
             if(beta <= alpha){
+                //update zobrist hash to correct color
+                ZKey->UpdateColor();
                 killerHArr[depth].push(tempMove);
                 return bestTempMove;
             }
         }
+        //update zobrist hash to correct color
+        ZKey->UpdateColor();
         return bestTempMove;
 
     }
@@ -304,29 +304,66 @@ long Ai_Logic::nullMovePruning(int depth, long alpha, long beta, bool isMaximisi
     return move;
 }
 
-bool Ai_Logic::checkTTable(int depth, int eval)
+void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval)
 {
     //get hash of current zobrist key
-    int hash =(int)ZKey % (2^20+7);
+    int hash = (int)(zobKey % 1048583);
+    //testing
+    if(transpositionT[hash].depth <= depth){
 
-
-
-}
-
-void Ai_Logic::addMoveTT(std::string bestmove, int depth, int eval)
-{
-    //get hash of current zobrist key
-    int hash =(int)zobKey % (2^20+7);
-    //if current depth is greather than depth of TT enrty, replace it
-    if(transpositionT[hash].depth < depth){
         //add position to the table
         transpositionT[hash].zobrist = zobKey;
         transpositionT[hash].depth = depth;
-        transpositionT[hash].eval = eval;
+        transpositionT[hash].eval = (int)eval;
         transpositionT[hash].move = bestmove;
     }
 
 }
+
+std::string Ai_Logic::lookUpTTable(int depth)
+{
+    //NEED TO ALTER LATER TO SKIP EVALUATING BEST MOVE AND USE ITS EVAL
+    std::string tmove, move;
+    //get hash of current zobrist key
+    int hash = (int)(zobKey % 1048583);
+    if(transpositionT[hash].depth >= depth){
+        //if zobkey at both locations match (ie is same board position) return best move
+        if(transpositionT[hash].zobrist == zobKey){
+            tmove = transpositionT[hash].move;
+            move += tmove[0];
+            move += tmove[1];
+            move += tmove[2];
+            move += tmove[3];
+            return move;
+        }
+    }
+    return "";
+}
+
+std::string Ai_Logic::debug(std::string ttMove, std::string moves)
+{
+
+    std::string tempMove = ttMove, tempMove1;
+    for(int j = 0; j < moves.size(); j+=4){
+        tempMove1 = moves[j];
+        tempMove1 += moves[j+1];
+        tempMove1 += moves[j+2];
+        tempMove1 += moves[j+3];
+        if(tempMove == tempMove1){
+            tempMove += moves;
+            return tempMove;
+        }
+    }
+
+
+    if(ttMove.length() > 0){
+        std::cout << zobKey << std::endl;
+        newBBBoard->drawBBA();
+    }
+
+    return moves;
+}
+
 /*
 std::vector<std::string> Ai_Logic::sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer)
 {

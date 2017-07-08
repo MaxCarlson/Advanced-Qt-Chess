@@ -77,6 +77,6 @@ extern U64 zobKey;
 //bitboards
 extern BitBoards *newBBBoard;
 //array for storing objects containing zorbist key for position as well as depth and eval
-extern HashEntry transpositionT[(2^20)+7];
+extern HashEntry transpositionT[1048583];
 
 #endif // EXTERNS_H
