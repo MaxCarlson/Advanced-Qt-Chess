@@ -26,9 +26,11 @@ ZobristH::ZobristH()
 
 U64 ZobristH::random64()
 {
+    //get random 64 bit integer to seed zorbist arrays
     U64 ranUI = dist(mt);
+
     //std::cout << ranUI << ",   ";
-    //long long int ranUI = rand();
+    //U64 ranUI = rand() * 924032403297933277;
     return ranUI;
 }
 
@@ -68,32 +70,31 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     char wB = moveKey[6];
 
     //if a piece was captured XOR that location with randomkey at array location end
-    if(captured != '0' || captured != 0){
-        if(wB == 'w') {
-            if(captured == 'P'){
-                zobKey ^= zArray[0][0][end];
-            } else if(captured == 'R'){
-                zobKey ^= zArray[0][1][end];
-            } else if(captured == 'N'){
-                zobKey ^= zArray[0][2][end];
-            } else if(captured == 'B'){
-                zobKey ^= zArray[0][3][end];
-            } else if(captured == 'Q'){
-                zobKey ^= zArray[0][4][end];
-            }
-        } else if (wB == 'b'){
-            if(captured == 'p'){
-                zobKey ^= zArray[1][0][end];
-            } else if(captured == 'r'){
-                zobKey ^= zArray[1][1][end];
-            } else if(captured == 'n'){
-                zobKey ^= zArray[1][2][end];
-            } else if(captured == 'b'){
-                zobKey ^= zArray[1][3][end];
-            } else if(captured == 'q'){
-                zobKey ^= zArray[1][4][end];
-            }
+    if(captured == 'P' || captured == 'R' || captured == 'N' || captured == 'B' || captured == 'Q'){
+        if(captured == 'P'){
+            zobKey ^= zArray[0][0][end];
+        } else if(captured == 'R'){
+            zobKey ^= zArray[0][1][end];
+        } else if(captured == 'N'){
+            zobKey ^= zArray[0][2][end];
+        } else if(captured == 'B'){
+            zobKey ^= zArray[0][3][end];
+        } else if(captured == 'Q'){
+            zobKey ^= zArray[0][4][end];
         }
+    } else if (captured == 'p' || captured == 'r' || captured == 'n' || captured == 'b' || captured == 'q'){
+        if(captured == 'p'){
+            zobKey ^= zArray[1][0][end];
+        } else if(captured == 'r'){
+            zobKey ^= zArray[1][1][end];
+        } else if(captured == 'n'){
+            zobKey ^= zArray[1][2][end];
+        } else if(captured == 'b'){
+            zobKey ^= zArray[1][3][end];
+        } else if(captured == 'q'){
+            zobKey ^= zArray[1][4][end];
+        }
+
     }
 
     //XOR zobKey with zArray number at piece start end then end location
@@ -153,10 +154,12 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
-        //if tile is empty skip all the rest of the if statments
+        //if tile is empty skip to next i
+        /*
         if(((EmptyTiles >> square) & 1) == 1){
             continue;
         }
+        */
         //white and black pawns
         //if there is a white pawn on i square
         if(((BBWhitePawns >> square) & 1) == 1)
@@ -226,8 +229,6 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
 
     return returnZKey;
 }
-
-
 
 void ZobristH::testDistibution()
 {

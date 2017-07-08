@@ -95,6 +95,9 @@ bool Tile::moveChecking(Tile *temp, int countC){
                 turns++;
                 count = 0;
 
+                //once move is made update the zorbist hash key
+                ZKey->getZobristHash(true);
+
                 if(aiOn == 1){
                     aiTurn();
                 }
