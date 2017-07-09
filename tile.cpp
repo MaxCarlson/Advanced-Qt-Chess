@@ -83,7 +83,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
                 temp->pieceColor=click1->pieceColor;
                 temp->pieceName=click1->pieceName;
 
-
+                //display piece in correct spot on gui
                 click1->display(click1->pieceName);
                 temp->display(click1->pieceName);
 

@@ -55,6 +55,8 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer)
     //best move to return after all calcs
     std::string bestMoveFound;
 
+    //update zobrsit hash to correct color
+    ZKey->UpdateColor();
     //lookup whether board position has been input into TTable if so add it to front of moves
     //moves = lookUpTTable(depth);
     //moves += tmoves;
@@ -208,8 +210,6 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
                 return bestTempMove;
             }
         }
-        //add best move to transpositon table
-        addMoveTT(tempBBMove, depth, bestTempMove);
         //update zobrist hash to correct color
         ZKey->UpdateColor();
 
@@ -258,8 +258,6 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
                 return bestTempMove;
             }
         }
-        //add best move to transpositon table
-        addMoveTT(tempBBMove, depth, bestTempMove);
         //update zobrist hash to correct color
         ZKey->UpdateColor();
 
