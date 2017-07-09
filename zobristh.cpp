@@ -250,6 +250,83 @@ void ZobristH::testDistibution()
 
 }
 
+U64 ZobristH::debugKey(bool isWhite)
+{
+    U64 returnZKey = 0LL;
+    for (int square = 0; square < 64; square++){
+        //if tile is empty skip to next i
+        /*
+        if(((EmptyTiles >> square) & 1) == 1){
+            continue;
+        }
+        */
+        //white and black pawns
+        //if there is a white pawn on i square
+        if(((BBWhitePawns >> square) & 1) == 1)
+        {
+            //XOR the zkey with the U64 in the white pawns square
+            //that was generated from rand64
+            returnZKey ^= zArray[0][0][square];
+        }
+        else if(((BBBlackPawns >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][0][square];
+        }
+        //white pieces
+        else if(((BBWhiteRooks >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[0][1][square];
+        }
+        else if(((BBWhiteKnights >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[0][2][square];
+        }
+        else if(((BBWhiteBishops >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[0][3][square];
+        }
+        else if(((BBWhiteQueens >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[0][4][square];
+        }
+        else if(((BBWhiteKing >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[0][5][square];
+        }
+
+        //black pieces
+        else if(((BBBlackRooks >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][1][square];
+        }
+        else if(((BBBlackKnights >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][2][square];
+        }
+        else if(((BBBlackBishops >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][3][square];
+        }
+        else if(((BBBlackQueens >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][4][square];
+        }
+        else if(((BBBlackKing >> square) & 1) == 1)
+        {
+            returnZKey ^= zArray[1][5][square];
+        }
+    }
+    //EnPassant and castling stuff add later
+
+
+    //if it isn't whites turn, XOR zobrist key with black move U64
+    if(isWhite == false){
+        returnZKey ^= zBlackMove;
+    }
+
+    return returnZKey;
+}
+
 
 
 

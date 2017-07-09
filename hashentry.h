@@ -17,8 +17,13 @@ public:
     int eval;
     //move string
     std::string move;
+    //flag denoting what the hash represents, i.e. alpha 1, beta 2, exact evaluation (between alpha beta) 3
+    int flag;
     //how old move is maybe make a bool so move can be replaced
-    int ancient;
+    int ancient;    
+
+    //color ~~ to be removed later when search is switched to PV or negamax, false for white
+    //bool color;
 
 private:
 

@@ -28,6 +28,8 @@ public:
     //use excel to graph results
     void testDistibution();
 
+    U64 debugKey(bool isWhite);
+
 };
 
 #endif // ZOBRISTH_H
