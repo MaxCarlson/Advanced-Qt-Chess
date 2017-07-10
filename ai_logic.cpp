@@ -99,6 +99,10 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
 
     std::string bestMoveFound, moves, tempBBMove;
 
+    if(PVMoves[currentDepth].length() == 4){
+        moves = PVMoves[currentDepth];
+    }
+
     //create unqiue hash from zobkey
     int hash = (int)(zobKey % 15485867);
     HashEntry entry = transpositionT[hash];
@@ -153,7 +157,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
     //add best move to transpositon table
     addMoveTT(bestMoveFound, depth, tempValue, 3);
 
-    PVMoves[depth] = bestMoveFound;
+    PVMoves[currentDepth] = bestMoveFound;
 
     return bestMoveFound;
 
@@ -198,14 +202,21 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
         return score;
     }
 
-    std::string moves, tempBBMove;
+    std::string moves, tempBBMove, pv;
     int bestTempMove;
 
+    //generate normal moves
     moves = newBBBoard->genWhosMove(isMaximisingPlayer);
+    /*
+    //find out if there is a pv move for current depth
+    if(PVMoves[currentDepth].length() == 4){
+        pv = PVMoves[currentDepth];
+    }
+    */
 
-    //push  killer (better) moves to (eventually just near) front of move list
+    //push pv to front and after pv killer (better) moves to  move list
     //in order to get a high cutoff as fast as possible
-    moves = killerHe(currentDepth, moves, isMaximisingPlayer);
+    moves = killerHe(currentDepth, moves, isMaximisingPlayer, pv);
 
     for(int i = 0; i < moves.length(); i+=4){
         positionCount ++;
@@ -231,7 +242,7 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
             addMoveTT(tempBBMove, depth, bestTempMove, 2);
 
             //push killer move to top of stack for given depth
-            killerHArr[depth].push(tempMove);
+            killerHArr[currentDepth].push(tempMove);
             return beta;
         }
 
@@ -240,21 +251,25 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
             addMoveTT(tempBBMove, depth, bestTempMove, 1);
             //new best move
             alpha = bestTempMove;
+            //store principal variation
+            PVMoves[currentDepth] = tempMove;
         }
     }
 
     return alpha;
 }
 
-std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite)
+std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite, std::string PV)
 {
     std::string cutoffs, tempMove, tempMove1;
     int size = killerHArr[depth].size();
 
     //if no killer moves, return the same list taken
     if(size == 0){
-        return moves;
+        return PV+moves;
     }
+
+    cutoffs = PV;
 
     //loop through killer moves at given depth and test if they're legal
     //(done by testing if they're in move list that's already been legally generated)
@@ -527,6 +542,7 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
     return beta-1; //same as alpha
 }
 
+/*
 long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit)
 {
     //iterative deeping timer stuff
@@ -673,3 +689,4 @@ long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer
 
 
 
+*/

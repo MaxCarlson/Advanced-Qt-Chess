@@ -32,7 +32,7 @@ private:
     //bulk of minimax
     long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit);
     //killer heuristics function
-    std::string killerHe(int depth, std::string moves, bool isWhite);
+    std::string killerHe(int depth, std::string moves, bool isWhite, std::string PV);
     std::stack<std::string> killerHArr[7];    
     //Null move pruning
     long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
