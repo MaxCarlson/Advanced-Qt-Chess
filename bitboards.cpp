@@ -1146,6 +1146,8 @@ std::string BitBoards::makeMove(std::string move)
 
     //Update zobrist hash
     ZKey->UpdateKey(xyI, xyE, savedMove);
+    //update zobrist hash with color change
+    ZKey->UpdateColor();
 
     return savedMove;
 
@@ -1365,6 +1367,8 @@ void BitBoards::unmakeMove(std::string moveKey)
 
     //update zobrist hash
     ZKey->UpdateKey(xyI, xyE, moveKey);
+    //update zobrist hash with color change
+    ZKey->UpdateColor();
 
 }
 

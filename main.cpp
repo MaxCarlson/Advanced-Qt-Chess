@@ -31,7 +31,7 @@ ZobristH *ZKey;
 //bit boards object
 BitBoards *newBBBoard;
 //transposition table array
-HashEntry transpositionT[1048583];
+HashEntry transpositionT[15485867];
 
 
 //color piece arrays

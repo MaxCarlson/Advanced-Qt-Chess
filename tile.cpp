@@ -22,7 +22,7 @@ void Tile::mousePressEvent(QMouseEvent * event){
     moveChecking(this, ++count);
 
     //std::cout << ZKey->getZobristHash(true) << std::endl;
-
+    /*
     //debugging stuff
     for(int i = 0; i < 8; i++){
         for(int j =0; j < 8; j++){
@@ -31,8 +31,7 @@ void Tile::mousePressEvent(QMouseEvent * event){
         std::cout << std::endl;
     }
     std::cout << std::endl;
-
-
+    */
 }
 
 bool Tile::moveChecking(Tile *temp, int countC){
@@ -129,7 +128,11 @@ bool Tile::moveChecking(Tile *temp, int countC){
 void Tile::aiTurn(){
 
     Ai_Logic *newMove = new Ai_Logic;
-    std::string bestMove = newMove->miniMaxRoot(5, true);
+
+    std::string bestMove;
+
+    //bestMove = newMove->miniMaxRoot(5, true);
+    bestMove = newMove->iterativeDeep(5);
 
     //ready coordinates to give to Pieces
     //std::string bMove = best_moves[tester];

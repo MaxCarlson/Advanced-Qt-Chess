@@ -62,6 +62,11 @@ void ZobristH::zobristFill()
     zBlackMove = random64();
 }
 
+void ZobristH::UpdateColor()
+{
+    zobKey ^= zBlackMove;
+}
+
 void ZobristH::UpdateKey(int start, int end, std::string moveKey)
 {
     //gather piece, capture, and w or b info from movekey
@@ -145,10 +150,6 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     }
 }
 
-void ZobristH::UpdateColor()
-{
-    zobKey ^= zBlackMove;
-}
 
 U64 ZobristH::getZobristHash(bool isWhiteTurn)
 {
