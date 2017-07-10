@@ -164,7 +164,9 @@ int main(int argc, char *argv[])
     myWidget->setGeometry(0,0,1370,700);
 
     newBBBoard->constructBoards();
+    //calculate all zobrist numbers to later use with transpostion table
     ZKey->zobristFill();
+    //set the zobrist key from the random numbers generated
     ZKey->getZobristHash(true);
 
     //buttons and other stylings

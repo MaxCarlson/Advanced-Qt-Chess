@@ -20,11 +20,15 @@ public:
     //iterative deepening
     std::string iterativeDeep(int depth);
 
+private:
+    //array of last iterations PV moves
+    std::string PVMoves [25] = {"0"};
+
+    int alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth);
+
     //root function for recursive move finiding via minimax
     std::string miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit);
 
-
-private:
     //bulk of minimax
     long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit);
     //killer heuristics function

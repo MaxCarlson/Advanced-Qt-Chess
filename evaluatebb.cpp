@@ -231,7 +231,7 @@ int evaluateBB::getPieceValue(int location)
             if((BBBlackQueens | BBWhiteQueens) & full){
                 return -9000 -bKingEndSqT[location];
             }
-         return -9000 -bKingMidSqT[location];
+         return 9000 - bKingMidSqT[location];
         }
     }
     return 0;
