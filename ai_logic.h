@@ -22,9 +22,14 @@ public:
 
 private:
     //array of last iterations PV moves
-    std::string PVMoves [25] = {"0"};
+    std::string PVMoves [10] = {"0"}; //not working except at root
 
-    int alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth);
+    int aspWindowA [10] = {100000}; //currentdepth -1 represents correct value
+    int aspWindowB [10] = {-100000};
+
+    void helper(std::string a);
+
+    int alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth);
 
     //root function for recursive move finiding via minimax
     std::string miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit);

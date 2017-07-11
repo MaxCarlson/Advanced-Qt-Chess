@@ -12,6 +12,9 @@
 //best overall move as calced
 std::string bestMove;
 
+extern std::string tBestMove;
+std::string tBestMove;
+
 //holds board state before any moves or trys
 std::string board1[8][8];
 //holds state of initial board + 1 move
@@ -39,14 +42,15 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limmit in miliseconds
-    int timeLimmit = 11500;
+    int timeLimmit = 115009999, currentDepth = 0;
 
     long endTime = IDTimeS + timeLimmit;
 
     searchCutoff = false;
 
     positionCount = 0;
-    std::string bestMove, tBestMove;
+    //std::string bestMove, tBestMove;
+    std::string bestMove;
 
     std::cout << zobKey << std::endl;
 
@@ -55,19 +59,17 @@ std::string Ai_Logic::iterativeDeep(int depth)
     for(distance; distance <= depth && IDTimeS < endTime; distance++){
         positionCount = 0;
         clock_t currentTime = clock();
+
         if(currentTime >= endTime){
-            //distance -= 1;
             break;
         }
 
-        tBestMove = miniMaxRoot(distance, true, currentTime, endTime - currentTime);
+        //tBestMove = miniMaxRoot(distance, true, currentTime, endTime - currentTime);
+        int val = alphaBeta(distance -1, 100000, -100000, false, currentTime, timeLimmit, currentDepth +1);
 
         //if the search is not cutoff
         if(!searchCutoff){
             bestMove = tBestMove;
-        } else {
-            //distance -= 1;
-            break;
         }
     }
     //std::cout << zobKey << std::endl;
@@ -88,6 +90,11 @@ std::string Ai_Logic::iterativeDeep(int depth)
     PVMoves[depth] = bestMove;
 
     return bestMove;
+}
+
+void Ai_Logic::helper(std::string a)
+{
+
 }
 
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit)
@@ -133,7 +140,6 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
 
         //perform alpha beta search
         tempValue = -alphaBeta(depth -1, -100000, 100000, isMaximisingPlayer, currentTime, timeLimmit, currentDepth +1);
-
         //tempValue = -principleV(depth -1, -100000, 100000, isMaximisingPlayer);
         //tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, currentTime, timeLimmit);
 
@@ -159,11 +165,12 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
 
     PVMoves[currentDepth] = bestMoveFound;
 
+
     return bestMoveFound;
 
 }
 
-int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -172,7 +179,6 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
     //create unqiue hash from zobkey
     int hash = (int)(zobKey % 15485867);
     HashEntry entry = transpositionT[hash];
-
 
     //if the depth of the stored evaluation is greater and the zobrist key matches
     if(entry.depth >= depth && entry.zobrist == zobKey){
@@ -189,6 +195,7 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
 
     }
 
+    //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
     }
@@ -202,19 +209,14 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
         return score;
     }
 
+
     std::string moves, tempBBMove, pv;
     int bestTempMove;
 
     //generate normal moves
     moves = newBBBoard->genWhosMove(isMaximisingPlayer);
-    /*
-    //find out if there is a pv move for current depth
-    if(PVMoves[currentDepth].length() == 4){
-        pv = PVMoves[currentDepth];
-    }
-    */
 
-    //push pv to front and after pv killer (better) moves to  move list
+    //push pv to front and after pv killer (better) moves to  move list ~~still need to add PV
     //in order to get a high cutoff as fast as possible
     moves = killerHe(currentDepth, moves, isMaximisingPlayer, pv);
 
@@ -236,6 +238,7 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
 
         //undo move on BB's
         newBBBoard->unmakeMove(tempBBMove);
+
         //if move causes a beta cutoff (is bad for us) stop searching current branch
         if(bestTempMove >= beta){
             //add beta eval to transpositon table
@@ -243,6 +246,7 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
 
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
+
             return beta;
         }
 
@@ -253,6 +257,8 @@ int Ai_Logic::alphaBeta(int depth, long alpha, long beta, bool isMaximisingPlaye
             alpha = bestTempMove;
             //store principal variation
             PVMoves[currentDepth] = tempMove;
+
+            tBestMove = tempMove;
         }
     }
 
@@ -266,10 +272,8 @@ std::string Ai_Logic::killerHe(int depth, std::string moves, bool isWhite, std::
 
     //if no killer moves, return the same list taken
     if(size == 0){
-        return PV+moves;
+        return moves;
     }
-
-    cutoffs = PV;
 
     //loop through killer moves at given depth and test if they're legal
     //(done by testing if they're in move list that's already been legally generated)
@@ -430,7 +434,6 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite)
 
     moves = newBBBoard->genWhosMove(isWhite);
 
-
     //Do full depth search of first move
     std::string tempMove;
     //convert move into a single string
@@ -452,12 +455,13 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite)
 
     //NEED a mate check here
 
+    //if move is too good to be true
+    if(bestScore >= beta){
+        return bestScore;
+    }
+
     //if the moves is an improvement
-    if(bestScore > alpha){
-        //if move is too good to be true
-        if(bestScore >= beta){
-            return bestScore;
-        }
+    if(bestScore > alpha){   
         //if it's better but not too good to be true
         alpha = bestScore;
     }
@@ -512,7 +516,7 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
     //alpha = beta-1;
 
     if(depth == 0){
-        score = -eval->evalBoard();
+        score = eval->evalBoard();
         return score;
     }
 
