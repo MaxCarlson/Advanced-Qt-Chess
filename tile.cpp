@@ -131,8 +131,7 @@ void Tile::aiTurn(){
 
     std::string bestMove;
 
-    //bestMove = newMove->miniMaxRoot(5, true);
-    bestMove = newMove->iterativeDeep(5);
+    bestMove = newMove->iterativeDeep(6);
 
     //ready coordinates to give to Pieces
     //std::string bMove = best_moves[tester];

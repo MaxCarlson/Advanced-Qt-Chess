@@ -12,8 +12,8 @@
 //best overall move as calced
 std::string bestMove;
 
-extern std::string tBestMove;
-std::string tBestMove;
+//variable for returning best move at depth of one
+static std::string tBestMove;
 
 //holds board state before any moves or trys
 std::string board1[8][8];
@@ -54,9 +54,11 @@ std::string Ai_Logic::iterativeDeep(int depth)
 
     std::cout << zobKey << std::endl;
 
-    int distance = 1;
+    int alpha = -1000000;
+    int beta = 1000000;
 
-    for(distance; distance <= depth && IDTimeS < endTime; distance++){
+    int distance = 1;
+    for(distance; distance <= depth && IDTimeS < endTime;){
         positionCount = 0;
         clock_t currentTime = clock();
 
@@ -65,12 +67,22 @@ std::string Ai_Logic::iterativeDeep(int depth)
         }
 
         //tBestMove = miniMaxRoot(distance, true, currentTime, endTime - currentTime);
-        int val = alphaBeta(distance -1, 100000, -100000, false, currentTime, timeLimmit, currentDepth +1);
+        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1);
+
+        /*
+        if ((val <= alpha) || (val >= beta)) {
+            alpha = -INFINITY;    // We fell outside the window, so try again with a
+            beta = INFINITY;      //  full-width window (and the same depth).
+            continue;
+        }
+        */
 
         //if the search is not cutoff
         if(!searchCutoff){
             bestMove = tBestMove;
         }
+        //increment depth
+        distance++;
     }
     //std::cout << zobKey << std::endl;
 
@@ -90,11 +102,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
     PVMoves[depth] = bestMove;
 
     return bestMove;
-}
-
-void Ai_Logic::helper(std::string a)
-{
-
 }
 
 std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit)
@@ -180,6 +187,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer,
     int hash = (int)(zobKey % 15485867);
     HashEntry entry = transpositionT[hash];
 
+
     //if the depth of the stored evaluation is greater and the zobrist key matches
     if(entry.depth >= depth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
@@ -194,6 +202,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer,
         }
 
     }
+
 
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
@@ -220,10 +229,11 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer,
     //in order to get a high cutoff as fast as possible
     moves = killerHe(currentDepth, moves, isMaximisingPlayer, pv);
 
+    std::string tempMove;
     for(int i = 0; i < moves.length(); i+=4){
         positionCount ++;
         //change board accoriding to i possible move
-        std::string tempMove;
+        tempMove = "";
         //convert move into a single string
         tempMove += moves[i];
         tempMove += moves[i+1];
@@ -255,12 +265,15 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer,
             addMoveTT(tempBBMove, depth, bestTempMove, 1);
             //new best move
             alpha = bestTempMove;
-            //store principal variation
-            PVMoves[currentDepth] = tempMove;
 
-            tBestMove = tempMove;
+            //store best move useable found for depth of one
+            if(currentDepth == 1){
+                tBestMove = tempMove;
+            }
         }
     }
+
+
 
     return alpha;
 }
