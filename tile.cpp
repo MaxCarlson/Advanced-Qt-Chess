@@ -130,8 +130,8 @@ void Tile::aiTurn(){
     Ai_Logic *newMove = new Ai_Logic;
 
     std::string bestMove;
-
-    bestMove = newMove->iterativeDeep(6);
+    //generate best move (number represents max search depth)
+    bestMove = newMove->iterativeDeep(4);
 
     //ready coordinates to give to Pieces
     //std::string bMove = best_moves[tester];

@@ -24,12 +24,7 @@ private:
     //array of last iterations PV moves
     std::string PVMoves [10] = {"0"}; //not working except at root
 
-    int aspWindowA [10] = {100000}; //currentdepth -1 represents correct value
-    int aspWindowB [10] = {-100000};
-
-    void helper(std::string a);
-
-    int alphaBeta(int depth, int alpha, int beta, bool isMaximisingPlayer, long currentTime, long timeLimmit, int currentDepth);
+    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth);
 
     //root function for recursive move finiding via minimax
     std::string miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit);
@@ -37,8 +32,8 @@ private:
     //bulk of minimax
     long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit);
     //killer heuristics function
-    std::string killerHe(int depth, std::string moves, bool isWhite, std::string PV);
-    std::stack<std::string> killerHArr[7];    
+    std::string killerHe(int depth, std::string moves);
+    std::stack<std::string> killerHArr[15];
     //Null move pruning
     long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
 
