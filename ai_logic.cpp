@@ -26,6 +26,8 @@ evaluateBB *eval = new evaluateBB;
 //bool value to determine if time for search has run out
 bool searchCutoff = false;
 
+int qcount = 0;
+
 Ai_Logic::Ai_Logic()
 {
     //generate all possible moves for one turn
@@ -102,6 +104,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << (double) (IDTimeE - IDTimeS) / CLOCKS_PER_SEC << " seconds" << std::endl;
     std::cout << "Depth of " << distance-1 << " reached."<<std::endl;
     //std::cout << zobKey << std::endl;
+    std::cout << qcount << std::endl;
 
     return bestMove;
 }
@@ -286,8 +289,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
 {
     static int depth = currentDepth;
     int value;
-/*
-    if(currentDepth > depth + 5){
+
+    if(currentDepth > depth + 7){
         if((currentDepth & 1) == 1){
             value = -eval->evalBoard();
             return value;
@@ -296,7 +299,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
             return value;
         }
     }
-*/
+
 
     //evaluate board position (if curentDepth is even return -eval)
     if((currentDepth & 1) == 1){
@@ -325,9 +328,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
         enemys = BBWhitePieces & ~BBWhiteKing;
     }
 
-    int x, y, x1, y1, xyI, xyE;
-    U64 pieceMaskI = 0LL, pieceMaskE;
-    //pieceMaskI += 1LL<< xyI;
+    int x1, y1, xyE;
+    U64 pieceMaskE;
 
     //search through all moves from turn for captures
     for(int i = 0; i < moves.length(); i += 4){
@@ -360,12 +362,13 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
         }
     }
 
-    //captures = mostVVLVA(captures, isWhite);
+    captures = mostVVLVA(captures, isWhite);
 
     int score;
     std::string unmake;
     for(int i = 0; i < captures.length(); i+=4)
     {
+        qcount ++;
         tempMove = "";
         //convert move into a single string
         tempMove += captures[i];
@@ -553,6 +556,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     orderedCaptures += kingCaps[3];
     orderedCaptures += rookCaps[2];
     orderedCaptures += pawnCaps[0];
+    orderedCaptures += rookCaps[1];
     orderedCaptures += knightCaps[0];
     orderedCaptures += bishopCaps[0];
     orderedCaptures += rookCaps[0];
@@ -661,6 +665,7 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
     //Do a shallower zero window search of moves other than the first, if they're better
     //run a full PV search
     for(int i = bestMoveIndex+4; i < moves.length(); i += 4){
+
         int score = -999999;
         positionCount ++;
         std::string move;
@@ -736,205 +741,3 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
     }
     return beta-1; //same as alpha
 }
-
-long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit)
-{
-    //iterative deeping timer stuff
-    clock_t time = clock();
-    long elapsedTime = time - currentTime;
-
-    //update zobrist hash to correct color
-    //ZKey->UpdateColor();
-
-    //create unqiue hash from zobkey
-    int hash = (int)(zobKey % 15485867);
-    HashEntry entry = transpositionT[hash];
-
-    //if the depth of the stored evaluation is greater and the zobrist key matches
-    if(entry.depth >= depth && entry.zobrist == zobKey){
-        //return either the eval, the beta, or the alpha depending on flag
-        if(entry.flag == 3){
-            return entry.eval;
-        }
-        if(entry.flag == 2 && entry.eval >= beta){
-            return beta;
-        }
-        if(entry.flag == 1 && entry.eval <= alpha){
-            return alpha;
-        }
-
-    }
-    if(elapsedTime >= timeLimmit){
-        searchCutoff = true;
-    }
-
-    if(depth == 0 || searchCutoff){
-        //evaluate board position
-        long score = - eval->evalBoard();
-
-        //add move to hash table with exact flag
-        addMoveTT("0", depth, score, 3);
-        return score;
-    }
-
-    std::string moves, tempBBMove;
-
-    moves = newBBBoard->genWhosMove(!isMaximisingPlayer);
-
-
-    if(isMaximisingPlayer == true){
-        long bestTempMove = -999999;
-        //push  killer (better) moves to (eventually just near) front of move list
-        //in order to get a high cutoff as fast as possible
-        moves = killerHe(depth, moves);
-
-        for(int i = 0; i < moves.length(); i+=4){
-            positionCount ++;
-            //change board accoriding to i possible move
-            std::string tempMove;
-            //convert move into a single string
-            tempMove += moves[i];
-            tempMove += moves[i+1];
-            tempMove += moves[i+2];
-            tempMove += moves[i+3];
-
-            //make move on BB's store data to string so move can be undone
-            tempBBMove = newBBBoard->makeMove(tempMove);
-
-            //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-            bestTempMove = std::max(bestTempMove, miniMax(depth-1, alpha, beta,  ! isMaximisingPlayer, currentTime, timeLimmit));
-
-            //undo move on BB's
-            newBBBoard->unmakeMove(tempBBMove);
-
-            //alpha beta pruning
-            alpha = std::max(alpha, bestTempMove);
-
-             //if move causes a beta cutoff (is bad for us) stop searching current branch
-            if(beta <= alpha){
-                //add beta eval to transpositon table
-                addMoveTT(tempBBMove, depth, bestTempMove, 2);
-
-                //push killer move to top of stack for given depth
-                killerHArr[depth].push(tempMove);
-                return bestTempMove;
-            }
-        }
-        //add alpha eval to hash table
-        addMoveTT(tempBBMove, depth, bestTempMove, 1);
-
-        return bestTempMove;
-
-    } else {
-        long bestTempMove = 999999;
-
-        moves = killerHe(depth, moves);
-        //debug(lookUpTTable(depth), moves);
-
-        if(ZKey->debugKey(true) != zobKey){
-            std::cout << ZKey->debugKey(true) << std::endl;
-            std::cout << zobKey << std::endl;
-        }
-
-        for(int i = 0; i <  moves.length(); i+=4){
-            positionCount ++;
-            std::string tempMove;
-            //convert move into a single string
-            tempMove += moves[i];
-            tempMove += moves[i+1];
-            tempMove += moves[i+2];
-            tempMove += moves[i+3];
-
-            //make move on BB
-            tempBBMove = newBBBoard->makeMove(tempMove);
-
-            //recursively test best move
-            bestTempMove = std::min(bestTempMove, miniMax(depth-1, alpha, beta, ! isMaximisingPlayer, currentTime, timeLimmit));
-
-            //undo move on BB
-            newBBBoard->unmakeMove(tempBBMove);
-
-            //alpha beta pruning
-            beta = std::min(beta, bestTempMove);
-
-            if(beta <= alpha){
-                //add beta eval to transpositon table
-                addMoveTT(tempBBMove, depth, bestTempMove, 2);
-
-                killerHArr[depth].push(tempMove);
-                return bestTempMove;
-            }
-        }
-        //add alpha eval to transpositon table
-        addMoveTT(tempBBMove, depth, bestTempMove, 1);
-
-        return bestTempMove;
-
-    }
-
-}
-
-std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit)
-{
-    int currentDepth = 1;
-
-    //for moves to compete against
-    int bestMoveValue = -999999, tempValue;
-
-    std::string bestMoveFound, moves, tempBBMove;
-
-    //create unqiue hash from zobkey
-    int hash = (int)(zobKey % 15485867);
-    HashEntry entry = transpositionT[hash];
-/*
-    //if the depth of the stored evaluation is greater/= and the zobrist key matches
-    if(entry.depth >= currentDepth && entry.zobrist == zobKey){
-        //return either the eval, the beta, or the alpha depending on flag
-        if(entry.flag == 3){
-            moves = entry.move;
-        }
-    }
-*/
-    //generate first possible initial moves
-    moves += newBBBoard->genWhosMove(false); //false for is not white, change later to be more versitile
-
-    //compare moves
-    for(int i = 0; i < moves.length(); i+=4){
-        positionCount ++;
-        std::string tempMove;
-        //convert move into a single string
-        tempMove += moves[i];
-        tempMove += moves[i+1];
-        tempMove += moves[i+2];
-        tempMove += moves[i+3];
-
-        //make move on BB
-        tempBBMove = newBBBoard->makeMove(tempMove);
-
-        //perform alpha beta search
-        tempValue = -alphaBeta(depth -1, -100000, 100000, isMaximisingPlayer, currentTime, timeLimmit, currentDepth +1, true);
-        //tempValue = -principleV(depth -1, -100000, 100000, isMaximisingPlayer);
-        //tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, currentTime, timeLimmit);
-
-        //undo move on BB
-        newBBBoard->unmakeMove(tempBBMove);
-
-        //if move is better then the best one store it
-        if(tempValue >= bestMoveValue){
-            bestMoveValue = tempValue;
-            bestMoveFound = tempMove;
-
-        }
-
-    }
-
-    //add best move to transpositon table
-    addMoveTT(bestMoveFound, depth, tempValue, 3);
-
-    return bestMoveFound;
-
-}
-
-
-
-
