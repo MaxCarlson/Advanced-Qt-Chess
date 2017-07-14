@@ -21,6 +21,9 @@ public:
     std::string iterativeDeep(int depth);
 
 private:
+    //sort moves and apply heuristics like killer and transpostion data
+    std::string sortMoves(std::string moves, HashEntry entry, int currentDepth);
+
     //array of last iterations PV moves
     std::string PVMoves [10] = {"0"}; //not working except at root
 
@@ -54,16 +57,12 @@ private:
 
 
     //TEST
-    int principleV(int depth, int alpha, int beta, bool isWhite);
+    int principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth);
 
     int zWSearch(int depth, int beta, bool isWhite);
 
-
     //counts number of piece postitions tried
-    long positionCount = 0;
-
-    //sort first few moves to increase alpha beta efficiancy
-    std::vector<std::string> sortMoves(std::vector<std::string> moves, bool isMaximisingPlayer);
+    int positionCount = 0;
 
     int modifyDepth(int depth, int numberOfMoves);
 
