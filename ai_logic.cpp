@@ -20,12 +20,11 @@ std::string board1[8][8];
 //holds state of initial board + 1 move
 std::string board2[8][8];
 
-//evaluation object
+//evaluation object - evaluates board position and gives an int value (- for black)
 evaluateBB *eval = new evaluateBB;
 
+//bool value to determine if time for search has run out
 bool searchCutoff = false;
-
-int alphaC = 0, betaC = 0;
 
 Ai_Logic::Ai_Logic()
 {
@@ -103,7 +102,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << (double) (IDTimeE - IDTimeS) / CLOCKS_PER_SEC << " seconds" << std::endl;
     std::cout << "Depth of " << distance-1 << " reached."<<std::endl;
     //std::cout << zobKey << std::endl;
-    std::cout << alphaC << ", " << betaC <<std::endl;
 
     //push best move of this iteration to stack
     PVMoves[depth] = bestMove;
@@ -124,20 +122,51 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
+
     if(entry.depth >= depth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
-        if(entry.flag == 3){
+        switch(entry.flag){
+            case 3:
+            if(entry.flag == 3){
+                return entry.eval;
+            }
+            break;
+            case 2:
+            if(entry.eval >= beta){
+                return beta;
+            }
+            break;
+            case 1:
+            if(entry.eval <= alpha){
+                return alpha;
+            }
+            break;
+        }
+    }
+ /*
+    if(entry.depth >= depth && entry.zobrist == zobKey){
+        //return either the eval, the beta, or the alpha depending on flag
+        switch(entry.flag){
+            case 1:
+                if(entry.eval > alpha){
+                    alpha = entry.eval;
+                }
+                break;
+
+            case 2:
+                if(entry.eval < beta){
+                    beta = entry.eval;
+                }
+                break;
+
+            case 3:
+                return entry.eval;
+        }
+        if(alpha >= beta){
             return entry.eval;
         }
-        if(entry.flag == 2 && entry.eval >= beta){
-            return beta;
-        }
-        if(entry.flag == 1 && entry.eval <= alpha){
-            return alpha;
-        }
-
     }
-
+*/
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -222,7 +251,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth)
 {
-    //call killer moves
+    //call killer moves + add killers to front of moves if there are any
     moves = killerHe(currentDepth, moves);
     //perfrom look up from transpositon table
     if(entry.move.length() == 4 && entry.zobrist == zobKey){
@@ -274,6 +303,85 @@ std::string Ai_Logic::killerHe(int depth, std::string moves)
     cutoffs += moves;
     return cutoffs;
 
+}
+
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
+{
+    int value;
+    //evaluate board position (if curentDepth is even return -eval)
+    if((currentDepth & 1) == 1){
+        value = -eval->evalBoard();
+    } else {
+        value = eval->evalBoard();
+    }
+
+    if(value >= beta){
+       return beta;
+    }
+
+    if(value > alpha){
+       alpha = value;
+    }
+
+    std::string moves = newBBBoard->genWhosMove(isWhite);
+
+    U64 enemys, captures;
+    std::string tempMove;
+
+    //create bitboard of enemys
+    if(isWhite){
+        enemys = BBBlackPieces & ~BBBlackKing;
+    } else {
+        enemys = BBWhitePieces & ~BBWhiteKing;
+    }
+
+    int x, y, x1, y1, xyI, xyE;
+    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
+    //pieceMaskI += 1LL<< xyI;
+
+    //search through all moves from turn for captures
+    for(int i = 0; i < moves.length(); i += 4){
+        tempMove = "";
+        tempMove += moves[i];
+        tempMove += moves[i+1];
+        tempMove += moves[i+2];
+        tempMove += moves[i+3];
+        //find number representing board  xy
+        int x1 = moves[2]-0; int y1 = moves[3]-0;
+        xyE = y1*8+x1;
+        //create mask of move end position
+        pieceMaskE += 1LL << xyE;
+        //if move ends on an enemy, it's a capture
+        if(pieceMaskE & enemys){
+            captures += tempMove;
+        }
+    }
+
+    std::string unmake;
+    for(int i = 0; i < captures.length(); i+=4)
+    {
+        tempMove = "";
+        //convert move into a single string
+        tempMove += captures[i];
+        tempMove += captures[i+1];
+        tempMove += captures[i+2];
+        tempMove += captures[i+3];
+
+        unmake = newBBBoard->makeMove(tempMove);
+
+        value = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1);
+
+        newBBBoard->unmakeMove(unmake);
+
+        if(value >= beta){
+           return beta;
+        }
+
+        if(value > alpha){
+           alpha = eval;
+        }
+    }
+    return alpha;
 }
 
 void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)

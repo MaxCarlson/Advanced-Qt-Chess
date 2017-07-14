@@ -14,24 +14,27 @@ class BitBoards
 public:
     BitBoards();
 
+    //builds boards through reading an array
     void constructBoards();
 
+    //makes a move and returns a string that allows unmaking (both make and unmake change zobrist keys by move and color)
     std:: string makeMove(std::string move);
-
+    //unmakes move
     void unmakeMove(std::string moveKey);
 
-     std::string genWhosMove(bool isWhite);
+    //start of move gen, used to point to correct color generation
+    std::string genWhosMove(bool isWhite);
 
     //helper method for faster move gen -- finds number of trailing zeros -- Implement in all moves later
     int trailingZeros(U64 i);
 
     //helper funtction to draw out bitboards like chess boards
     void drawBB(U64 board);
-    //draw out bitboards like an array
+
+    //draw out bitboards like a full chessboard array
     void drawBBA();
 
-    //is move legal function
-    bool isLegal(std::string move, bool isWhite);
+    std::string generateCaptures(isWhite);
 private:
 
     //unsafe area checking for b/w

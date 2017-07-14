@@ -149,14 +149,7 @@ std::string BitBoards::genWhosMove(bool isWhite)
 //move generation functions for white and black
 std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishops, U64 bqueens, U64 bking)
 {
-    //test
-    //std::clock_t start;
-    //double duration;
-    //start = std::clock();
-
-   // FullTiles = wpawns | wrooks | wknights | wbishops | wqueens | wking | bpawns | brooks | bknights | bbishops | bqueens | bking;
     U64 empty = ~FullTiles;
-    //U64 EmptyTiles = ~FullTiles;
     U64 pinned, kingSafeLessKing, unsafeTiles, checkers;
 
     std::string moveList, removedPinned;
@@ -213,10 +206,6 @@ std::string BitBoards::possibleMovesW(U64 whitepieces, U64 wpawns, U64 wrooks, U
 
     //restore pinned pieces to master BB's
     restorePinnedPieces(removedPinned, true);
-
-    //duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC; //for testing
-    //std::cout<<"printf: "<< duration <<'\n';
-    //int temp = moveList.length()/4;
 
     return moveList;
 }
@@ -2522,58 +2511,191 @@ void BitBoards::drawBBA()
     std::cout << std::endl << std::endl;;
 }
 
-bool BitBoards::isLegal(std::string move, bool isWhite)
+std::string BitBoards::generateCaptures(BitBoards::isWhite)
 {
-    //function used to test if a move is legal or not
-    //used in killer Heuristics right now only
-    U64 unsafe;
-    std::string undoMove;
-    int x,y,x1,y1, xy, xy1;
+    U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king;
+    std::string list;
+    //white pawn captures + set enemy mask + set friends and pieces masks
+    if(isWhite){
+        enemys = BBBlackPieces & ~BBBlackKing;
+        friends = BBWhitePieces;
+        pawns = BBWhitePawns;
+        knights = BBWhiteKnights;
+        bishops = BBWhiteBishops;
+        rooks = BBWhiteRooks;
+        queens = BBWhiteQueens;
+        king = BBWhiteKing;
+        //capture right
+        moves = noEaOne(pawns) & enemys;
+        for(int i = 0; i < 64; i++){
+            if(((moves>>i)&1)==1){
+                list+=i%8-1;
+                list+=i/8+1;
+                list+=i%8;
+                list+=i/8;
 
-    //check if move takes own piece
-    x = move[0]-0;
-    y = move[1]-0;
-    x1 = move[2]-0;
-    y1 = move[3]-0;
-    xy = y*8+x; xy1 = y1*8+x;
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    pieceMaskI += 1LL<< xy;
-    pieceMaskE += 1LL << xy1;
-
-    if(isWhite == true && (BBWhitePieces & pieceMaskI)){
-        //friendly check
-        if(BBWhitePieces & pieceMaskE) {
-            return false;
+            }
         }
-        //make move and get board to test if king is safe
-        undoMove = makeMove(move);
-        unsafe = unsafeForWhite(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
 
-        //unmake move
-        drawBB(EmptyTiles);
-        unmakeMove(undoMove);
+        //capture left
+        moves = noWeOne(pawns) & enemys;
+        for(int i = 0; i < 64; i++){
+            if(((moves>>i)&1)==1){
+                list+=i%8+1;
+                list+=i/8+1;
+                list+=i%8;
+                list+=i/8;
 
-        if(unsafe & BBWhiteKing){
-            return false;
+            }
         }
-        return true;
+    //black pawn captures
+    } else {
+        enemys = BBWhitePieces & ~BBWhiteKing;
+        friends = BBBlackPieces;
+        pawns = BBBlackPawns;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+        //capture right
+        moves = soEaOne(pawns) & enemys;
+        for(int i = 0; i < 64; i++){
+            if(((PAWN_MOVES>>i)&1)==1){
+                list+=i%8-1;
+                list+=i/8-1;
+                list+=i%8;
+                list+=i/8;
 
-    } else if (BBBlackPieces & pieceMaskI){
-        if(BBBlackPieces & pieceMaskE) {
-            return false;
+            }
         }
-        //make move and get board to test if king is safe
-        undoMove = makeMove(move);
-        unsafe = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
 
-        unmakeMove(undoMove);
-        if(unsafe & BBBlackKing){
-            return false;
+        //capture left
+        moves = soWeOne(pawns) & enemys;
+        for(int i = 0; i < 64; i++){
+            if(((PAWN_MOVES>>i)&1)==1){
+                list+=i%8+1;
+                list+=i/8-1;
+                list+=i%8;
+                list+=i/8;
+
+            }
         }
-        return true;
     }
-   unmakeMove(undoMove);
-   return false;
+
+    //knight captures
+    for(int i = 0; i < 64; i++){
+        if(((knights>>i) &1) == 1){
+            //use the knight span board which holds possible knight moves
+            //and apply a shift to the knights current pos
+            if(i > 18){
+                moves = KNIGHT_SPAN<<(i-18);
+            } else {
+                moves = KNIGHT_SPAN>>(18-i);
+            }
+
+            //making sure the moves don't warp around to other side once shifter
+            //as well as friendly and illegal king capture check
+            if(i % 8 < 4){
+                moves &= ~FILE_GH & ~friends & enemys;
+            } else {
+                moves &= ~FILE_AB & ~friends & enemys;
+            }
+
+            for(int j = 0; j < 64; j++){
+                if(((moves>>j) &1) == 1){
+                    list+=i%8;
+                    list+=i/8;
+                    list+=j%8;
+                    list+=j/8;
+                }
+            }
+        }
+    }
+
+    //bishops captures
+    for(int i = 0; i < 64; i++){
+        if(((bishops>>i) &1) == 1){
+            //map moves that don't collide with friendlys and doesn't illegaly take black king
+            moves = DAndAntiDMoves(i) & ~friends & enemys;
+            for(int j = 0; j < 64; j++){
+                if(((moves>>j) &1) == 1){
+                    list+=i%8;
+                    list+=i/8;
+                    list+=j%8;
+                    list+=j/8;
+                }
+            }
+        }
+    }
+
+    //rook captures
+    for(int i = 0; i < 64; i++){
+        if(((rooks>>i) &1) == 1){
+            //map moves that don't collide with friendlys and doesn't illegaly take black king
+            moves = horizVert(i) & ~friends & enemys;
+            for(int j = 0; j < 64; j++){
+                if(((moves>>j) &1) == 1){
+                    list+=i%8;
+                    list+=i/8;
+                    list+=j%8;
+                    list+=j/8;
+                }
+            }
+        }
+    }
+
+    //queen captures
+    for(int i = 0; i < 64; i++){
+        if(((queens>>i) &1) == 1){
+            //map moves that don't collide with friendlys and doesn't illegaly take black king
+            moves = DAndAntiDMoves(i) + horizVert(i) & ~friends & enemys;
+
+            for(int j = 0; j < 64; j++){
+                if(((moves>>j) &1) == 1){
+                    list+=i%8;
+                    list+=i/8;
+                    list+=j%8;
+                    list+=j/8;
+                }
+            }
+        }
+    }
+
+    //king captures
+    int i = trailingZeros(king);
+    if(i > 9){
+        moves = KING_SPAN << (i-9);
+
+    } else {
+        moves = KING_SPAN >> (9-i);
+    }
+
+    if(i % 8 < 4){
+        moves &= ~FILE_GH & ~wOrBpieces;
+
+    } else {
+        moves &= ~FILE_AB & ~wOrBpieces;
+    }
+    //check king unsafe board against king moves
+    //removing places the king would be unsafe from the moves
+    moves &= ~kingSafeLessKing;
+
+    U64 j = moves &~(moves-1);
+
+    while(j != 0){
+        int index = trailingZeros(j);
+
+        list += i % 8;
+        list += i / 8;
+        list += index % 8;
+        list += index / 8;
+
+        moves &= ~j;
+        j = moves &~ (moves-1);
+    }
+
+    return list;
 }
 
 //single ray direction functions -- mostly for pinned piece calcs

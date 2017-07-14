@@ -41,7 +41,7 @@ private:
     long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
 
     //Quiescent search ~~ search positions farther if there are captures on horizon
-    int quiescent(int alpha, int beta);
+    int quiescent(int alpha, int beta, bool isWhite, int currentDepth);
 
     //Check transposition table for a move and decide whether or not to use value
     bool checkTTable(int depth, int eval);
