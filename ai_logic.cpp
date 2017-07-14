@@ -43,7 +43,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 115009999, currentDepth = 0;
+    int timeLimmit = 35500, currentDepth = 0;
 
     long endTime = IDTimeS + timeLimmit;
 
@@ -68,7 +68,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         }
 
         //tBestMove = miniMaxRoot(distance, true, currentTime, timeLimmit);
-        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1);
+        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
         //int val = principleV(distance, alpha, beta, false, currentDepth);
 
 
@@ -103,13 +103,10 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << "Depth of " << distance-1 << " reached."<<std::endl;
     //std::cout << zobKey << std::endl;
 
-    //push best move of this iteration to stack
-    PVMoves[depth] = bestMove;
-
     return bestMove;
 }
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -143,30 +140,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             break;
         }
     }
- /*
-    if(entry.depth >= depth && entry.zobrist == zobKey){
-        //return either the eval, the beta, or the alpha depending on flag
-        switch(entry.flag){
-            case 1:
-                if(entry.eval > alpha){
-                    alpha = entry.eval;
-                }
-                break;
 
-            case 2:
-                if(entry.eval < beta){
-                    beta = entry.eval;
-                }
-                break;
-
-            case 3:
-                return entry.eval;
-        }
-        if(alpha >= beta){
-            return entry.eval;
-        }
-    }
-*/
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -175,13 +149,16 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth == 0 || searchCutoff){
         int score;
         //evaluate board position (if curentDepth is even return -eval)
-        if((currentDepth & 1) == 1){
-            score = -eval->evalBoard();
+        if(!extend){
+            if((currentDepth & 1) == 1){
+                score = -eval->evalBoard();
+            } else {
+                score = eval->evalBoard();
+            }
+            extend = true;
         } else {
-            score = eval->evalBoard();
+            score = quiescent(alpha, beta, isWhite, currentDepth);
         }
-
-
         //add move to hash table with exact flag
         addMoveTT("0", depth, score, 3);
         return score;
@@ -214,7 +191,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         tempBBMove = newBBBoard->makeMove(tempMove);
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1);
+        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, extend);
 
         //undo move on BB's
         newBBBoard->unmakeMove(tempBBMove);
@@ -307,7 +284,20 @@ std::string Ai_Logic::killerHe(int depth, std::string moves)
 
 int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
 {
+    static int depth = currentDepth;
     int value;
+/*
+    if(currentDepth > depth + 5){
+        if((currentDepth & 1) == 1){
+            value = -eval->evalBoard();
+            return value;
+        } else {
+            value = eval->evalBoard();
+            return value;
+        }
+    }
+*/
+
     //evaluate board position (if curentDepth is even return -eval)
     if((currentDepth & 1) == 1){
         value = -eval->evalBoard();
@@ -325,8 +315,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
 
     std::string moves = newBBBoard->genWhosMove(isWhite);
 
-    U64 enemys, captures;
-    std::string tempMove;
+    U64 enemys;
+    std::string tempMove, captures;
 
     //create bitboard of enemys
     if(isWhite){
@@ -336,18 +326,20 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
     }
 
     int x, y, x1, y1, xyI, xyE;
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
+    U64 pieceMaskI = 0LL, pieceMaskE;
     //pieceMaskI += 1LL<< xyI;
 
     //search through all moves from turn for captures
     for(int i = 0; i < moves.length(); i += 4){
+        pieceMaskE = 0LL;
+
         tempMove = "";
         tempMove += moves[i];
         tempMove += moves[i+1];
         tempMove += moves[i+2];
         tempMove += moves[i+3];
         //find number representing board  xy
-        int x1 = moves[2]-0; int y1 = moves[3]-0;
+        x1 = tempMove[i+2]-0; y1 = tempMove[i+3]-0;
         xyE = y1*8+x1;
         //create mask of move end position
         pieceMaskE += 1LL << xyE;
@@ -357,6 +349,20 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
         }
     }
 
+    //if there are no captures, return value of board
+    if(captures.length() == 0){
+        if((currentDepth & 1) == 1){
+            value = -eval->evalBoard();
+            return value;
+        } else {
+            value = eval->evalBoard();
+            return value;
+        }
+    }
+
+    //captures = mostVVLVA(captures, isWhite);
+
+    int score;
     std::string unmake;
     for(int i = 0; i < captures.length(); i+=4)
     {
@@ -369,19 +375,193 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
 
         unmake = newBBBoard->makeMove(tempMove);
 
-        value = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1);
 
         newBBBoard->unmakeMove(unmake);
 
-        if(value >= beta){
+        if(score >= beta){
            return beta;
         }
 
-        if(value > alpha){
-           alpha = eval;
+        if(score > alpha){
+           alpha = score;
         }
     }
     return alpha;
+}
+
+std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
+{
+    //arrays holding different captures 0 position for pawn captures, 1 = knight, 2 = bishops, 3 = rook, 4 = queen captures
+    std::string pawnCaps[5];
+    std::string knightCaps[5];
+    std::string bishopCaps[5];
+    std::string rookCaps[5];
+    std::string queenCaps[5];
+    std::string kingCaps[5];
+
+    U64 epawns, eknights, ebishops, erooks, equeens, pawns, knights, bishops, rooks, queens, king;
+    //set enemy bitboards and friendly piece bitboards
+    if(isWhite){
+        //enemies
+        epawns = BBBlackPawns;
+        eknights = BBBlackKnights;
+        ebishops = BBBlackBishops;
+        erooks = BBBlackRooks;
+        equeens = BBBlackQueens;
+        //friendlys
+        pawns = BBWhitePawns;
+        knights = BBWhiteKnights;
+        bishops = BBWhiteBishops;
+        rooks = BBWhiteRooks;
+        queens = BBWhiteQueens;
+        king = BBWhiteKing;
+    } else {
+        epawns = BBWhitePawns;
+        eknights = BBWhiteKnights;
+        ebishops = BBWhiteBishops;
+        erooks = BBWhiteRooks;
+        equeens = BBWhiteQueens;
+
+        pawns = BBBlackPawns;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+    }
+
+
+    int x, y, x1, y1, xyI, xyE;
+    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
+    std::string tempMove;
+
+    for(int i = 0; i < captures.length(); i+=4)
+    {
+        pieceMaskI = 0LL, pieceMaskE = 0LL;
+        tempMove = "";
+        //convert move into a single string
+        tempMove += captures[i];
+        tempMove += captures[i+1];
+        tempMove += captures[i+2];
+        tempMove += captures[i+3];
+        x = tempMove[i]-0; y = tempMove[i+1];
+        xyI = y*8+x;
+        pieceMaskI += 1LL << xyI;
+        //find number representing board end position
+        x1 = tempMove[i+2]-0; y1 = tempMove[i+3]-0;
+        xyE = y1*8+x1;
+        //create mask of move end position
+        pieceMaskE += 1LL << xyE;
+
+        //if the initial piece is our pawn check which piece he captures and add move to appropriate array
+        if(pieceMaskI & pawns){
+            if(pieceMaskE & epawns){
+                pawnCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                pawnCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                pawnCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                pawnCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                pawnCaps[4]+= tempMove;
+            }
+        } else if (pieceMaskI & knights){
+            if(pieceMaskE & epawns){
+                knightCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                knightCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                knightCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                knightCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                knightCaps[4]+= tempMove;
+            }
+        } else if (pieceMaskI & bishops){
+            if(pieceMaskE & epawns){
+                bishopCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                bishopCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                bishopCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                bishopCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                bishopCaps[4]+= tempMove;
+            }
+        } else if (pieceMaskI & rooks){
+            if(pieceMaskE & epawns){
+                rookCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                rookCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                rookCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                rookCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                rookCaps[4]+= tempMove;
+            }
+        } else if (pieceMaskI & queens){
+            if(pieceMaskE & epawns){
+                queenCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                queenCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                queenCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                queenCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                queenCaps[4]+= tempMove;
+            }
+        } else if (pieceMaskI & king){
+            if(pieceMaskE & epawns){
+                kingCaps[0]+= tempMove;
+            } else if(pieceMaskE & eknights){
+                kingCaps[1]+= tempMove;
+            } else if(pieceMaskE & ebishops){
+                kingCaps[2]+= tempMove;
+            } else if(pieceMaskE & erooks){
+                kingCaps[3]+= tempMove;
+            } else if(pieceMaskE & equeens){
+                kingCaps[4]+= tempMove;
+            }
+        }
+
+    }
+
+    //add all captures in order of least valuable attacker most valuable victim
+    std::string orderedCaptures;
+
+    orderedCaptures += pawnCaps[4];
+    orderedCaptures += pawnCaps[3];
+    orderedCaptures += pawnCaps[2];
+    orderedCaptures += pawnCaps[1];
+
+    orderedCaptures += knightCaps[4];
+    orderedCaptures += bishopCaps[4];
+    orderedCaptures += rookCaps[4];
+    orderedCaptures += kingCaps[4];
+    orderedCaptures += knightCaps[3];
+    orderedCaptures += bishopCaps[3];
+    orderedCaptures += knightCaps[2];
+    orderedCaptures += bishopCaps[2];
+    orderedCaptures += knightCaps[1];
+    orderedCaptures += bishopCaps[1];
+    orderedCaptures += rookCaps[3];
+    orderedCaptures += kingCaps[3];
+    orderedCaptures += rookCaps[2];
+    orderedCaptures += pawnCaps[0];
+    orderedCaptures += knightCaps[0];
+    orderedCaptures += bishopCaps[0];
+    orderedCaptures += rookCaps[0];
+    orderedCaptures += kingCaps[2];
+    orderedCaptures += kingCaps[1];
+    orderedCaptures += kingCaps[0];
+
+ return orderedCaptures;
+
 }
 
 void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
@@ -399,40 +579,6 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
 
     }
 
-}
-
-std::string Ai_Logic::lookUpTTable(int depth)
-{
-    //NEED TO ALTER LATER TO SKIP EVALUATING BEST MOVE AND USE ITS EVAL
-    std::string tmove, move;
-    //get hash of current zobrist key
-    int hash = (int)(zobKey % 3869311);
-    if(transpositionT[hash].depth >= depth){
-        //if zobkey at both locations match (ie is same board position) return best move
-        if(transpositionT[hash].zobrist == zobKey){
-            tmove = transpositionT[hash].move;
-            move += tmove[0];
-            move += tmove[1];
-            move += tmove[2];
-            move += tmove[3];
-            return move;
-        }
-    }
-    return "";
-}
-
-long Ai_Logic::lookUpTTEval(int depth)
-{
-    int hash = (int)(zobKey % 15485867);
-    long eval;
-    if(transpositionT[hash].depth >= depth){
-        //if zobkey at both locations match (ie is same board position) return best move
-        if(transpositionT[hash].zobrist == zobKey){
-            eval = transpositionT[hash].eval;
-            return eval;
-        }
-    }
-    return 999999;
 }
 
 std::string Ai_Logic::debug(std::string ttMove, std::string moves)
@@ -456,17 +602,6 @@ std::string Ai_Logic::debug(std::string ttMove, std::string moves)
     }
 
     return moves;
-}
-
-int Ai_Logic::modifyDepth(int depth, int numberOfMoves)
-{
-    if(numberOfMoves <= 15){
-        depth += 1;
-    }
-    if(numberOfMoves <= 6){
-        depth += 1;
-    }
-    return depth;
 }
 
 int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth)
@@ -601,7 +736,6 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
     }
     return beta-1; //same as alpha
 }
-
 
 long Ai_Logic::miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit)
 {
@@ -749,10 +883,6 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
 
     std::string bestMoveFound, moves, tempBBMove;
 
-    if(PVMoves[currentDepth].length() == 4){
-        moves = PVMoves[currentDepth];
-    }
-
     //create unqiue hash from zobkey
     int hash = (int)(zobKey % 15485867);
     HashEntry entry = transpositionT[hash];
@@ -782,7 +912,7 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
         tempBBMove = newBBBoard->makeMove(tempMove);
 
         //perform alpha beta search
-        tempValue = -alphaBeta(depth -1, -100000, 100000, isMaximisingPlayer, currentTime, timeLimmit, currentDepth +1);
+        tempValue = -alphaBeta(depth -1, -100000, 100000, isMaximisingPlayer, currentTime, timeLimmit, currentDepth +1, true);
         //tempValue = -principleV(depth -1, -100000, 100000, isMaximisingPlayer);
         //tempValue = miniMax(depth -1, -100000, 100000, ! isMaximisingPlayer, currentTime, timeLimmit);
 
@@ -800,8 +930,6 @@ std::string Ai_Logic::miniMaxRoot(int depth, bool isMaximisingPlayer, long curre
 
     //add best move to transpositon table
     addMoveTT(bestMoveFound, depth, tempValue, 3);
-
-    PVMoves[currentDepth] = bestMoveFound;
 
     return bestMoveFound;
 

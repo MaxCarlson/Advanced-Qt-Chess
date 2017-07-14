@@ -2510,7 +2510,7 @@ void BitBoards::drawBBA()
     }
     std::cout << std::endl << std::endl;;
 }
-
+/*
 std::string BitBoards::generateCaptures(BitBoards::isWhite)
 {
     U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king;
@@ -2697,7 +2697,7 @@ std::string BitBoards::generateCaptures(BitBoards::isWhite)
 
     return list;
 }
-
+*/
 //single ray direction functions -- mostly for pinned piece calcs
 U64 BitBoards::up(U64 piece)
 {

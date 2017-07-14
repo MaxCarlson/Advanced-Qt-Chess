@@ -15,43 +15,40 @@ class Ai_Logic
 public:
     Ai_Logic();
 
-    std::vector<std::string> possible_moves;
-
     //iterative deepening
     std::string iterativeDeep(int depth);
 
 private:
-    //sort moves and apply heuristics like killer and transpostion data
-    std::string sortMoves(std::string moves, HashEntry entry, int currentDepth);
+    //minmax with alpha beta, the main component of our search
+    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend);
 
-    //array of last iterations PV moves
-    std::string PVMoves [10] = {"0"}; //not working except at root
+        //counts number of piece postitions tried
+        int positionCount = 0;
 
-    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth);
+        //sort moves and apply heuristics like killer and transpostion data
+        std::string sortMoves(std::string moves, HashEntry entry, int currentDepth);
+
+        //killer heuristics function
+        std::string killerHe(int depth, std::string moves);
+             std::stack<std::string> killerHArr[15];
+
+        //Quiescent search ~~ search positions farther if there are captures on horizon
+        int quiescent(int alpha, int beta, bool isWhite, int currentDepth);
+
+        std::string mostVVLVA(std::string captures, bool isWhite);
+
+//transposition table functions
+    //add best move to TT
+    void addMoveTT(std::string bestmove, int depth, long eval, int flag);
+
+
+//misc functions that are not implemented or are old
 
     //root function for recursive move finiding via minimax
     std::string miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit);
 
     //bulk of minimax
     long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit);
-    //killer heuristics function
-    std::string killerHe(int depth, std::string moves);
-    std::stack<std::string> killerHArr[15];
-    //Null move pruning
-    long nullMovePruning(int depth, long alpha, long beta, bool isMaximisingPlayer);
-
-    //Quiescent search ~~ search positions farther if there are captures on horizon
-    int quiescent(int alpha, int beta, bool isWhite, int currentDepth);
-
-    //Check transposition table for a move and decide whether or not to use value
-    bool checkTTable(int depth, int eval);
-
-    //add best move to TT
-    void addMoveTT(std::string bestmove, int depth, long eval, int flag);
-    //look up if board state has been evaluated and stored to table previously, if so add best move first ~~ possibly only use best move for search
-    std::string lookUpTTable(int depth);
-
-    long lookUpTTEval(int depth);
 
     std::string debug(std::string ttMove, std::string moves);
 
@@ -61,10 +58,7 @@ private:
 
     int zWSearch(int depth, int beta, bool isWhite);
 
-    //counts number of piece postitions tried
-    int positionCount = 0;
 
-    int modifyDepth(int depth, int numberOfMoves);
 
 };
 
