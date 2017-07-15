@@ -25,8 +25,11 @@ evaluateBB *eval = new evaluateBB;
 
 //bool value to determine if time for search has run out
 bool searchCutoff = false;
-
+//count of quiescnce positions checked
 int qcount = 0;
+
+//number representing amount to reduce search with Null-Moves
+static int depthR = 2;
 
 Ai_Logic::Ai_Logic()
 {
@@ -75,7 +78,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         }
 
         //tBestMove = miniMaxRoot(distance, true, currentTime, timeLimmit);
-        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
+        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, true);
         //int val = principleV(distance, alpha, beta, false, currentDepth);
 
         //aspiration window correction
@@ -115,7 +118,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     return bestMove;
 }
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend, bool allowNull)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -147,6 +150,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             }
             break;
         }
+        if(alpha >= beta){
+            return entry.eval;
+        }
     }
 
     //if the time limmit has been exceeded finish searching
@@ -154,13 +160,14 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         searchCutoff = true;
     }
 
+    int score;
     if(depth == 0 || searchCutoff){
-        int score;
+
         //evaluate board position (if curentDepth is even return -eval)
         if(!extend){
             score = eval->evalBoard(isWhite);
-
             extend = true;
+
         } else {
             score = quiescent(alpha, beta, isWhite, currentDepth, 5, currentTime, timeLimmit);
         }
@@ -168,6 +175,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         addMoveTT("0", depth, score, 3);
         return score;
     }
+
+
 
     std::string moves, tempBBMove;
     int bestTempMove;
@@ -182,6 +191,17 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //apply heuristics and move entrys from hash table, add to front of moves
     moves = sortMoves(moves, entry, currentDepth, isWhite);
+
+    //Null move heuristics
+    if(allowNull && depth >= depthR+1){
+        ZKey->UpdateColor();
+        score = -alphaBeta(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, true, false);
+        ZKey->UpdateColor();
+        //if after getting a free move the score is too good, prune this branch
+        if(score >= beta){
+            return score;
+        }
+    }
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -201,13 +221,14 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         tempBBMove = newBBBoard->makeMove(tempMove);
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, extend);
+        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, extend, true);
 
         //undo move on BB's
         newBBBoard->unmakeMove(tempBBMove);
 
         //if move causes a beta cutoff stop searching current branch
         if(bestTempMove >= beta){
+
             //add beta to transpositon table with beta flag
             addMoveTT(tempMove, depth, beta, 2);
 
@@ -230,6 +251,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             hashMove = tempMove;
         }
     }
+
     //add alpha eval to hash table
     addMoveTT(hashMove, depth, alpha, hashFlag);
 

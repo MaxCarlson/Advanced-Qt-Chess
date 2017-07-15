@@ -20,7 +20,7 @@ public:
 
 private:
     //minmax with alpha beta, the main component of our search
-    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend);
+    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool extend, bool allowNull);
 
         //counts number of piece postitions tried
         int positionCount = 0;
