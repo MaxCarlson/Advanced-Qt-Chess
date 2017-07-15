@@ -14,6 +14,8 @@ public:
     int evalBoard(bool isWhite);
 
     int getPieceValue(int location);
+
+    int returnMateScore(bool isWhite);
 };
 
 #endif // EVALUATEBB_H

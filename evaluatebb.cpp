@@ -34,6 +34,15 @@ int evaluateBB::evalBoard(bool isWhite)
 
 }
 
+int evaluateBB::returnMateScore(bool isWhite)
+{
+    if(isWhite){
+        return 22000;
+    } else {
+        return -22000;
+    }
+}
+
 //white piece square lookup tables
 int wPawnsSqT[64] = {
      0,  0,  0,  0,  0,  0,  0,  0,
@@ -241,3 +250,4 @@ int evaluateBB::getPieceValue(int location)
     }
     return 0;
 }
+

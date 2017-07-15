@@ -26,14 +26,14 @@ private:
         int positionCount = 0;
 
         //sort moves and apply heuristics like killer and transpostion data
-        std::string sortMoves(std::string moves, HashEntry entry, int currentDepth);
+        std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite);
 
         //killer heuristics function
         std::string killerHe(int depth, std::string moves);
              std::stack<std::string> killerHArr[25];
 
         //Quiescent search ~~ search positions farther if there are captures on horizon
-        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth);
+        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit);
 
         std::string mostVVLVA(std::string captures, bool isWhite);
 

@@ -45,16 +45,18 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 3550099999999999, currentDepth = 0;
-
+    int timeLimmit = 27000, currentDepth = 0;
     long endTime = IDTimeS + timeLimmit;
 
+    //normal positions searched
+    positionCount = 0;
+    int tpositionCount;
+    //count of number of quiet nodes searched
     qcount = 0;
 
+    //search has not run out of time
     searchCutoff = false;
 
-    positionCount = 0;
-    //std::string bestMove, tBestMove;
     std::string bestMove;
 
     std::cout << zobKey << std::endl;
@@ -68,6 +70,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         clock_t currentTime = clock();
 
         if(currentTime >= endTime){
+            distance - 1;
             break;
         }
 
@@ -75,7 +78,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
         //int val = principleV(distance, alpha, beta, false, currentDepth);
 
-
+        //aspiration window correction
         if (val <= alpha || val >= beta) {
             alpha = -1000000;    // We fell outside the window, so try again with a
             beta = 1000000;      //  full-width window (and the same depth).
@@ -89,6 +92,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         if(!searchCutoff){
             bestMove = tBestMove;
             std::cout << (int)bestMove[0] << (int)bestMove[1] << (int)bestMove[2] << (int)bestMove[3] << ", ";
+            tpositionCount = positionCount;
         }
         //increment distance to travel (inverse of depth)
         distance++;
@@ -102,7 +106,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
 
     clock_t IDTimeE = clock();
     //postion count and time it took to find move
-    std::cout << positionCount << " positions searched." << std::endl;
+    std::cout << tpositionCount << " positions searched." << std::endl;
     std::cout << (double) (IDTimeE - IDTimeS) / CLOCKS_PER_SEC << " seconds" << std::endl;
     std::cout << "Depth of " << distance-1 << " reached."<<std::endl;
     //std::cout << zobKey << std::endl;
@@ -124,7 +128,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
-
     if(entry.depth >= depth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
@@ -159,7 +162,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
             extend = true;
         } else {
-            score = quiescent(alpha, beta, isWhite, currentDepth, 5);
+            score = quiescent(alpha, beta, isWhite, currentDepth, 5, currentTime, timeLimmit);
         }
         //add move to hash table with exact flag
         addMoveTT("0", depth, score, 3);
@@ -172,10 +175,13 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //generate normal moves
     moves = newBBBoard->genWhosMove(isWhite);
 
-    moves = mostVVLVA(moves, isWhite);
+    //return mate score if there are no more moves
+    if(moves.length() == 0){
+       return eval->returnMateScore(isWhite);
+    }
 
     //apply heuristics and move entrys from hash table, add to front of moves
-    moves = sortMoves(moves, entry, currentDepth);
+    moves = sortMoves(moves, entry, currentDepth, isWhite);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -230,8 +236,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     return alpha;
 }
 
-std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth)
+std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite)
 {
+    moves = mostVVLVA(moves, isWhite);
     //call killer moves + add killers to front of moves if there are any
     moves = killerHe(currentDepth, moves);
     //perfrom look up from transpositon table
@@ -286,10 +293,14 @@ std::string Ai_Logic::killerHe(int depth, std::string moves)
 
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit)
 {
     static int depth = currentDepth;
     int standingPat;
+
+    //iterative deeping timer stuff
+    clock_t time = clock();
+    long elapsedTime = time - currentTime;
 
     //transposition hash quiet
     int hash = (int)(zobKey % 338207);
@@ -316,12 +327,17 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         }
     }
 
+    //if the time limmit has been exceeded finish searching
+    if(elapsedTime >= timeLimmit){
+        searchCutoff = true;
+    }
+
     //evaluate board position (if curentDepth is even return -eval)
 
     standingPat = eval->evalBoard(isWhite);
 
 
-    if(quietDepth == 0){
+    if(quietDepth == 0 || searchCutoff){
         return standingPat;
     }
 
@@ -380,7 +396,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     captures = mostVVLVA(captures, isWhite);
-    sortMoves(captures, entry, currentDepth);
+    sortMoves(captures, entry, currentDepth, isWhite);
 
     int score;
     std::string unmake, hashMove;
@@ -399,7 +415,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
         unmake = newBBBoard->makeMove(tempMove);
 
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit);
 
         newBBBoard->unmakeMove(unmake);
 
@@ -491,114 +507,148 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
         //create mask of move end position
         pieceMaskE += 1LL << xyE;
 
-        //if the initial piece is our pawn check which piece he captures and add move to appropriate array
+        //if the initial piece is our x piece check which piece he captures (if any) and add move to appropriate array otherwise add it to non captures
         if(pieceMaskI & pawns){
             if(pieceMaskE & epawns){
                 pawnCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 pawnCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 pawnCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 pawnCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 pawnCaps[4]+= tempMove;
+                continue;
             }
         } else if (pieceMaskI & knights){
             if(pieceMaskE & epawns){
                 knightCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 knightCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 knightCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 knightCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 knightCaps[4]+= tempMove;
+                continue;
             }
         } else if (pieceMaskI & bishops){
             if(pieceMaskE & epawns){
                 bishopCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 bishopCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 bishopCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 bishopCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 bishopCaps[4]+= tempMove;
+                continue;
             }
         } else if (pieceMaskI & rooks){
             if(pieceMaskE & epawns){
                 rookCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 rookCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 rookCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 rookCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 rookCaps[4]+= tempMove;
+                continue;
             }
         } else if (pieceMaskI & queens){
             if(pieceMaskE & epawns){
                 queenCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 queenCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 queenCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 queenCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 queenCaps[4]+= tempMove;
+                continue;
             }
         } else if (pieceMaskI & king){
             if(pieceMaskE & epawns){
                 kingCaps[0]+= tempMove;
+                continue;
             } else if(pieceMaskE & eknights){
                 kingCaps[1]+= tempMove;
+                continue;
             } else if(pieceMaskE & ebishops){
                 kingCaps[2]+= tempMove;
+                continue;
             } else if(pieceMaskE & erooks){
                 kingCaps[3]+= tempMove;
+                continue;
             } else if(pieceMaskE & equeens){
                 kingCaps[4]+= tempMove;
+                continue;
             }
+
         //add non capture to string so they can be added last
-        } else{
-            nonCaptures += tempMove;
         }
+        nonCaptures += tempMove;
 
     }
 
     //add all captures in order of least valuable attacker most valuable victim
     std::string orderedCaptures;
 
+    //ordered as most valuable victim, least valuable attacker ~~ Probably more effeciant order possible
     orderedCaptures += pawnCaps[4];
-    orderedCaptures += pawnCaps[3];
-    orderedCaptures += pawnCaps[2];
-    orderedCaptures += pawnCaps[1];
-
     orderedCaptures += knightCaps[4];
     orderedCaptures += bishopCaps[4];
     orderedCaptures += rookCaps[4];
     orderedCaptures += kingCaps[4];
+
+    orderedCaptures += pawnCaps[3];
     orderedCaptures += knightCaps[3];
     orderedCaptures += bishopCaps[3];
-    orderedCaptures += knightCaps[2];
-    orderedCaptures += bishopCaps[2];
-    orderedCaptures += knightCaps[1];
-    orderedCaptures += bishopCaps[1];
     orderedCaptures += rookCaps[3];
     orderedCaptures += kingCaps[3];
+
+    orderedCaptures += pawnCaps[2];   
+    orderedCaptures += knightCaps[2];
+    orderedCaptures += bishopCaps[2];
     orderedCaptures += rookCaps[2];
-    orderedCaptures += pawnCaps[0];
+    orderedCaptures += kingCaps[2];
+
+    orderedCaptures += pawnCaps[1];
+    orderedCaptures += knightCaps[1];
+    orderedCaptures += bishopCaps[1];
     orderedCaptures += rookCaps[1];
+    orderedCaptures += kingCaps[1];
+
+    orderedCaptures += pawnCaps[0];
     orderedCaptures += knightCaps[0];
     orderedCaptures += bishopCaps[0];
     orderedCaptures += rookCaps[0];
-    orderedCaptures += kingCaps[2];
-    orderedCaptures += kingCaps[1];
     orderedCaptures += kingCaps[0];
 
     orderedCaptures += nonCaptures;
