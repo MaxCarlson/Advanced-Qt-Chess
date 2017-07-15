@@ -34,7 +34,7 @@ public:
     //draw out bitboards like a full chessboard array
     void drawBBA();
 
-    //std::string generateCaptures(isWhite);
+    std::string generateCaptures(bool isWhite);
 private:
 
     //unsafe area checking for b/w
@@ -125,6 +125,7 @@ private:
     U64 westOne (U64 b);
     U64 soWeOne (U64 b);
     U64 noWeOne (U64 b);
+
 
 };
 

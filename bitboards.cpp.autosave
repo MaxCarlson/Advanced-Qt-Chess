@@ -1816,7 +1816,7 @@ std::string BitBoards::pinnedMoves(U64 pinned, U64 opawns, U64 orooks, U64 obish
     //restore accurate full tiles
     FullTiles = tempStoreTiles;
 
-
+    
     U64 enemyPieces = ~ourPieces & FullTiles, empty = ~FullTiles;
 
     //only check pinned pieces
@@ -1824,7 +1824,7 @@ std::string BitBoards::pinnedMoves(U64 pinned, U64 opawns, U64 orooks, U64 obish
     opawns = opawns & pinned;
     if(opawns != 0){
         moves += pinnedPawnCaptures(opawns, enemyPieces, mrays, isWhite);
-        moves += pinnedPawnPushes(opawns, ~enemyPieces&~ourPieces, mrays, isWhite);
+        moves += pinnedPawnPushes(opawns, empty, mrays, isWhite);
     }
     //bishops
     obishops = obishops & pinned;
@@ -2508,12 +2508,9 @@ void BitBoards::drawBBA()
 }
 
 std::string BitBoards::generateCaptures(bool isWhite){
-
-
-
-    U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king;
+//Generates mostly captures except in check or double check in which case it generates all moves
+    U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king, epawns, erooks, eknights, ebishops, equeens, eking, unsafeTiles;
     std::string list;
-    //white pawn captures + set enemy mask + set friends and pieces masks
     if(isWhite){
         enemys = BBBlackPieces & ~BBBlackKing;
         friends = BBWhitePieces;
@@ -2522,7 +2519,81 @@ std::string BitBoards::generateCaptures(bool isWhite){
         bishops = BBWhiteBishops;
         rooks = BBWhiteRooks;
         queens = BBWhiteQueens;
-        king = BBWhiteKing;
+        king = BBWhiteKing;   
+        
+        epawns = BBBlackPawns;
+        eknights = BBBlackKnights;
+        ebishops = BBBlackBishops;
+        erooks = BBBlackRooks;
+        equeens = BBBlackQueens;
+        eking = BBBlackKing;
+        //generate unsafe tiles for in check checking        
+        unsafeTiles = unsafeForWhite(pawns, rooks, knights, bishops, queens, king, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+    } else {
+        enemys = BBWhitePieces & ~BBWhiteKing;
+        friends = BBBlackPieces;
+        pawns = BBBlackPawns;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+        
+        epawns = BBWhitePawns;
+        eknights = BBWhiteKnights;
+        ebishops = BBWhiteBishops;
+        erooks = BBWhiteRooks;
+        equeens = BBWhiteQueens;
+        eking = BBWhiteKing;
+        
+        unsafeTiles = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, pawns, rooks, knights, bishops, queens, king);
+    }
+        
+    //if king is in check
+    if(king & unsafeTiles){
+        //find out if it's double check
+        checkers = checkersBB(king, isWhite);
+
+        //if we're in double check only generate king moves
+        if(isDoubleCheck(checkers)){
+            //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
+            if(isWhite){
+                kingSafeLessKing = unsafeForWhite(pawns, rooks, knights, bishops, queens, 0LL, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);                   
+            } else {
+                kingSafeLessKing = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, pawns, rooks, knights, bishops, queens, 0LL);                                   
+            }
+
+            //generates legal king moves
+            list += possibleK(king, friends, kingSafeLessKing);
+
+            return list;
+        }
+        //if we're only in single check, generate moves that either,..
+        //take out checking piece or block it's ray if it's a ray piece
+        list += genInCheckMoves(checkers, king, isWhite);
+        //generate king safety array without king in it, pass to king move gen (blank board in place of our king)
+        if(isWhite){
+            kingSafeLessKing = unsafeForWhite(pawns, rooks, knights, bishops, queens, 0LL, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);                   
+        } else {
+            kingSafeLessKing = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, pawns, rooks, knights, bishops, queens, 0LL);                                   
+        }
+        //generates legal king moves
+        list += possibleK(king, friends, kingSafeLessKing);
+
+        return list;
+    }
+    
+    //generate pinned BB and remove pieces from it for sepperate move gen ~~ opposite piece color aside from king
+    pinned = pinnedBB(erooks, ebishops, equeens, king);
+    
+    list += pinnedMoves(pinned, pawns, rooks, bishops, queens, king, erooks, ebishops, equeens, friends, isWhite);
+    
+    
+    
+    
+    //white pawn captures + set enemy mask + set friends and pieces masks
+    if(isWhite){
+
         //capture right
         moves = noEaOne(pawns) & enemys;
         for(int i = 0; i < 64; i++){
@@ -2548,14 +2619,6 @@ std::string BitBoards::generateCaptures(bool isWhite){
         }
     //black pawn captures
     } else {
-        enemys = BBWhitePieces & ~BBWhiteKing;
-        friends = BBBlackPieces;
-        pawns = BBBlackPawns;
-        knights = BBBlackKnights;
-        bishops = BBBlackBishops;
-        rooks = BBBlackRooks;
-        queens = BBBlackQueens;
-        king = BBBlackKing;
         //capture right
         moves = soEaOne(pawns) & enemys;
         for(int i = 0; i < 64; i++){
