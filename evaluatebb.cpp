@@ -18,7 +18,7 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard()
+int evaluateBB::evalBoard(bool isWhite)
 {
     int totalEvaualtion = 0;
 
@@ -26,7 +26,12 @@ int evaluateBB::evalBoard()
         totalEvaualtion += getPieceValue(i);
     }
 
-    return totalEvaualtion;
+    if(isWhite){
+        return totalEvaualtion;
+    } else {
+        return -totalEvaualtion;
+    }
+
 }
 
 //white piece square lookup tables

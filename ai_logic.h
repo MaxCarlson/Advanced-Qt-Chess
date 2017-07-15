@@ -30,16 +30,18 @@ private:
 
         //killer heuristics function
         std::string killerHe(int depth, std::string moves);
-             std::stack<std::string> killerHArr[15];
+             std::stack<std::string> killerHArr[25];
 
         //Quiescent search ~~ search positions farther if there are captures on horizon
-        int quiescent(int alpha, int beta, bool isWhite, int currentDepth);
+        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth);
 
         std::string mostVVLVA(std::string captures, bool isWhite);
 
 //transposition table functions
     //add best move to TT
     void addMoveTT(std::string bestmove, int depth, long eval, int flag);
+    //add to quiescience TT
+    void addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag);
 
 
 //misc functions that are not implemented or are old

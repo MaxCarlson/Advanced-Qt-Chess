@@ -45,9 +45,11 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 35500, currentDepth = 0;
+    int timeLimmit = 3550099999999999, currentDepth = 0;
 
     long endTime = IDTimeS + timeLimmit;
+
+    qcount = 0;
 
     searchCutoff = false;
 
@@ -116,7 +118,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     long elapsedTime = time - currentTime;
 
     //create unqiue hash from zobkey
-    int hash = (int)(zobKey % 3869311);
+    int hash = (int)(zobKey % 15485843);
     HashEntry entry = transpositionT[hash];
 
 
@@ -153,14 +155,11 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         int score;
         //evaluate board position (if curentDepth is even return -eval)
         if(!extend){
-            if((currentDepth & 1) == 1){
-                score = -eval->evalBoard();
-            } else {
-                score = eval->evalBoard();
-            }
+            score = eval->evalBoard(isWhite);
+
             extend = true;
         } else {
-            score = quiescent(alpha, beta, isWhite, currentDepth);
+            score = quiescent(alpha, beta, isWhite, currentDepth, 5);
         }
         //add move to hash table with exact flag
         addMoveTT("0", depth, score, 3);
@@ -172,6 +171,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //generate normal moves
     moves = newBBBoard->genWhosMove(isWhite);
+
+    moves = mostVVLVA(moves, isWhite);
 
     //apply heuristics and move entrys from hash table, add to front of moves
     moves = sortMoves(moves, entry, currentDepth);
@@ -285,41 +286,58 @@ std::string Ai_Logic::killerHe(int depth, std::string moves)
 
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth)
 {
     static int depth = currentDepth;
-    int value;
+    int standingPat;
 
-    if(currentDepth > depth + 7){
-        if((currentDepth & 1) == 1){
-            value = -eval->evalBoard();
-            return value;
-        } else {
-            value = eval->evalBoard();
-            return value;
+    //transposition hash quiet
+    int hash = (int)(zobKey % 338207);
+    HashEntry entry = transpositionTQuiet[hash];
+
+    if(entry.depth >= quietDepth && entry.zobrist == zobKey){
+        //return either the eval, the beta, or the alpha depending on flag
+        switch(entry.flag){
+            case 3:
+            if(entry.flag == 3){
+                return entry.eval;
+            }
+            break;
+            case 2:
+            if(entry.eval >= beta){
+                return beta;
+            }
+            break;
+            case 1:
+            if(entry.eval <= alpha){
+                return alpha;
+            }
+            break;
         }
     }
 
-
     //evaluate board position (if curentDepth is even return -eval)
-    if((currentDepth & 1) == 1){
-        value = -eval->evalBoard();
-    } else {
-        value = eval->evalBoard();
+
+    standingPat = eval->evalBoard(isWhite);
+
+
+    if(quietDepth == 0){
+        return standingPat;
     }
 
-    if(value >= beta){
+
+    if(standingPat >= beta){
        return beta;
     }
 
-    if(value > alpha){
-       alpha = value;
+    if(alpha < standingPat){
+       alpha = standingPat;
     }
 
     std::string moves = newBBBoard->genWhosMove(isWhite);
 
     U64 enemys;
-    std::string tempMove, captures;
+    std::string tempMove, captures = "";
 
     //create bitboard of enemys
     if(isWhite){
@@ -341,7 +359,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
         tempMove += moves[i+2];
         tempMove += moves[i+3];
         //find number representing board  xy
-        x1 = tempMove[i+2]-0; y1 = tempMove[i+3]-0;
+        x1 = tempMove[2]-0; y1 = tempMove[3]-0;
         xyE = y1*8+x1;
         //create mask of move end position
         pieceMaskE += 1LL << xyE;
@@ -351,21 +369,24 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
         }
     }
 
+
+//newBBBoard->drawBBA();
+
+    //std::string captures = newBBBoard->generateCaptures(isWhite), tempMove;
+
     //if there are no captures, return value of board
     if(captures.length() == 0){
-        if((currentDepth & 1) == 1){
-            value = -eval->evalBoard();
-            return value;
-        } else {
-            value = eval->evalBoard();
-            return value;
-        }
+        return standingPat;
     }
 
     captures = mostVVLVA(captures, isWhite);
+    sortMoves(captures, entry, currentDepth);
 
     int score;
-    std::string unmake;
+    std::string unmake, hashMove;
+    //set hash flag equal to alpha Flag
+    int hashFlag = 1;
+
     for(int i = 0; i < captures.length(); i+=4)
     {
         qcount ++;
@@ -378,18 +399,28 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth)
 
         unmake = newBBBoard->makeMove(tempMove);
 
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1);
 
         newBBBoard->unmakeMove(unmake);
 
         if(score >= beta){
+            //add beta to transpositon table with beta flag
+            addTTQuiet(tempMove, quietDepth, beta, 2);
+
+            //push killer move to top of stack for given depth
+            killerHArr[currentDepth].push(tempMove);
            return beta;
         }
 
         if(score > alpha){
            alpha = score;
+           //if we've gained a new alpha set hash Flag equal to exact
+           hashFlag = 3;
+           hashMove = tempMove;
         }
     }
+    //add alpha eval to hash table
+    addTTQuiet(hashMove, quietDepth, alpha, hashFlag);
     return alpha;
 }
 
@@ -439,6 +470,9 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
     std::string tempMove;
 
+    //string for holding all non captures, to be added last to moves
+    std::string nonCaptures;
+
     for(int i = 0; i < captures.length(); i+=4)
     {
         pieceMaskI = 0LL, pieceMaskE = 0LL;
@@ -448,11 +482,11 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
         tempMove += captures[i+1];
         tempMove += captures[i+2];
         tempMove += captures[i+3];
-        x = tempMove[i]-0; y = tempMove[i+1];
+        x = tempMove[0]-0; y = tempMove[1];
         xyI = y*8+x;
         pieceMaskI += 1LL << xyI;
         //find number representing board end position
-        x1 = tempMove[i+2]-0; y1 = tempMove[i+3]-0;
+        x1 = tempMove[2]-0; y1 = tempMove[3]-0;
         xyE = y1*8+x1;
         //create mask of move end position
         pieceMaskE += 1LL << xyE;
@@ -530,6 +564,9 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
             } else if(pieceMaskE & equeens){
                 kingCaps[4]+= tempMove;
             }
+        //add non capture to string so they can be added last
+        } else{
+            nonCaptures += tempMove;
         }
 
     }
@@ -564,6 +601,8 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     orderedCaptures += kingCaps[1];
     orderedCaptures += kingCaps[0];
 
+    orderedCaptures += nonCaptures;
+
  return orderedCaptures;
 
 }
@@ -571,7 +610,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
 void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
 {
     //get hash of current zobrist key
-    int hash = (int)(zobKey % 3869311);
+    int hash = (int)(zobKey % 15485843);
 
     if(transpositionT[hash].depth <= depth){
         //add position to the table
@@ -583,6 +622,22 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
 
     }
 
+}
+
+void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag)
+{
+    //get hash of current zobrist key
+    int hash = (int)(zobKey % 338207);
+
+    if(transpositionTQuiet[hash].depth <= quietDepth){
+        //add position to the table
+        transpositionTQuiet[hash].zobrist = zobKey;
+        transpositionTQuiet[hash].depth = quietDepth;
+        transpositionTQuiet[hash].eval = (int)eval;
+        transpositionTQuiet[hash].move = bestmove;
+        transpositionTQuiet[hash].flag = flag;
+
+    }
 }
 
 std::string Ai_Logic::debug(std::string ttMove, std::string moves)
@@ -615,12 +670,8 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
 
 
     if(depth == 0){
-        int bestScore;
-        if(isWhite){
-            bestScore = eval->evalBoard();
-        } else {
-            bestScore = -eval->evalBoard();
-        }
+        int bestScore = eval->evalBoard(isWhite);
+
         return bestScore;
     }
 
@@ -665,8 +716,7 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
     //Do a shallower zero window search of moves other than the first, if they're better
     //run a full PV search
     for(int i = bestMoveIndex+4; i < moves.length(); i += 4){
-
-        int score = -999999;
+        int score;
         positionCount ++;
         std::string move;
         //convert move into a single string
@@ -692,7 +742,7 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
                 alpha = score;
             }
         }
-        if(score != -999999 && score > bestScore){
+        if(score > bestScore){
 
             if(score >= beta){
                 return score;
@@ -712,7 +762,7 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
     //alpha = beta-1;
 
     if(depth == 0){
-        score = eval->evalBoard();
+        score = eval->evalBoard(isWhite);
         return score;
     }
 

@@ -56,6 +56,7 @@ private:
 
     //our pieces and enemy pieces -- for finding moves for pinned pieces along pin ray
     std::string pinnedMoves(U64 pinned, U64 opawns, U64 orooks, U64 obishops, U64 oqueens, U64 oking, U64 erooks, U64 ebishops, U64 equeens, U64 ourPieces, bool isWhite);
+    std::string pinnedCaptures(U64 pinned, U64 opawns, U64 orooks, U64 obishops, U64 oqueens, U64 oking, U64 erooks, U64 ebishops, U64 equeens, U64 ourPieces, U64 enemyPieces, bool isWhite);
         //pinned pieces movements
         std::string pinnedPawnCaptures(U64 opawns, U64 enemyPieces, U64 mrays, bool isWhite);
         std::string pinnedPawnPushes(U64 opawns, U64 EmptyTiles, U64 mrays, bool isWhite);

@@ -31,7 +31,9 @@ ZobristH *ZKey;
 //bit boards object
 BitBoards *newBBBoard;
 //transposition table array
-HashEntry transpositionT[3869311];
+HashEntry transpositionT[15485843];
+//transpositon table for quiescence search
+HashEntry transpositionTQuiet[338207];
 
 
 //color piece arrays

@@ -11,7 +11,7 @@ public:
     evaluateBB();
 
     //forms total evaluation for baord state
-    int evalBoard();
+    int evalBoard(bool isWhite);
 
     int getPieceValue(int location);
 };
