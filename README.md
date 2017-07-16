@@ -6,20 +6,27 @@ Currently implemented:
 	Minimax
 
 	Alpha-beta pruning
+	
+	Null move pruning
 
 	Bitboards
+	
+	Iterative deepening
+	
+	Aspiration windows
 
 	Killer heuristics
 
 	Transpostion table using zobrist keys
+	
+	Quiescence search
+	
+	Delta pruning for Quiescence
+	
 		
 In the future:
 		
-	Aspiration windows
-
-	History heuristics
-
-	Null move pruning
+	History heuristics	
 
 	Nega-max or principal variation
 
@@ -28,3 +35,5 @@ In the future:
 	Castling
 
 	En-Passants
+	
+	Pawn promotions
