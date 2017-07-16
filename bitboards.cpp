@@ -2869,6 +2869,35 @@ std::string BitBoards::generateCaptures(bool isWhite){
     return list;
 }
 
+bool BitBoards::isInCheck(bool isWhite)
+{
+    U64 knights, pawns, bishops, rooks, queens, king, unsafeTiles;
+    std::string list;
+    if(isWhite){
+        pawns = BBWhitePawns;
+        knights = BBWhiteKnights;
+        bishops = BBWhiteBishops;
+        rooks = BBWhiteRooks;
+        queens = BBWhiteQueens;
+        king = BBWhiteKing;
+        //generate unsafe tiles for in check checking
+        unsafeTiles = unsafeForWhite(pawns, rooks, knights, bishops, queens, king, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+    } else {
+        pawns = BBBlackPawns;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+        unsafeTiles = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, pawns, rooks, knights, bishops, queens, king);
+    }
+    if(unsafeTiles & king){
+        return true;
+    } else {
+        return false;
+    }
+}
+
 //single ray direction functions -- mostly for pinned piece calcs
 U64 BitBoards::up(U64 piece)
 {

@@ -18,7 +18,7 @@ public:
     void constructBoards();
 
     //makes a move and returns a string that allows unmaking (both make and unmake change zobrist keys by move and color)
-    std:: string makeMove(std::string move);
+    std::string makeMove(std::string move);
     //unmakes move
     void unmakeMove(std::string moveKey);
 
@@ -33,8 +33,10 @@ public:
 
     //draw out bitboards like a full chessboard array
     void drawBBA();
-
+    //still needs lots of work, possible to generatae only captures more effeciantly than parsing already gened moves?
     std::string generateCaptures(bool isWhite);
+
+    bool isInCheck(bool isWhite);
 private:
 
     //unsafe area checking for b/w

@@ -48,7 +48,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 27000, currentDepth = 0;
+    int timeLimmit = 18000, currentDepth = 0;
     long endTime = IDTimeS + timeLimmit;
 
     //normal positions searched
@@ -131,7 +131,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
-    if(entry.depth >= depth && entry.zobrist == zobKey){
+    if(entry.depth >= depth && entry.zobrist == zobKey && currentDepth != 1){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
             case 3:
@@ -150,9 +150,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             }
             break;
         }
-        if(alpha >= beta){
-            return entry.eval;
-        }
+
     }
 
     //if the time limmit has been exceeded finish searching
@@ -177,8 +175,20 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
 
+    //Null move heuristics, disabled if in check
+    if(allowNull && depth >= depthR+1 && ! newBBBoard->isInCheck(isWhite)){
+        ZKey->UpdateColor();
+        ZKey->UpdateNull();
+        score = -alphaBeta(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, true, false);
+        ZKey->UpdateColor();
+        ZKey->UpdateNull();
+        //if after getting a free move the score is too good, prune this branch
+        if(score >= beta){
+            return score;
+        }
+    }
 
-    std::string moves, tempBBMove;
+    std::string moves;
     int bestTempMove;
 
     //generate normal moves
@@ -192,23 +202,10 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //apply heuristics and move entrys from hash table, add to front of moves
     moves = sortMoves(moves, entry, currentDepth, isWhite);
 
-    //Null move heuristics ~~ need to disable in mate scenarios
-    if(allowNull && depth >= depthR+1){
-        ZKey->UpdateColor();
-        ZKey->UpdateNull();
-        score = -alphaBeta(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, true, false);
-        ZKey->UpdateColor();
-        ZKey->UpdateNull();
-        //if after getting a free move the score is too good, prune this branch
-        if(score >= beta){
-            return score;
-        }
-    }
-
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
 
-    std::string tempMove, hashMove;
+    std::string tempMove, tempBBMove, hashMove;
     for(int i = 0; i < moves.length(); i+=4){
         positionCount ++;
         //change board accoriding to i possible move
@@ -236,6 +233,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
+            //addToKillers(currentDepth, tempMove);
 
             return beta;
         }
@@ -262,9 +260,12 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite)
 {
+    //sort moves into most valuable victim least valuable attacker order
+    //with non captures following all captures
     moves = mostVVLVA(moves, isWhite);
     //call killer moves + add killers to front of moves if there are any
     moves = killerHe(currentDepth, moves);
+    //moves = killerTest(currentDepth, moves);
     //perfrom look up from transpositon table
     if(entry.move.length() == 4 && entry.zobrist == zobKey){
         std::string m;
@@ -317,6 +318,59 @@ std::string Ai_Logic::killerHe(int depth, std::string moves)
 
 }
 
+std::string Ai_Logic::killerTest(int depth, std::string moves)
+{
+    std::string cutoffs, tempMove, tempMove1;
+    //if no killer moves, return the same list of moves taken
+    int size = 0;
+    if(killers[0][depth].length() >= 4){
+        size ++;
+    }
+    if(killers[1][depth].length() >= 4){
+        size ++;
+    }
+    if(killers[2][depth].length() >= 4){
+        size ++;
+    }
+    if(size == 0){
+        return moves;
+    }
+
+    //loop through killer moves at given depth and test if they're legal
+    //(done by testing if they're in move list that's already been legally generated)
+    for(int i = 0; i < 3 ; ++i){
+        //grab first killer move for given depth
+        tempMove = killers[i][depth];
+        for(int j = 0; j < moves.size(); j+=4){
+            tempMove1 = moves[j];
+            tempMove1 += moves[j+1];
+            tempMove1 += moves[j+2];
+            tempMove1 += moves[j+3];
+            //if killer move matches a move in the moveset for current turn, put it at the front of the list
+            if(tempMove == tempMove1){
+                cutoffs += tempMove;
+                break;
+            }
+        }
+    }
+    cutoffs += moves;
+    return cutoffs;
+}
+
+void Ai_Logic::addToKillers(int depth, std::string move)
+{
+    std::string temp, temp1;
+    //if move is not identical to other moves in killer at depth
+    if(killers[0][depth] != move && killers[1][depth] != move && killers[2][depth] != move){
+        //shift killer moves
+        temp = killers[0][depth];
+        killers[0][depth] = move;
+        temp1 = killers[1][depth];
+        killers[1][depth] = temp;
+        killers[2][depth] = temp1;
+    }
+}
+
 int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit)
 {
     static int depth = currentDepth;
@@ -329,7 +383,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //transposition hash quiet
     int hash = (int)(zobKey % 338207);
     HashEntry entry = transpositionTQuiet[hash];
-/*
+
     if(entry.depth >= quietDepth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
@@ -350,7 +404,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             break;
         }
     }
-*/
+
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -368,6 +422,12 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     if(standingPat >= beta){
        return beta;
+    }
+
+    int BIG_DELTA = 900; // queen value
+
+    if (standingPat < alpha - BIG_DELTA ) {
+       return alpha;
     }
 
     if(alpha < standingPat){
@@ -449,6 +509,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
+            //addToKillers(currentDepth, tempMove);
            return beta;
         }
 
