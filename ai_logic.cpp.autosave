@@ -329,7 +329,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //transposition hash quiet
     int hash = (int)(zobKey % 338207);
     HashEntry entry = transpositionTQuiet[hash];
-/*
+
     if(entry.depth >= quietDepth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
@@ -350,7 +350,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             break;
         }
     }
-*/
+
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;

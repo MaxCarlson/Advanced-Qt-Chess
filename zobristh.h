@@ -23,6 +23,7 @@ public:
     //Update zobrist key by XOR ing rand numbers in zArray
     void UpdateKey(int start, int end, std::string moveKey);
     void UpdateColor();
+    void UpdateNull();
 
     //print out how many times a number in the array is created
     //use excel to graph results

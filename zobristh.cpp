@@ -15,7 +15,11 @@ std::uniform_int_distribution<U64> dist(std::llround(std::pow(2,61)), std::llrou
 U64 zArray[2][6][64];
 //U64 zEnPassasnt[8]; ~~restore once implemented
 //U64 zCastle[4];
+//used to change color of move
 U64 zBlackMove;
+//test ~~ used to indicate a NULL move state
+U64 zNullMove;
+
 //actual key reprenting game state
 U64 zobKey;
 
@@ -60,11 +64,17 @@ void ZobristH::zobristFill()
     */
     //random is it blacks turn or not
     zBlackMove = random64();
+    zNullMove = random64();
 }
 
 void ZobristH::UpdateColor()
 {
     zobKey ^= zBlackMove;
+}
+
+void ZobristH::UpdateNull()
+{
+    zobKey ^= zNullMove;
 }
 
 void ZobristH::UpdateKey(int start, int end, std::string moveKey)
@@ -149,7 +159,6 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
 
     }
 }
-
 
 U64 ZobristH::getZobristHash(bool isWhiteTurn)
 {
