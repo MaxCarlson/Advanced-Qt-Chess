@@ -36,11 +36,7 @@ int evaluateBB::evalBoard(bool isWhite)
 
 int evaluateBB::returnMateScore(bool isWhite)
 {
-    if(isWhite){
-        return 22000;
-    } else {
-        return -22000;
-    }
+    return 22000;
 }
 
 //white piece square lookup tables
