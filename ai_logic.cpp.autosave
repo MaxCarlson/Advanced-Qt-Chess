@@ -878,7 +878,7 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
     //get hash of current zobrist key
     int hash = (int)(zobKey % 15485843);
     //if the depth of the current move is greater than the one it's replacing...
-    //if(depth >= transpositionT[hash].depth){
+    if(depth >= transpositionT[hash].depth){
         //add position to the table
         transpositionT[hash].zobrist = zobKey;
         transpositionT[hash].depth = depth;
@@ -889,7 +889,7 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
             transpositionT[hash].move = bestmove;
         }
 
-   // }
+    }
 
 }
 
