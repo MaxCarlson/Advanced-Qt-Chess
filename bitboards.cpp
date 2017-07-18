@@ -2603,7 +2603,7 @@ void BitBoards::drawBBA()
     std::cout << std::endl << std::endl;;
 }
 
-std::string BitBoards::generateCaptures(bool isWhite){
+std::string BitBoards::generateCaptures(bool isWhite, bool removeVarIfTryingToUseLater){
 //Generates mostly captures except in check or double check in which case it generates all moves
     U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king, epawns, erooks, eknights, ebishops, equeens, eking, unsafeTiles, kingSafeLessKing, checkers, pinned;
     std::string list;
@@ -2867,6 +2867,47 @@ std::string BitBoards::generateCaptures(bool isWhite){
     }
 
     return list;
+}
+
+std::string BitBoards::generateCaptures(bool isWhite)
+{
+    std::string moves = genWhosMove(isWhite);
+
+    U64 enemys;
+    std::string tempMove, captures;
+
+    //create bitboard of enemys
+    if(isWhite){
+        enemys = BBBlackPieces & ~BBBlackKing;
+    } else {
+        enemys = BBWhitePieces & ~BBWhiteKing;
+    }
+
+    int x1, y1, xyE;
+    U64 pieceMaskE;
+
+    //search through all moves from turn for captures
+    for(int i = 0; i < moves.length(); i += 4){
+        pieceMaskE = 0LL;
+
+        tempMove = "";
+        tempMove += moves[i];
+        tempMove += moves[i+1];
+        tempMove += moves[i+2];
+        tempMove += moves[i+3];
+        //find number representing board  xy
+        x1 = tempMove[2]-0; y1 = tempMove[3]-0;
+        xyE = y1*8+x1;
+        //create mask of move end position
+        pieceMaskE += 1LL << xyE;
+        //if move ends on an enemy, it's a capture
+        if(pieceMaskE & enemys){
+            captures += tempMove;
+        }
+    }
+
+    return captures;
+
 }
 
 bool BitBoards::isInCheck(bool isWhite)

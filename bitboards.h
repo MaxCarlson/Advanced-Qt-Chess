@@ -34,6 +34,8 @@ public:
     //draw out bitboards like a full chessboard array
     void drawBBA();
     //still needs lots of work, possible to generatae only captures more effeciantly than parsing already gened moves?
+    std::string generateCaptures(bool isWhite, bool removeVarIfTryingToUseLater);
+
     std::string generateCaptures(bool isWhite);
 
     bool isInCheck(bool isWhite);
