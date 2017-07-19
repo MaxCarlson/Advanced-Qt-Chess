@@ -102,14 +102,15 @@ std::string Ai_Logic::iterativeDeep(int depth)
             int hash = (int)(zobKey % 15485843);
             //store best move from hash table
             bestMove = transpositionT[hash].move;
-
-            std::cout << (int)bestMove[0] << (int)bestMove[1] << (int)bestMove[2] << (int)bestMove[3] << ", ";
             tpositionCount = positionCount;
         }
         //increment distance to travel (inverse of depth)
         distance++;
     }
     std::cout << std::endl;
+
+    //prints the principal variation
+    extractPV(distance-1);
 
     //make final move on bitboards
     newBBBoard->makeMove(bestMove);
@@ -804,6 +805,32 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     orderedCaptures += nonCaptures;
 
  return orderedCaptures;
+
+}
+
+void Ai_Logic::extractPV(int depthReached)
+{
+
+    int hash = (int)(zobKey % 15485843);
+    HashEntry entry = transpositionT[hash];
+    std::vector<std::string> moveVec;
+
+    char flips[8] = {'8', '7', '6', '5', '4', '3', '2', '1'};
+    char flipsL[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+
+    //make move and print PV
+    for(int i = 0; i < depthReached; i++){
+        std::cout << flips[(int)entry.move[0]] << flipsL[(int)entry.move[1]] << flips[(int)entry.move[2]] << flipsL[(int)entry.move[3]] << ", ";
+        std::string tmove = newBBBoard->makeMove(entry.move);
+        moveVec.push_back(tmove);
+        hash = (int)(zobKey % 15485843);
+        entry = transpositionT[hash];
+    }
+
+    //unmake moves
+    for(int i = depthReached-1; i >= 0; i--){
+        newBBBoard->unmakeMove(moveVec[i]);
+    }
 
 }
 

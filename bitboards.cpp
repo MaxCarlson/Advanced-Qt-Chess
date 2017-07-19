@@ -3041,13 +3041,17 @@ std::string BitBoards::generateCaptures(bool isWhite)
 
     int x1, y1, xyE;
     U64 pieceMaskE;
+    int length = moves.length();
     //parse through moves for promotions
-    for(int i = 0; i < moves.length(); i += 4){
+    for(int i = 0; i < length; i += 4){
         if(moves[i+3] == 'Q'){
             captures += moves[i];
             captures += moves[i+1];
             captures += moves[i+2];
             captures += moves[i+3];
+            moves.erase(i,4);
+            i -=4;
+            length -=4;
         }
     }
 

@@ -24,7 +24,7 @@ std::string boardArr [8][8]= {
     {"P", "P", "P", "P", "P", "P", "P", "P"},
     {"R", "N", "B", "Q", "K", "B", "N", "R"},
               };
-
+*/
 //TEST BOARD
 std::string boardArr [8][8]= {
     {"r", " ", " ", " ", "k", " ", " ", "r"},
@@ -37,7 +37,7 @@ std::string boardArr [8][8]= {
     {" ", " ", " ", " ", " ", " ", " ", " "},
               };
 
-*/
+/*
 std::string boardArr[8][8] = {
     {" " , "r", " " , " " , " " , " " , " " , "r" },
     {" ", "p", "p", "q", " " , "p", "p", "p"},
@@ -48,7 +48,7 @@ std::string boardArr[8][8] = {
     { "P" , " " , " " , " " , "K", " ", " ", " "},
     {" ", "R", " ", " ", " ", " ", " ", "R" },
 };
-
+*/
 //king saftey arrays
 bool whiteSafe[8][8];
 bool blackSafe[8][8];

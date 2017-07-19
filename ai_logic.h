@@ -46,6 +46,9 @@ private:
         //orders moves by placing in order of most valuable victim least valuable attacker
         std::string mostVVLVA(std::string captures, bool isWhite);
 
+        //function to extract PV or best line of moves looked at
+        void extractPV(int depthReached);
+
 //transposition table functions
     //add best move to TT
     void addMoveTT(std::string bestmove, int depth, long eval, int flag);
