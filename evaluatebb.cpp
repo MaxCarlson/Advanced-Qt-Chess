@@ -10,7 +10,7 @@ piece values
   B = 330
   R = 500
   Q = 900
-  K = 20000
+  K = 19000
 */
 
 evaluateBB::evaluateBB()
@@ -37,9 +37,9 @@ int evaluateBB::evalBoard(bool isWhite)
 int evaluateBB::returnMateScore(bool isWhite)
 {
     if(isWhite){
-        return 22000;
+        return 32000;
     } else {
-        return -22000;
+        return -32000;
     }
 }
 
@@ -224,10 +224,10 @@ int evaluateBB::getPieceValue(int location)
         } else if(pieceLocation & BBWhiteKing){
             //If both sides have no queens use king end game board
             if((BBWhiteQueens | BBBlackQueens) & full){
-                return 9000 + wKingEndSqT[location];
+                return 19000 + wKingEndSqT[location];
             }
             //if end game conditions fail use mid game king board
-            return 9000 + wKingMidSqT[location];
+            return 19000 + wKingMidSqT[location];
 
         }
     } else if (BBBlackPieces & pieceLocation) {
@@ -243,9 +243,9 @@ int evaluateBB::getPieceValue(int location)
             return -900 -bQueenSqT[location];
         } else if(pieceLocation & BBBlackKing){
             if((BBBlackQueens | BBWhiteQueens) & full){
-                return -9000 -bKingEndSqT[location];
+                return -19000 -bKingEndSqT[location];
             }
-         return 9000 - bKingMidSqT[location];
+         return -19000 -bKingMidSqT[location];
         }
     }
     return 0;

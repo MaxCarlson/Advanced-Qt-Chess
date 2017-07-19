@@ -1104,8 +1104,18 @@ std::string BitBoards::makeMove(std::string move)
             FullTiles &= ~pieceMaskI;
             savedMove += "p";
             savedMove += isCapture(pieceMaskE, wOrB);
-            //add piece
-            BBBlackPawns |= pieceMaskE;
+
+            if(move[3] != 'Q'){
+                //add piece to landing spot
+                BBBlackPawns |= pieceMaskE;
+
+            //if it's a pawn promotion
+            } else {
+                //add queen to landing spot
+                BBBlackQueens |= pieceMaskE;
+                //add promotion data to capture string
+                savedMove += "O";
+            }
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
@@ -1271,6 +1281,11 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
 
 void BitBoards::unmakeMove(std::string moveKey)
 {
+    if(BBBlackBishops &EmptyTiles){
+        drawBB(BBBlackBishops);
+        drawBBA();
+    }
+
     //parse string move and change to ints
     int x = moveKey[0] - 0;
     int y = moveKey[1] - 0;
@@ -1353,8 +1368,13 @@ void BitBoards::unmakeMove(std::string moveKey)
     } else if(wOrB == 'b'){
         switch(pieceMoved){
             case 'p':
-            //remove piece from where it landed
-            BBBlackPawns &= ~pieceMaskE;
+            if(promotion == 'X'){
+                //remove piece from where it landed
+                BBBlackPawns &= ~pieceMaskE;
+            //promotion unmake
+            } else {
+                BBBlackQueens &= ~pieceMaskE;
+            }
             //put it back where it started
             BBBlackPawns |= pieceMaskI;
             //change color boards same way
@@ -2253,7 +2273,7 @@ std::string BitBoards::possibleWP(U64 wpawns, U64 EmptyTiles, U64 blackking)
         }
     }
 
-    //Pawn promotions moving forward one
+//Pawn promotions moving forward one
     PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
     for(int i = 0; i < 64; i++){
         if(((PAWN_MOVES>>i)&1)==1){
@@ -2310,10 +2330,6 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 
     //forward two
     PAWN_MOVES = (bpawns<<16) & EmptyTiles &(EmptyTiles<<8) & rank5;
-    if(EmptyTiles & BBBlackPawns){
-        std::cout << "Pawns shifted here" << std::endl;
-        drawBB(BBBlackPawns);
-    }
     for(int i = 0; i < 64; i++){
         if(((PAWN_MOVES>>i)&1)==1){
             list+=i%8;
@@ -2347,6 +2363,43 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 
         }
     }
+
+//promotions
+    PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8;
+            list+=i/8-1;
+            list+='F';
+            list+='Q';
+
+        }
+    }
+    //capture promotions
+    //capture right
+    PAWN_MOVES = soEaOne(bpawns) & BBWhitePieces & ~whiteking & rank1;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8-1;
+            list+=i/8-1;
+            list+=i%8;
+            list+='Q';
+
+        }
+    }
+
+    //capture left
+    PAWN_MOVES = soWeOne(bpawns) & BBWhitePieces & ~whiteking & rank1;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8+1;
+            list+=i/8-1;
+            list+=i%8;
+            list+='Q';
+
+        }
+    }
+
     //drawBB(EmptyTiles);
     return list;
 }

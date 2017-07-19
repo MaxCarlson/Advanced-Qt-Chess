@@ -124,8 +124,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
     //std::cout << zobKey << std::endl;
     std::cout << qcount << " quiet positions searched."<< std::endl;
 
-
-
     return bestMove;
 }
 
@@ -628,8 +626,26 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
         x = tempMove[0]-0; y = tempMove[1];
         xyI = y*8+x;
         pieceMaskI += 1LL << xyI;
-        //find number representing board end position
-        x1 = tempMove[2]-0; y1 = tempMove[3]-0;
+        //normal moves
+        if(tempMove[3] != 'Q'){
+            //find number representing board end position
+            x1 = tempMove[2]-0; y1 = tempMove[3]-0;
+        //pawn promotions
+        } else {
+            //forward non capture
+            if(tempMove[2] == 'F'){
+                x1 = x;
+            //capture
+            } else {
+                x1 = tempMove[2]-0;
+            }
+            if(isWhite){
+                y1 = 0;
+            } else {
+                y1 = 7;
+            }
+
+        }
         xyE = y1*8+x1;
         //create mask of move end position
         pieceMaskE += 1LL << xyE;
