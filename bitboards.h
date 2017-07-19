@@ -36,7 +36,11 @@ public:
     //still needs lots of work, possible to generatae only captures more effeciantly than parsing already gened moves?
     std::string generateCaptures(bool isWhite, bool removeVarIfTryingToUseLater);
 
+    //used in MVVLVA sorting !!! NEED to include pawn promotions
     std::string generateCaptures(bool isWhite);
+
+    //used for validating player move
+    bool isPlayerMoveValid(int x, int y, int x1, int y1, bool isWhite);
 
     bool isInCheck(bool isWhite);
 private:

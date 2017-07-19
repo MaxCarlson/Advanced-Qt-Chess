@@ -137,7 +137,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     int hash = (int)(zobKey % 15485843);
     HashEntry entry = transpositionT[hash];
 
-
+/*
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobKey){
@@ -161,7 +161,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-
+*/
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -199,7 +199,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
     //apply heuristics and move entrys from hash table, add to front of moves
-    moves = sortMoves(moves, entry, currentDepth, isWhite);
+    //moves = sortMoves(moves, entry, currentDepth, isWhite);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -568,6 +568,7 @@ bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha,
 std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
 {
     //arrays holding different captures 0 position for pawn captures, 1 = knight, 2 = bishops, 3 = rook, 4 = queen captures
+    std::string pawnPromotions;
     std::string pawnCaps[5];
     std::string knightCaps[5];
     std::string bishopCaps[5];
@@ -644,6 +645,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
             } else {
                 y1 = 7;
             }
+            pawnPromotions += tempMove;
 
         }
         xyE = y1*8+x1;
@@ -763,6 +765,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     //add all captures in order of least valuable attacker most valuable victim
     std::string orderedCaptures;
 
+    orderedCaptures += pawnPromotions;
     //ordered as most valuable victim, least valuable attacker ~~ Probably more effeciant order possible
     orderedCaptures += pawnCaps[4];
     orderedCaptures += knightCaps[4];

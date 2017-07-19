@@ -3069,6 +3069,30 @@ std::string BitBoards::generateCaptures(bool isWhite)
 
 }
 
+bool BitBoards::isPlayerMoveValid(int x, int y, int x1, int y1, bool isWhite)
+{
+    //gen moves all moves and compare against player move
+    std::string pMoves = genWhosMove(isWhite);
+
+    std::string move;
+    move += (char)x;
+    move += (char)y;
+    move += (char)x1;
+    move += (char)y1;
+    //scan through all possible moves and see if players move is valid
+    for(int i = 0; i < pMoves.length(); i += 4){
+        std::string tMove;
+        tMove += pMoves[i];
+        tMove += pMoves[i+1];
+        tMove += pMoves[i+2];
+        tMove += pMoves[i+3];
+        if(tMove == move){
+            return true;
+        }
+    }
+    return false;
+}
+
 bool BitBoards::isInCheck(bool isWhite)
 {
     U64 knights, pawns, bishops, rooks, queens, king, unsafeTiles;

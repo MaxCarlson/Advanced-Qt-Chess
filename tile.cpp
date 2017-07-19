@@ -73,10 +73,18 @@ bool Tile::moveChecking(Tile *temp, int countC){
 
             //check if input coordinates are a valid move for piece and player
             if(isValid->whichPiece() == true){
-
                 //switch Qwidget values on origin and spot piece landed
                 click1->piece=0;
                 temp->piece=1;
+
+                //pawn promotions
+                if(click1->pieceName == "P" && tempy2 == 0){
+                    click1->pieceName = "Q";
+                    boardArr[tempy2][tempx2] = "Q";
+                } else if (click1->pieceName == "p" && tempy2 == 7){
+                    click1->pieceName = "q";
+                    boardArr[tempy2][tempx2] = "q";
+                }
 
                 //give moved piece same attributes
                 temp->pieceColor=click1->pieceColor;
@@ -89,33 +97,14 @@ bool Tile::moveChecking(Tile *temp, int countC){
                 click1->tileDisplay();
                 temp->tileDisplay();
 
-
-
                 turns++;
                 count = 0;
-                /*
-                //once move is made update the zorbist hash key
-                ZKey->getZobristHash(true);
 
-                int xyI = tempy*8+tempx;
-                int xyE = tempy2*8+tempx;
-                char x = tempx-0; char y = tempy-0;
-                char x1 = tempx2-0; char y1 = tempy2-0;
-                std::string moveKey;
-                moveKey += x;
-                moveKey += y;
-                moveKey += x1;
-                moveKey += y1;
-                //update zobrist hash
-                ZKey->UpdateKey(xyI, xyE, moveKey);
-                */
                 if(aiOn == 1){
                     aiTurn();
                 }
 
-
             } else {
-
                 count = 1;
             }
 
@@ -131,7 +120,7 @@ void Tile::aiTurn(){
 
     std::string bestMove;
     //generate best move (number represents max search depth)
-    bestMove = newMove->iterativeDeep(7);
+    bestMove = newMove->iterativeDeep(6);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;
