@@ -120,7 +120,7 @@ void Tile::aiTurn(){
 
     std::string bestMove;
     //generate best move (number represents max search depth)
-    bestMove = newMove->iterativeDeep(6);
+    bestMove = newMove->iterativeDeep(7);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;

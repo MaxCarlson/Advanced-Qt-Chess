@@ -1281,10 +1281,6 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
 
 void BitBoards::unmakeMove(std::string moveKey)
 {
-    if(BBBlackBishops &EmptyTiles){
-        drawBB(BBBlackBishops);
-        drawBBA();
-    }
 
     //parse string move and change to ints
     int x = moveKey[0] - 0;
@@ -3030,6 +3026,7 @@ std::string BitBoards::generateCaptures(bool isWhite, bool removeVarIfTryingToUs
 
 std::string BitBoards::generateCaptures(bool isWhite)
 {
+    //parses normal moves generated for captures and promotions
     std::string moves = genWhosMove(isWhite);
 
     U64 enemys;
@@ -3044,6 +3041,16 @@ std::string BitBoards::generateCaptures(bool isWhite)
 
     int x1, y1, xyE;
     U64 pieceMaskE;
+    //parse through moves for promotions
+    for(int i = 0; i < moves.length(); i += 4){
+        if(moves[i+3] == 'Q'){
+            captures += moves[i];
+            captures += moves[i+1];
+            captures += moves[i+2];
+            captures += moves[i+3];
+        }
+    }
+
 
     //search through all moves from turn for captures
     for(int i = 0; i < moves.length(); i += 4){

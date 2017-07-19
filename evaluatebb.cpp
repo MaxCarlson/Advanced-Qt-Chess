@@ -39,7 +39,7 @@ int evaluateBB::returnMateScore(bool isWhite)
     if(isWhite){
         return 32000;
     } else {
-        return 32000;
+        return -32000;
     }
 }
 

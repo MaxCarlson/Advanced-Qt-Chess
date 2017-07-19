@@ -137,7 +137,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     int hash = (int)(zobKey % 15485843);
     HashEntry entry = transpositionT[hash];
 
-/*
+
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobKey){
@@ -161,7 +161,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-*/
+
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -169,7 +169,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     int score;
     if(depth == 0 || searchCutoff){
-        int queitSD = 23;
+        int queitSD = 16;
         //run capture search to max depth of queitSD
         score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit);
 
@@ -199,7 +199,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
     //apply heuristics and move entrys from hash table, add to front of moves
-    //moves = sortMoves(moves, entry, currentDepth, isWhite);
+    moves = sortMoves(moves, entry, currentDepth, isWhite);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -240,10 +240,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         if(bestTempMove > alpha){
             //new best move
             alpha = bestTempMove;
-            //store best move useable found for depth of one
-            if(currentDepth == 1){
-                tBestMove = tempMove;
-            }
 
             //if we've gained a new alpha set hash Flag equal to exact
             hashFlag = 3;
@@ -266,7 +262,8 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
     moves = killerHe(currentDepth, moves);
     //moves = killerTest(currentDepth, moves);
     //perfrom look up from transpositon table
-    if(entry.move.length() >= 4 && entry.zobrist == zobKey){
+
+    if(entry.move.length() == 4 && entry.zobrist == zobKey){
         std::string m;
         //if entry is a beta match, add beta cutoff move to front of moves
         if(entry.flag == 2){
@@ -397,7 +394,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //transposition hash quiet
     int hash = (int)(zobKey % 338207);
     HashEntry entry = transpositionTQuiet[hash];
-/*
+
     if(entry.depth >= quietDepth && entry.zobrist == zobKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
@@ -418,7 +415,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             break;
         }
     }
-*/
+
     //if the time limmit has been exceeded finish searching
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -440,11 +437,12 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //simple horrible node pruning, if no possible move can improve alpha, no reason to search
     ///ONCE pawn promotion is complete, augment with 775 increase to bigD if promotion possible
+    /*
     int bigDelta = 900; // queen value
     if (standingPat < alpha - bigDelta ) {
        return alpha;
     }
-
+*/
     if(alpha < standingPat){
        alpha = standingPat;
     }
@@ -479,7 +477,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         tempMove += captures[i+3];
         // ~~~NEEDS WORK + Testing
         if(!deltaPruning(tempMove, standingPat, isWhite, alpha, false)){
-            continue;
+            //continue;
         }
 
         unmake = newBBBoard->makeMove(tempMove);
@@ -614,8 +612,9 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
 
     //string for holding all non captures, to be added last to moves
     std::string nonCaptures;
+    int length = captures.length();
 
-    for(int i = 0; i < captures.length(); i+=4)
+    for(int i = 0; i < length; i+=4)
     {
         pieceMaskI = 0LL, pieceMaskE = 0LL;
         tempMove = "";
@@ -631,6 +630,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
         if(tempMove[3] != 'Q'){
             //find number representing board end position
             x1 = tempMove[2]-0; y1 = tempMove[3]-0;
+
         //pawn promotions
         } else {
             //forward non capture
@@ -646,7 +646,6 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
                 y1 = 7;
             }
             pawnPromotions += tempMove;
-
         }
         xyE = y1*8+x1;
         //create mask of move end position
@@ -655,7 +654,7 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
         //if the initial piece is our x piece check which piece he captures (if any) and add move to appropriate array otherwise add it to non captures
         if(pieceMaskI & pawns){
             if(pieceMaskE & epawns){
-                pawnCaps[0]+= tempMove;
+                pawnCaps[0]+= tempMove;                
                 continue;
             } else if(pieceMaskE & eknights){
                 pawnCaps[1]+= tempMove;
@@ -771,30 +770,35 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     orderedCaptures += knightCaps[4];
     orderedCaptures += bishopCaps[4];
     orderedCaptures += rookCaps[4];
+    orderedCaptures += queenCaps[4];
     orderedCaptures += kingCaps[4];
 
     orderedCaptures += pawnCaps[3];
     orderedCaptures += knightCaps[3];
     orderedCaptures += bishopCaps[3];
     orderedCaptures += rookCaps[3];
+    orderedCaptures += queenCaps[3];
     orderedCaptures += kingCaps[3];
 
     orderedCaptures += pawnCaps[2];   
     orderedCaptures += knightCaps[2];
     orderedCaptures += bishopCaps[2];
     orderedCaptures += rookCaps[2];
+    orderedCaptures += queenCaps[2];
     orderedCaptures += kingCaps[2];
 
     orderedCaptures += pawnCaps[1];
     orderedCaptures += knightCaps[1];
     orderedCaptures += bishopCaps[1];
     orderedCaptures += rookCaps[1];
+    orderedCaptures += queenCaps[1];
     orderedCaptures += kingCaps[1];
 
     orderedCaptures += pawnCaps[0];
     orderedCaptures += knightCaps[0];
     orderedCaptures += bishopCaps[0];
     orderedCaptures += rookCaps[0];
+    orderedCaptures += queenCaps[0];
     orderedCaptures += kingCaps[0];
 
     orderedCaptures += nonCaptures;
@@ -814,10 +818,7 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
         transpositionT[hash].depth = depth;
         transpositionT[hash].eval = (int)eval;
         transpositionT[hash].flag = flag;
-        //only overwrite best move if there is a move
-        if(bestmove.length() >= 4){
-            transpositionT[hash].move = bestmove;
-        }
+        transpositionT[hash].move = bestmove;
 
     }
 
