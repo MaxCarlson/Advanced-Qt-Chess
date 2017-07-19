@@ -20,8 +20,17 @@ const U64 Totallyempty = 0LL;
 extern const U64 notAFile = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
 extern const U64 notHFile = 0xfefefefefefefefe; // ~0x0101010101010101
 
+
 extern const U64 rank4 = 1095216660480L;
 extern const U64 rank5=4278190080L;
+extern const U64 rank6 = rank5 >> 8;
+extern const U64 rank7 = rank6 >> 8;
+extern const U64 rank8 = rank7 >> 8;
+//ugh
+extern const U64 rank3 = rank4 << 8;
+extern const U64 rank2 = rank3 << 8;
+extern const U64 rank1 = rank2 << 8;
+
 
 //board for knight moves that can be shifted
 extern const U64 KNIGHT_SPAN=43234889994L;
@@ -133,8 +142,6 @@ std::string BitBoards::generatePsMoves()
 std::string BitBoards::genWhosMove(bool isWhite)
 {
     std::string moves;
-
-
     if(isWhite == true){
 
         moves = possibleMovesW(BBWhitePieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
@@ -935,18 +942,58 @@ std::string BitBoards::genBlockOrTakes(U64 attacker, U64 ourKing, bool isWhite, 
 //normal move stuff
 std::string BitBoards::makeMove(std::string move)
 {
-
     std::string savedMove;
-    //parse string move and change to ints
-    int x = move[0] - 0;
-    int y = move[1] - 0;
-    int x1 = move[2] - 0;
-    int y1 = move[3] - 0;
-    int xyI = y*8+x, xyE = y1*8+x1;
+    bool wOrB;
+    int x, y, x1, y1, xyI, xyE;
     //inital spot piece mask and end spot mask
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    pieceMaskI += 1LL<< xyI;
-    pieceMaskE += 1LL << xyE;
+    //for normal moves
+    if(move[3] != 'Q'){
+        //parse string move and change to ints
+        x = move[0] - 0;
+        y = move[1] - 0;
+        x1 = move[2] - 0;
+        y1 = move[3] - 0;
+        xyI = y*8+x, xyE = y1*8+x1;
+        pieceMaskI += 1LL<< xyI;
+        pieceMaskE += 1LL << xyE;
+        wOrB = isWhite(pieceMaskI);
+    //for pawn promotions
+    } else {
+        x = move[0] - 0;
+        y = move[1] - 0;
+        xyI = y*8+x;
+        pieceMaskI += 1LL<< xyI;
+        wOrB = isWhite(pieceMaskI);
+        //if promotion is white pawn
+        if(wOrB == true){
+            y1 = 0;
+            //if it is a non capture forward promotion
+            if(move[2] == 'F'){
+                x1 = x;
+                xyE = y1*8+x1;
+                pieceMaskE += 1LL << xyE;
+            //capture promotion
+            } else {
+                x1 = move[2]-0;
+                xyE = y1*8+x1;
+                pieceMaskE += 1LL << xyE;
+            }
+        //black promotions
+        } else {
+            y1 = 7;
+            if(move[2] == 'F'){
+                x1 = x;
+                xyE = y1*8+x1;
+                pieceMaskE += 1LL << xyE;
+            } else {
+                x1 = move[2]-0;
+                xyE = y1*8+x1;
+                pieceMaskE += 1LL << xyE;
+            }
+        }
+
+    }
 
 
     //store coordiantes for undoing move
@@ -955,9 +1002,6 @@ std::string BitBoards::makeMove(std::string move)
     savedMove += y;
     savedMove += x1;
     savedMove += y1;
-
-    //is piece black or white
-    bool wOrB = isWhite(pieceMaskI);
 
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
@@ -975,12 +1019,21 @@ std::string BitBoards::makeMove(std::string move)
             savedMove += "P";
             //removes piece from capture location if capture and returns piece char
             savedMove += isCapture(pieceMaskE, wOrB);
-            //add piece to landing spot
-            BBWhitePawns |= pieceMaskE;
+
+            if(move[3] != 'Q'){
+                //add piece to landing spot
+                BBWhitePawns |= pieceMaskE;
+
+            //if it's a pawn promotion
+            } else {
+                //add queen to landing spot
+                BBWhiteQueens |= pieceMaskE;
+                //add promotion data to capture string
+                savedMove += "O";
+            }
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
-
         } else if (BBWhiteRooks & pieceMaskI){
             //remove piece, test/save capture
             BBWhiteRooks &= ~pieceMaskI;
@@ -1229,14 +1282,32 @@ void BitBoards::unmakeMove(std::string moveKey)
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
 
-    //store piece moved and captured if was one
-    char pieceMoved = moveKey[4], pieceCaptured = moveKey[5], wOrB = moveKey[6];
+    //store piece moved and captured and promotion if was one
+    char wOrB, promotion = 'X';
+
+    //for normal moves
+    char pieceMoved = moveKey[4], pieceCaptured = moveKey[5];
+
+    if(moveKey[6] != 'O'){
+        wOrB = moveKey[6];
+    //for promotions
+    } else {
+        promotion = moveKey[6];
+        wOrB = moveKey[7];
+    }
+
 
     if(wOrB == 'w'){
         switch(pieceMoved){
             case 'P':
-            //remove piece from where it landed
-            BBWhitePawns &= ~pieceMaskE;
+            //if move not a promotion
+            if(promotion == 'X'){
+                //remove piece from where it landed
+                BBWhitePawns &= ~pieceMaskE;
+            //promotion unmake
+            } else {
+                BBWhiteQueens &= ~pieceMaskE;
+            }
             //put it back where it started
             BBWhitePawns |= pieceMaskI;
             //change color boards same way
@@ -2181,6 +2252,43 @@ std::string BitBoards::possibleWP(U64 wpawns, U64 EmptyTiles, U64 blackking)
 
         }
     }
+
+    //Pawn promotions moving forward one
+    PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8;
+            list+=i/8+1;
+            list+="F";
+            list+="Q";
+
+        }
+    }
+    //pawn capture promotions
+    //capture right
+    PAWN_MOVES = noEaOne(wpawns) & BBBlackPieces & ~blackking & rank8;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8-1;
+            list+=i/8+1;
+            list+=i%8;
+            list+="Q";
+
+        }
+    }
+
+    //capture left
+    PAWN_MOVES = noWeOne(wpawns) & BBBlackPieces & ~blackking & rank8;
+    for(int i = 0; i < 64; i++){
+        if(((PAWN_MOVES>>i)&1)==1){
+            list+=i%8+1;
+            list+=i/8+1;
+            list+=i%8;
+            list+="Q";
+
+        }
+    }
+
     return list;
 }
 
@@ -2329,7 +2437,6 @@ std::string BitBoards::possibleB(U64 wOrBbishops, U64 wOrBpieces, U64 oppositeki
 
 }
 
-
 std::string BitBoards::possibleQ(U64 wOrBqueens, U64 wOrBpieces, U64 oppositeking)
 {
     std::string list;
@@ -2398,7 +2505,6 @@ std::string BitBoards::possibleK(U64 wOrBking, U64 wOrBpieces, U64 kingSafeLessK
 return list;
 
 }
-
 
 //implement into other MOVE GEN ASIDE FROM KINGS, MUCH FASTER THAN for 64 loop
 int BitBoards::trailingZeros(U64 i)
@@ -2602,7 +2708,7 @@ void BitBoards::drawBBA()
     }
     std::cout << std::endl << std::endl;;
 }
-
+//unused function currently
 std::string BitBoards::generateCaptures(bool isWhite, bool removeVarIfTryingToUseLater){
 //Generates mostly captures except in check or double check in which case it generates all moves
     U64 moves, enemys, friends, knights, pawns, bishops, rooks, queens, king, epawns, erooks, eknights, ebishops, equeens, eking, unsafeTiles, kingSafeLessKing, checkers, pinned;

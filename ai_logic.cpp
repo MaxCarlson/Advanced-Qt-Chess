@@ -46,11 +46,12 @@ Ai_Logic::Ai_Logic()
 std::string Ai_Logic::iterativeDeep(int depth)
 {
 
+
     //iterative deepening start time
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 180009999, currentDepth = 0;
+    int timeLimmit = 18000, currentDepth = 0;
     long endTime = IDTimeS + timeLimmit;
 
     //normal positions searched
@@ -181,7 +182,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 
     //Null move heuristics, disabled if in check
-    if(allowNull && depth >= depthR+1 && ! newBBBoard->isInCheck(isWhite)){
+    if(allowNull && depth >= depthR+1 && ! newBBBoard->isInCheck(isWhite) && turns < 26){
         score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1);
         if(score >= beta){
             return score;
