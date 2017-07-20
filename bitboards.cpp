@@ -2711,10 +2711,17 @@ void BitBoards::drawBB(U64 board)
 
 void BitBoards::drawBBA()
 {
+    char flips[8] = {'8', '7', '6', '5', '4', '3', '2', '1'};
+    char flipsL[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    int c = 0;
+
     for(int i = 0; i < 64; i++){
         if((i)%8 == 0){
             std::cout<< std::endl;
+            std::cout << flips[c] << " | ";
+            c++;
         }
+
         if(BBWhitePawns & (1ULL<<i)){
             std::cout << "P" << ", ";
         }
@@ -2754,7 +2761,18 @@ void BitBoards::drawBBA()
         if(EmptyTiles & (1ULL<<i)){
             std::cout << " " << ", ";
         }
+
+        //if(i % 8 == 7){
+        //    std::cout << "| " << flips[c] ;
+       //     c++;
+       // }
     }
+
+    std::cout << std::endl << "    ";
+    for(int i = 0; i < 8; i++){
+        std::cout << flipsL[i] << "  ";
+    }
+
     std::cout << std::endl << std::endl;;
 }
 //unused function currently

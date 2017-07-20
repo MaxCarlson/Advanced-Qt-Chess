@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
+#include <thread>
 #include "bitboards.h"
 #include "tile.h"
-
 
 
 //best overall move as calced
@@ -81,10 +81,19 @@ std::string Ai_Logic::iterativeDeep(int depth)
             break;
         }
 
+
         //tBestMove = miniMaxRoot(distance, true, currentTime, timeLimmit);
         //int val = principleV(distance, alpha, beta, false, currentDepth);
-        //std::string tbMove = alphaBetaRoot(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
-        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
+        //std::string tbMove = alphaBetaRoot(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);        
+
+        int val =  alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
+
+        //std::thread a (&Ai_Logic::alphaBeta, this, 7, alpha, beta, true, 0, timeLimmit, currentDepth, true);
+        //a.join();
+
+        //multi threading testing
+        //multi(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
+
 
         //aspiration window correction
         if (val <= alpha || val >= beta) {
@@ -126,6 +135,14 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << qcount << " quiet positions searched."<< std::endl;
 
     return bestMove;
+}
+
+void Ai_Logic::multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull)
+{
+    std::thread a (&Ai_Logic::alphaBeta, this, 6, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull);
+    std::thread b (&Ai_Logic::alphaBeta, this, distance-1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull);
+    a.join();
+    b.join();
 }
 
 int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull)
@@ -253,6 +270,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     return alpha;
 }
+
 
 std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite)
 {
@@ -820,7 +838,7 @@ void Ai_Logic::extractPV(int depthReached)
 
     //make move and print PV
     for(int i = 0; i < depthReached; i++){
-        std::cout << flips[(int)entry.move[0]] << flipsL[(int)entry.move[1]] << flips[(int)entry.move[2]] << flipsL[(int)entry.move[3]] << ", ";
+        std::cout << flipsL[(int)entry.move[0]] << flips[(int)entry.move[1]] << flipsL[(int)entry.move[2]] << flips[(int)entry.move[3]] << ", ";
         std::string tmove = newBBBoard->makeMove(entry.move);
         moveVec.push_back(tmove);
         hash = (int)(zobKey % 15485843);
