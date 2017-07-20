@@ -21,9 +21,9 @@ public:
 
 private:
     //minmax with alpha beta, the main component of our search
-    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull);
+    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard);
 
-    void multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull);
+    int multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull);
 
         //counts number of piece postitions tried
         int positionCount = 0;
@@ -39,10 +39,10 @@ private:
         void addToKillers(int depth, std::string move);
 
         //Null moves function
-        int nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth);
+        int nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard);
 
         //Quiescent search ~~ search positions farther if there are captures on horizon
-        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit);
+        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard);
         //if a capture cannot increase alpha, don't bother searching it
         bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame);
 
@@ -50,7 +50,7 @@ private:
         std::string mostVVLVA(std::string captures, bool isWhite);
 
         //function to extract PV or best line of moves looked at
-        void extractPV(int depthReached);
+        void extractPV(int depthReached, BitBoards *BBBoard);
 
 //transposition table functions
     //add best move to TT
