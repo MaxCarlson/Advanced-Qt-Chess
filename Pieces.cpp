@@ -12,7 +12,7 @@
  */
 
 #include "Pieces.h"
-/*
+
 //array of chess board
 std::string boardArr [8][8]= {
     {"r", "n", "b", "q", "k", "b", "n", "r"},
@@ -24,7 +24,7 @@ std::string boardArr [8][8]= {
     {"P", "P", "P", "P", "P", "P", "P", "P"},
     {"R", "N", "B", "Q", "K", "B", "N", "R"},
               };
-*/
+/*
 //TEST BOARD
 std::string boardArr [8][8]= {
     {"r", " ", " ", " ", "k", " ", " ", "r"},
@@ -37,7 +37,7 @@ std::string boardArr [8][8]= {
     {" ", " ", " ", " ", " ", " ", " ", " "},
               };
 
-/*
+
 std::string boardArr[8][8] = {
     {" " , "r", " " , " " , " " , " " , " " , "r" },
     {" ", "p", "p", "q", " " , "p", "p", "p"},

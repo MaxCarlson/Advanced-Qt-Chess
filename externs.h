@@ -33,48 +33,7 @@ extern int count, numberOfPieceMoved;
 // is ai on
 extern int aiOn;
 
-//to store pieces while testing best moves
-extern std::string storePiece, storePiece1, storePiece2, storePiece3;
-
-//best move as ai determines
-//extern std::string bestMove;
-
-//store board state so it can be undone
-extern std::string board1[8][8];
-
-extern std::string board2[8][8];
-
 extern int turnsTemp;
-
-//bitboards
-//board showing where all pieces are + aren't
-/*
-extern U64 FullTiles;
-extern U64 EmptyTiles;
-
-extern U64 BBWhitePieces;
-
-extern U64 BBWhitePawns;
-extern U64 BBWhiteRooks;
-extern U64 BBWhiteKnights;
-extern U64 BBWhiteBishops;
-extern U64 BBWhiteQueens;
-extern U64 BBWhiteKing;
-
-
-extern U64 BBBlackPieces;
-
-extern U64 BBBlackPawns;
-extern U64 BBBlackRooks;
-extern U64 BBBlackKnights;
-extern U64 BBBlackBishops;
-extern U64 BBBlackQueens;
-extern U64 BBBlackKing;
-*/
-
-//external zorbist object
-extern ZobristH *ZKey;
-extern U64 zobKey;
 
 //array holding U64 numbers for changing zobrist keys
 extern U64 zArray[2][6][64];
@@ -83,8 +42,6 @@ extern U64 zBlackMove;
 //test ~~ used to indicate a NULL move state
 extern U64 zNullMove;
 
-//bitboards
-extern BitBoards *newBBBoard;
 //array for storing objects containing zorbist key for position as well as depth and eval
 extern HashEntry transpositionT[15485843];
 extern HashEntry transpositionTQuiet[338207];

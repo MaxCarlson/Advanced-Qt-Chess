@@ -35,8 +35,6 @@ U64 zBlackMove;
 //test ~~ used to indicate a NULL move state
 U64 zNullMove;
 
-//bit boards object
-BitBoards *newBBBoard;
 //transposition table array
 HashEntry transpositionT[15485843];
 //transpositon table for quiescence search
@@ -172,9 +170,6 @@ int main(int argc, char *argv[])
     QWidget *myWidget = new QWidget();
     myWidget->setGeometry(0,0,1370,700);
 
-    BitBoards *TBBBoard = new BitBoards;
-
-    TBBBoard->constructBoards();
     //calculate all zobrist numbers to later use with transpostion table
     ZKey->zobristFill();
     //create bitboards to get master zobrist key with

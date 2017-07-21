@@ -113,6 +113,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
     }
     
 }
+#include <thread>
 
 void Tile::aiTurn(){
 

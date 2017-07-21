@@ -1,23 +1,13 @@
 #include "ai_logic.h"
 #include "zobristh.h"
+#include "bitboards.h"
+#include "tile.h"
 
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
 #include <thread>
-#include "bitboards.h"
-#include "tile.h"
-
 #include <future>
-
-
-//best overall move as calced
-std::string bestMove;
-
-int bestScore;
-
-//evaluation object - evaluates board position and gives an int value (- for black)
-evaluateBB *eval = new evaluateBB;
 
 //bool value to determine if time for search has run out
 bool searchCutoff = false;
@@ -32,6 +22,9 @@ BitBoards *newBoard = new BitBoards;
 
 //master zobrist object for ai turn
 ZobristH *mZobrist = new ZobristH;
+
+//master evaluation object - evaluates board position and gives an int value (- for black)
+evaluateBB *mEval = new evaluateBB;
 
 Ai_Logic::Ai_Logic()
 {
@@ -87,13 +80,23 @@ std::string Ai_Logic::iterativeDeep(int depth)
     BB0->constructBoards();
     BB1->constructBoards();
     BB2->constructBoards();
+    evaluateBB *e0 = new evaluateBB;
+    evaluateBB *e1 = new evaluateBB;
+    evaluateBB *e2 = new evaluateBB;
 
+    //Ai_Logic *nai = new Ai_Logic;
 
-    std::thread t0(&Ai_Logic::alphaBeta, this, depth+1, alpha, beta, false, 0, timeLimmit, currentDepth+1, true, BB0, z0);
-    std::thread t1(&Ai_Logic::alphaBeta, this, depth+2, alpha, beta, false, 0, timeLimmit, currentDepth+1, true, BB1, z1);
+    //std::thread t0(nai->alphaBeta, this, depth+1, -100000, 100000, false, 0, timeLimmit, currentDepth+1, true, BB0, z0, e0);
+    std::thread t0(&Ai_Logic::alphaBeta, this, depth, -100000, 100000, false, 0, timeLimmit, currentDepth+1, true, BB0, z0, e0);
+    std::thread t1(&Ai_Logic::alphaBeta, this, depth-1, -100000, 100000, false, 0, timeLimmit, currentDepth+1, true, BB1, z1, e1);
 
     //multi(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, z0, z1, z2, BB0, BB1, BB2);
 
+    //best overall move as calced
+    std::string bestMove;
+    int bestScore;
+
+    //iterative deepening loop starts at depth 1, iterates up till max depth or time cutoff
     while(distance <= depth && IDTimeS < endTime){
         positionCount = 0;
         clock_t currentTime = clock();
@@ -103,15 +106,10 @@ std::string Ai_Logic::iterativeDeep(int depth)
             break;
         }
 
-
-        //tBestMove = miniMaxRoot(distance, true, currentTime, timeLimmit);
-        //int val = principleV(distance, alpha, beta, false, currentDepth);
-        //std::string tbMove = alphaBetaRoot(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);        
-
-        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist);
+        bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist, mEval);
 
         //aspiration window correction
-        if (val <= alpha || val >= beta) {
+        if (bestScore <= alpha || bestScore >= beta) {
             alpha = -100000;    // We fell outside the window, so try again with a
             beta = 100000;      //  full-width window (and the same depth).
             continue;
@@ -124,9 +122,12 @@ std::string Ai_Logic::iterativeDeep(int depth)
         if(!searchCutoff){
             //get hash of current position
             int hash = (int)(mZobrist->zobristKey % 15485843);
-            //store best move from hash table
+
+            //grab best move from hash table
             bestMove = transpositionT[hash].move;
             tpositionCount = positionCount;
+
+            std::cout << (int)bestMove[0] << (int)bestMove[1] << (int)bestMove[2] << (int)bestMove[3] << ", ";
         }
         //increment distance to travel (same as depth at max depth)
         distance++;
@@ -136,8 +137,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
 
     t0.join();
     t1.join();
-
-
 
     std::cout << std::endl;
 
@@ -161,20 +160,20 @@ std::string Ai_Logic::iterativeDeep(int depth)
 int Ai_Logic::multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, ZobristH *z0, ZobristH *z1, ZobristH *z2, BitBoards *BB0, BitBoards *BB1, BitBoards *BB2)
 {
 
-    std::future<int> f1 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB0, z0);
+    //std::future<int> f1 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB0, z0);
     //std::future<int> f2 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance-1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB1, z1);
     //std::thread a(&Ai_Logic::alphaBeta, this, distance-1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB1, z1);
     //std::thread b(&Ai_Logic::alphaBeta, this, distance+1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB2, z2);
 
-    int val = f1.get();
+    //int val = f1.get();
     //int val1 = f2.get();
     //a.join();
     //b.join();
 
-    return val;
+    //return val;
 }
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -183,8 +182,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //create unqiue hash from zobrist key
     int hash = (int)(zobrist->zobristKey % 15485843);
     HashEntry entry = transpositionT[hash];
-
-
+/*
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobrist->zobristKey){
@@ -208,8 +206,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-
-    //if the time limmit has been exceeded finish searching
+*/
+    //if the time limmit has been exceeded set stop search flag
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
     }
@@ -218,7 +216,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth == 0 || searchCutoff){
         int queitSD = 16;
         //run capture search to max depth of queitSD
-        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist);
+        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
         //add move to hash table with exact flag
         addMoveTT("0", depth, score, 3, zobrist);
@@ -228,7 +226,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //Null move heuristics, disabled if in check
     if(allowNull && depth >= depthR+1 && ! BBBoard->isInCheck(isWhite) && turns < 26){
-        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard, zobrist);
+        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard, zobrist, eval);
         if(score >= beta){
             return score;
         }
@@ -266,7 +264,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         moveToUnmake = BBBoard->makeMove(tempMove, zobrist);
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard, zobrist);
+        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard, zobrist, eval);
 
         //undo move on BB's
         BBBoard->unmakeMove(moveToUnmake, zobrist);
@@ -306,23 +304,40 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
     //sort moves into most valuable victim least valuable attacker order
     //with non captures following all captures
     moves = mostVVLVA(moves, isWhite, BBBoards);
+
     //call killer moves + add killers to front of moves if there are any
     //moves = killerHe(currentDepth, moves);
     moves = killerTest(currentDepth, moves);
-    //perfrom look up from transpositon table
 
+    //perfrom look up from transpositon table
     if(entry.move.length() == 4 && entry.zobrist == zobrist->zobristKey){
         std::string m;
         //if entry is a beta match, add beta cutoff move to front of moves
         if(entry.flag == 2){
             m = entry.move;
-            moves = m + moves;
+            //moves = m + moves;
         //if entry is an exact alpha match add move to front
         }else if(entry.flag == 3){
             m = entry.move;
-            moves = m + moves;
+            //moves = m + moves;
         }
+
+        //validation that move is legit. Mainly used because of Lazy SMP corrupting hash values
+        for(int i = 0; i < moves.length(); i += 4){
+            std::string t = "";
+            t += moves[i];
+            t += moves[i+1];
+            t += moves[i+2];
+            t += moves[i+3];
+            if(t == m){
+                moves = m + moves;
+                break;
+            }
+        }
+
+
     }
+
 
     return moves;
 }
@@ -416,21 +431,21 @@ void Ai_Logic::addToKillers(int depth, std::string move)
     }
 }
 
-int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist)
+int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     int score;
     //update key color
     zobrist->UpdateColor();
     //as well as indicate to transposition tables these are null move boards
     zobrist->UpdateNull();
-    score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist);
+    score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist, eval);
     zobrist->UpdateColor();
     zobrist->UpdateNull();
     //if after getting a free move the score is too good, prune this branch
     return score;
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     static int depth = currentDepth;
     int standingPat;
@@ -522,12 +537,12 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         tempMove += captures[i+3];
         // ~~~NEEDS WORK + Testing + stop pruning in end game
         if(!deltaPruning(tempMove, standingPat, isWhite, alpha, false, BBBoard)){
-            //continue;
+            //continue; //uncomment to enable delta pruning!!!
         }
 
         unmake = BBBoard->makeMove(tempMove, zobrist);
 
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
         BBBoard->unmakeMove(unmake, zobrist);
 
@@ -874,7 +889,7 @@ void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int f
     //get hash of current zobrist key
     int hash = (int)(zobrist->zobristKey % 338207);
 
-    if(quietDepth >= transpositionTQuiet[hash].depth){
+    if(quietDepth <= transpositionTQuiet[hash].depth){
         //add position to the table
         transpositionTQuiet[hash].zobrist = zobrist->zobristKey;
         transpositionTQuiet[hash].depth = quietDepth;

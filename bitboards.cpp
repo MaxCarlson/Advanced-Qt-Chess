@@ -2689,11 +2689,8 @@ void BitBoards::constructBoards()
 
     }
 
-
     //mark empty tiles with 1's
     EmptyTiles = ~FullTiles;
-    //drawBB(EmptyTiles);
-    std::cout << std::endl;
 
 }
 
