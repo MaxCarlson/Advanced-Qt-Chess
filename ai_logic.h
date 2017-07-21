@@ -29,7 +29,7 @@ private:
         int positionCount = 0;
 
         //sort moves and apply heuristics like killer and transpostion data
-        std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite);
+        std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards);
 
         //killer heuristics function
         std::string killerHe(int depth, std::string moves);
@@ -44,10 +44,10 @@ private:
         //Quiescent search ~~ search positions farther if there are captures on horizon
         int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard);
         //if a capture cannot increase alpha, don't bother searching it
-        bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame);
+        bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, BitBoards *BBBoard);
 
         //orders moves by placing in order of most valuable victim least valuable attacker
-        std::string mostVVLVA(std::string captures, bool isWhite);
+        std::string mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard);
 
         //function to extract PV or best line of moves looked at
         void extractPV(int depthReached, BitBoards *BBBoard);
@@ -71,9 +71,9 @@ private:
 
 
     //TEST
-    int principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth);
+    int principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth, BitBoards *BBBoard);
 
-    int zWSearch(int depth, int beta, bool isWhite);
+    int zWSearch(int depth, int beta, bool isWhite, BitBoards *BBBoard);
 
 
 

@@ -28,6 +28,13 @@ int aiOn = 1;
 //zorbist key object
 //zorbirst key gen for transposition tables
 ZobristH *ZKey;
+//array for random numbers used to gen zobrist key
+U64 zArray[2][6][64];
+//used to change color of move
+U64 zBlackMove;
+//test ~~ used to indicate a NULL move state
+U64 zNullMove;
+
 //bit boards object
 BitBoards *newBBBoard;
 //transposition table array
@@ -165,11 +172,15 @@ int main(int argc, char *argv[])
     QWidget *myWidget = new QWidget();
     myWidget->setGeometry(0,0,1370,700);
 
-    newBBBoard->constructBoards();
+    BitBoards *TBBBoard = new BitBoards;
+
+    TBBBoard->constructBoards();
     //calculate all zobrist numbers to later use with transpostion table
     ZKey->zobristFill();
+    //create bitboards to get master zobrist key with
+
     //set the zobrist key from the random numbers generated
-    ZKey->getZobristHash(true);
+    ZKey->getZobristHash(true, TBBBoard);
 
     //buttons and other stylings
     buttons(myWidget);

@@ -11,6 +11,7 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 
 class BitBoards
 {
+
 public:
     BitBoards();
 
@@ -43,6 +44,28 @@ public:
     bool isPlayerMoveValid(int x, int y, int x1, int y1, bool isWhite);
 
     bool isInCheck(bool isWhite);
+
+    U64 FullTiles = 0LL;
+    U64 EmptyTiles;
+
+    U64 BBWhitePieces;
+
+    U64 BBWhitePawns;
+    U64 BBWhiteRooks;
+    U64 BBWhiteKnights;
+    U64 BBWhiteBishops;
+    U64 BBWhiteQueens;
+    U64 BBWhiteKing;
+
+    U64 BBBlackPieces;
+
+    U64 BBBlackPawns;
+    U64 BBBlackRooks;
+    U64 BBBlackKnights;
+    U64 BBBlackBishops;
+    U64 BBBlackQueens;
+    U64 BBBlackKing;
+
 private:
 
     //unsafe area checking for b/w

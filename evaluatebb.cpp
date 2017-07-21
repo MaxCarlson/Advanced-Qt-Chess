@@ -18,12 +18,12 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite)
+int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 {
     int totalEvaualtion = 0;
 
     for(int i = 0; i < 64; i++){
-        totalEvaualtion += getPieceValue(i);
+        totalEvaualtion += getPieceValue(i, BBBoard);
     }
 
     if(isWhite){
@@ -203,46 +203,46 @@ int bKingEndSqT[64] = {
     -50, -40, -30, -20, -20, -30, -40, -50,
 };
 
-int evaluateBB::getPieceValue(int location)
+int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
 {
     //create an empty board then shift a 1 over to the current i location
     U64 pieceLocation = 0LL;
     pieceLocation += 1LL<<location;
 
     //white pieces
-    if(BBWhitePieces & pieceLocation){
-        if(pieceLocation & BBWhitePawns){
+    if(BBBoard->BBWhitePieces & pieceLocation){
+        if(pieceLocation & BBBoard->BBWhitePawns){
             return 100 + wPawnsSqT[location];
-        } else if(pieceLocation & BBWhiteRooks){
+        } else if(pieceLocation & BBBoard->BBWhiteRooks){
             return 500 + wRooksSqT[location];
-        } else if(pieceLocation & BBWhiteKnights){
+        } else if(pieceLocation & BBBoard->BBWhiteKnights){
             return 320 + wKnightsSqT[location];
-        } else if(pieceLocation & BBWhiteBishops){
+        } else if(pieceLocation & BBBoard->BBWhiteBishops){
             return 330 + wBishopsSqT[location];
-        } else if(pieceLocation & BBWhiteQueens){
+        } else if(pieceLocation & BBBoard->BBWhiteQueens){
             return 900 + wQueensSqt[location];
-        } else if(pieceLocation & BBWhiteKing){
+        } else if(pieceLocation & BBBoard->BBWhiteKing){
             //If both sides have no queens use king end game board
-            if((BBWhiteQueens | BBBlackQueens) & full){
+            if((BBBoard->BBWhiteQueens | BBBoard->BBBlackQueens) & full){
                 return 19000 + wKingEndSqT[location];
             }
             //if end game conditions fail use mid game king board
             return 19000 + wKingMidSqT[location];
 
         }
-    } else if (BBBlackPieces & pieceLocation) {
-        if(pieceLocation & BBBlackPawns ){
+    } else if (BBBoard->BBBlackPieces & pieceLocation) {
+        if(pieceLocation & BBBoard->BBBlackPawns ){
             return -100 -bPawnSqT[location];
-        } else if(pieceLocation & BBBlackRooks){
+        } else if(pieceLocation & BBBoard->BBBlackRooks){
             return -500 -bRookSqT[location];
-        } else if(pieceLocation & BBBlackKnights){
+        } else if(pieceLocation & BBBoard->BBBlackKnights){
             return -320 -bKnightSqT[location];
-        } else if(pieceLocation & BBBlackBishops){
+        } else if(pieceLocation & BBBoard->BBBlackBishops){
             return -330 -bBishopsSqT[location];
-        } else if(pieceLocation & BBBlackQueens){
+        } else if(pieceLocation & BBBoard->BBBlackQueens){
             return -900 -bQueenSqT[location];
-        } else if(pieceLocation & BBBlackKing){
-            if((BBBlackQueens | BBWhiteQueens) & full){
+        } else if(pieceLocation & BBBoard->BBBlackKing){
+            if((BBBoard->BBBlackQueens | BBBoard->BBWhiteQueens) & full){
                 return -19000 -bKingEndSqT[location];
             }
          return -19000 -bKingMidSqT[location];

@@ -14,15 +14,7 @@
 //best overall move as calced
 std::string bestMove;
 
-//variable for returning best move at depth of one
-std::string tBestMove;
-
 int bestScore;
-
-//holds board state before any moves or trys
-std::string board1[8][8];
-//holds state of initial board + 1 move
-std::string board2[8][8];
 
 //evaluation object - evaluates board position and gives an int value (- for black)
 evaluateBB *eval = new evaluateBB;
@@ -35,12 +27,18 @@ int qcount = 0;
 //number representing amount to reduce search with Null-Moves
 const int depthR = 2;
 
+//master bitboard for turn
+BitBoards *newBoard = new BitBoards;
+
+//master zobrist key for turn
+U64 zobristK;
+
 Ai_Logic::Ai_Logic()
 {
-    //generate all possible moves for one turn
-    newBBBoard->constructBoards();
+    //construct boards to get zobrist hash
+    newBoard->constructBoards();
     //once opponent move is made update the zorbist hash key
-    ZKey->getZobristHash(true);
+    zobristK = ZKey->getZobristHash(true, newBoard);
     //update zobrsit hash to correct color
     ZKey->UpdateColor();
 }
@@ -70,11 +68,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
     int alpha = -100000;
     int beta = 100000;
 
-
-    //HashEntry entry = transpositionT[hash];
-    BitBoards *BBBoard = new BitBoards;
-    BBBoard->constructBoards();
-
     int distance = 1;
     for(distance; distance <= depth && IDTimeS < endTime;){
         positionCount = 0;
@@ -90,7 +83,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         //int val = principleV(distance, alpha, beta, false, currentDepth);
         //std::string tbMove = alphaBetaRoot(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);        
 
-        int val =  alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, BBBoard);
+        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard);
 
         //multi threading testing
         //int val = multi(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
@@ -119,9 +112,9 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << std::endl;
 
     //make final move on bitboards
-    newBBBoard->makeMove(bestMove);
+    newBoard->makeMove(bestMove);
 
-    newBBBoard->drawBBA();
+    newBoard->drawBBA();
 
     clock_t IDTimeE = clock();
     //postion count and time it took to find move
@@ -226,7 +219,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
     //apply heuristics and move entrys from hash table, add to front of moves
-    moves = sortMoves(moves, entry, currentDepth, isWhite);
+    moves = sortMoves(moves, entry, currentDepth, isWhite, BBBoard);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -281,11 +274,11 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 }
 
 
-std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite)
+std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards)
 {
     //sort moves into most valuable victim least valuable attacker order
     //with non captures following all captures
-    moves = mostVVLVA(moves, isWhite);
+    moves = mostVVLVA(moves, isWhite, BBBoards);
     //call killer moves + add killers to front of moves if there are any
     moves = killerHe(currentDepth, moves);
     //moves = killerTest(currentDepth, moves);
@@ -451,7 +444,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //evaluate board position (if curentDepth is even return -eval)
 
-    standingPat = eval->evalBoard(isWhite);
+    standingPat = eval->evalBoard(isWhite, BBBoard);
 
 
     if(quietDepth == 0 || searchCutoff){
@@ -483,11 +476,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         return standingPat;
     }
 
-    //sort captures by MVV/LVA
-    captures = mostVVLVA(captures, isWhite);
-
     //add killers and or exact/beta hash table matches
-    sortMoves(captures, entry, currentDepth, isWhite);
+    sortMoves(captures, entry, currentDepth, isWhite, BBBoard);
 
     int score;
     std::string unmake, hashMove, tempMove;
@@ -504,7 +494,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         tempMove += captures[i+2];
         tempMove += captures[i+3];
         // ~~~NEEDS WORK + Testing + stop pruning in end game
-        if(!deltaPruning(tempMove, standingPat, isWhite, alpha, false)){
+        if(!deltaPruning(tempMove, standingPat, isWhite, alpha, false, BBBoard)){
             //continue;
         }
 
@@ -536,7 +526,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     return alpha;
 }
 
-bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame)
+bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, BitBoards *BBBoard)
 {
     //if is end game, search all nodes
     if(isEndGame){
@@ -547,17 +537,17 @@ bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha,
     //set enemy bitboards
     if(isWhite){
         //enemies
-        epawns = BBBlackPawns;
-        eknights = BBBlackKnights;
-        ebishops = BBBlackBishops;
-        erooks = BBBlackRooks;
-        equeens = BBBlackQueens;
+        epawns = BBBoard->BBBlackPawns;
+        eknights = BBBoard->BBBlackKnights;
+        ebishops = BBBoard->BBBlackBishops;
+        erooks = BBBoard->BBBlackRooks;
+        equeens = BBBoard->BBBlackQueens;
     } else {
-        epawns = BBWhitePawns;
-        eknights = BBWhiteKnights;
-        ebishops = BBWhiteBishops;
-        erooks = BBWhiteRooks;
-        equeens = BBWhiteQueens;
+        epawns = BBBoard->BBWhitePawns;
+        eknights = BBBoard->BBWhiteKnights;
+        ebishops = BBBoard->BBWhiteBishops;
+        erooks = BBBoard->BBWhiteRooks;
+        equeens = BBBoard->BBWhiteQueens;
     }
 
     U64 pieceMaskE;
@@ -591,7 +581,7 @@ bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha,
 
 }
 
-std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
+std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard)
 {
     //arrays holding different captures 0 position for pawn captures, 1 = knight, 2 = bishops, 3 = rook, 4 = queen captures
     std::string pawnPromotions;
@@ -606,31 +596,31 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite)
     //set enemy bitboards and friendly piece bitboards
     if(isWhite){
         //enemies
-        epawns = BBBlackPawns;
-        eknights = BBBlackKnights;
-        ebishops = BBBlackBishops;
-        erooks = BBBlackRooks;
-        equeens = BBBlackQueens;
+        epawns = BBBoard->BBBlackPawns;
+        eknights = BBBoard->BBBlackKnights;
+        ebishops = BBBoard->BBBlackBishops;
+        erooks = BBBoard->BBBlackRooks;
+        equeens = BBBoard->BBBlackQueens;
         //friendlys
-        pawns = BBWhitePawns;
-        knights = BBWhiteKnights;
-        bishops = BBWhiteBishops;
-        rooks = BBWhiteRooks;
-        queens = BBWhiteQueens;
-        king = BBWhiteKing;
+        pawns = BBBoard->BBWhitePawns;
+        knights = BBBoard->BBWhiteKnights;
+        bishops = BBBoard->BBWhiteBishops;
+        rooks = BBBoard->BBWhiteRooks;
+        queens = BBBoard->BBWhiteQueens;
+        king = BBBoard->BBWhiteKing;
     } else {
-        epawns = BBWhitePawns;
-        eknights = BBWhiteKnights;
-        ebishops = BBWhiteBishops;
-        erooks = BBWhiteRooks;
-        equeens = BBWhiteQueens;
+        epawns = BBBoard->BBWhitePawns;
+        eknights = BBBoard->BBWhiteKnights;
+        ebishops = BBBoard->BBWhiteBishops;
+        erooks = BBBoard->BBWhiteRooks;
+        equeens = BBBoard->BBWhiteQueens;
 
-        pawns = BBBlackPawns;
-        knights = BBBlackKnights;
-        bishops = BBBlackBishops;
-        rooks = BBBlackRooks;
-        queens = BBBlackQueens;
-        king = BBBlackKing;
+        pawns = BBBoard->BBBlackPawns;
+        knights = BBBoard->BBBlackKnights;
+        bishops = BBBoard->BBBlackBishops;
+        rooks = BBBoard->BBBlackRooks;
+        queens = BBBoard->BBBlackQueens;
+        king = BBBoard->BBBlackKing;
     }
 
 
@@ -917,21 +907,21 @@ std::string Ai_Logic::debug(std::string ttMove, std::string moves)
     return moves;
 }
 
-int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth)
+int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth, BitBoards *BBBoard)
 {
     int bestScore;
     int bestMoveIndex = 0;
 
 
     if(depth == 0){
-        int bestScore = eval->evalBoard(isWhite);
+        int bestScore = eval->evalBoard(isWhite, BBBoard);
 
         return bestScore;
     }
 
     std::string moves, tempBBMove;
 
-    moves = newBBBoard->genWhosMove(isWhite);
+    moves = BBBoard->genWhosMove(isWhite);
 
     //Do full depth search of first move
     std::string tempMove;
@@ -942,15 +932,15 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
     tempMove += moves[3];
 
     //make move on BB's store data to string so move can be undone
-    tempBBMove = newBBBoard->makeMove(tempMove);
+    tempBBMove = BBBoard->makeMove(tempMove);
 
     //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-    bestScore = -principleV(depth-1, -beta, -alpha,  ! isWhite, currentDepth+1);
+    bestScore = -principleV(depth-1, -beta, -alpha,  ! isWhite, currentDepth+1, BBBoard);
 
     positionCount ++;
 
     //undo move on BB's
-    newBBBoard->unmakeMove(tempBBMove);
+    BBBoard->unmakeMove(tempBBMove);
 
     //NEED a mate check here
 
@@ -982,14 +972,14 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
         tempBBMove = newBBBoard->makeMove(tempMove);
 
         //zero window search
-        score = -zWSearch(depth -1, -alpha, !isWhite);
+        score = -zWSearch(depth -1, -alpha, !isWhite, BBBoard);
 
         //unmake move
         newBBBoard->unmakeMove(tempBBMove);
 
         if((score > alpha) && (score < beta)){
 
-            bestScore = -principleV(depth-1, -beta, -alpha, !isWhite, currentDepth+1);
+            bestScore = -principleV(depth-1, -beta, -alpha, !isWhite, currentDepth+1, BBBoard);
 
             if(score > alpha){
                 bestMoveIndex = i;
@@ -1010,18 +1000,18 @@ int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int curre
      return bestScore;
 }
 
-int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
+int Ai_Logic::zWSearch(int depth, int beta, bool isWhite, BitBoards *BBBoard)
 {
     int score = -999999;
     //alpha = beta-1;
 
     if(depth == 0){
-        score = eval->evalBoard(isWhite);
+        score = eval->evalBoard(isWhite, BBBoard);
         return score;
     }
 
     std::string moves, tempBBMove;
-    moves = newBBBoard->genWhosMove(isWhite);
+    moves = BBBoard->genWhosMove(isWhite);
 
     for(int i = 4; i < moves.length(); i += 4){
         std::string move;
@@ -1031,11 +1021,11 @@ int Ai_Logic::zWSearch(int depth, int beta, bool isWhite)
         move += moves[i+2];
         move += moves[i+3];
 
-        tempBBMove = newBBBoard->makeMove(move);
+        tempBBMove = BBBoard->makeMove(move);
 
-        score = -zWSearch(depth - 1, 1 - beta, ! isWhite);
+        score = -zWSearch(depth - 1, 1 - beta, ! isWhite, BBBoard);
 
-        newBBBoard->unmakeMove(tempBBMove);
+        BBBoard->unmakeMove(tempBBMove);
 
         if(score >= beta){
 

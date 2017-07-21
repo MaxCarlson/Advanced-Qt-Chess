@@ -48,6 +48,7 @@ extern int turnsTemp;
 
 //bitboards
 //board showing where all pieces are + aren't
+/*
 extern U64 FullTiles;
 extern U64 EmptyTiles;
 
@@ -69,10 +70,18 @@ extern U64 BBBlackKnights;
 extern U64 BBBlackBishops;
 extern U64 BBBlackQueens;
 extern U64 BBBlackKing;
+*/
 
 //external zorbist object
 extern ZobristH *ZKey;
 extern U64 zobKey;
+
+//array holding U64 numbers for changing zobrist keys
+extern U64 zArray[2][6][64];
+//used to change color of move
+extern U64 zBlackMove;
+//test ~~ used to indicate a NULL move state
+extern U64 zNullMove;
 
 //bitboards
 extern BitBoards *newBBBoard;

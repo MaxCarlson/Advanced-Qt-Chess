@@ -12,13 +12,9 @@ std::mt19937_64 mt(rd());
 
 std::uniform_int_distribution<U64> dist(std::llround(std::pow(2,61)), std::llround(std::pow(2,62)));
 
-U64 zArray[2][6][64];
 //U64 zEnPassasnt[8]; ~~restore once implemented
 //U64 zCastle[4];
-//used to change color of move
-U64 zBlackMove;
-//test ~~ used to indicate a NULL move state
-U64 zNullMove;
+
 
 //actual key reprenting game state
 U64 zobKey;
@@ -181,7 +177,7 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     }
 }
 
-U64 ZobristH::getZobristHash(bool isWhiteTurn)
+U64 ZobristH::getZobristHash(bool isWhiteTurn, BitBoards *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
@@ -193,56 +189,56 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
         */
         //white and black pawns
         //if there is a white pawn on i square
-        if(((BBWhitePawns >> square) & 1) == 1)
+        if(((BBBoard->BBWhitePawns >> square) & 1) == 1)
         {
             //XOR the zkey with the U64 in the white pawns square
             //that was generated from rand64
             returnZKey ^= zArray[0][0][square];
         }
-        else if(((BBBlackPawns >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackPawns >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][0][square];
         }
         //white pieces
-        else if(((BBWhiteRooks >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][1][square];
         }
-        else if(((BBWhiteKnights >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][2][square];
         }
-        else if(((BBWhiteBishops >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][3][square];
         }
-        else if(((BBWhiteQueens >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][4][square];
         }
-        else if(((BBWhiteKing >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][5][square];
         }
 
         //black pieces
-        else if(((BBBlackRooks >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][1][square];
         }
-        else if(((BBBlackKnights >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][2][square];
         }
-        else if(((BBBlackBishops >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][3][square];
         }
-        else if(((BBBlackQueens >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][4][square];
         }
-        else if(((BBBlackKing >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][5][square];
         }
@@ -255,6 +251,8 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn)
         returnZKey ^= zBlackMove;
     }
     */
+
+    zobristKey = returnZKey;
 
     zobKey = returnZKey;
 
@@ -281,7 +279,7 @@ void ZobristH::testDistibution()
 
 }
 
-U64 ZobristH::debugKey(bool isWhite)
+U64 ZobristH::debugKey(bool isWhite, BitBoards *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
@@ -293,56 +291,56 @@ U64 ZobristH::debugKey(bool isWhite)
         */
         //white and black pawns
         //if there is a white pawn on i square
-        if(((BBWhitePawns >> square) & 1) == 1)
+        if(((BBBoard->BBWhitePawns >> square) & 1) == 1)
         {
             //XOR the zkey with the U64 in the white pawns square
             //that was generated from rand64
             returnZKey ^= zArray[0][0][square];
         }
-        else if(((BBBlackPawns >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackPawns >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][0][square];
         }
         //white pieces
-        else if(((BBWhiteRooks >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][1][square];
         }
-        else if(((BBWhiteKnights >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][2][square];
         }
-        else if(((BBWhiteBishops >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][3][square];
         }
-        else if(((BBWhiteQueens >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][4][square];
         }
-        else if(((BBWhiteKing >> square) & 1) == 1)
+        else if(((BBBoard->BBWhiteKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][5][square];
         }
 
         //black pieces
-        else if(((BBBlackRooks >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][1][square];
         }
-        else if(((BBBlackKnights >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][2][square];
         }
-        else if(((BBBlackBishops >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][3][square];
         }
-        else if(((BBBlackQueens >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][4][square];
         }
-        else if(((BBBlackKing >> square) & 1) == 1)
+        else if(((BBBoard->BBBlackKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][5][square];
         }

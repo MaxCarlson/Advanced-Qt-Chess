@@ -65,7 +65,7 @@ extern const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
 0x8040201008040201L, 0x4020100804020100L, 0x2010080402010000L, 0x1008040201000000L,
 0x804020100000000L, 0x402010000000000L, 0x201000000000000L, 0x100000000000000L
 };
-
+/*
 U64 FullTiles;
 U64 EmptyTiles;
 
@@ -86,7 +86,7 @@ U64 BBBlackKnights;
 U64 BBBlackBishops;
 U64 BBBlackQueens;
 U64 BBBlackKing;
-
+*/
 
 std::string chessBoard [8][8]= {
     {"r", "n", "b", "q", "k", "b", "n", "r"},
