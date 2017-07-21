@@ -1,10 +1,12 @@
 #ifndef ZOBRISTH_H
 #define ZOBRISTH_H
 #include <string>
-#include "bitboards.h"
+//#include "bitboards.h"
 
 typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
+
+class BitBoards;
 
 class ZobristH
 {

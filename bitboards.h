@@ -1,12 +1,20 @@
 #ifndef BITBOARDS_H
 #define BITBOARDS_H
 
+
 typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
 
 #include <string>
 #include <cstdio>
 #include <ctime>
+#include <iostream>
+#include "externs.h"
+#include <cmath>
+#include <random>
+#include <iostream>
+#include "zobristh.h"
+
 
 
 class BitBoards
@@ -19,9 +27,9 @@ public:
     void constructBoards();
 
     //makes a move and returns a string that allows unmaking (both make and unmake change zobrist keys by move and color)
-    std::string makeMove(std::string move);
+    std::string makeMove(std::string move, ZobristH *zobrist);
     //unmakes move
-    void unmakeMove(std::string moveKey);
+    void unmakeMove(std::string moveKey, ZobristH *zobrist);
 
     //start of move gen, used to point to correct color generation
     std::string genWhosMove(bool isWhite);

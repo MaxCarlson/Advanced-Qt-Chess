@@ -30,6 +30,8 @@ const int depthR = 2;
 //master bitboard for turn
 BitBoards *newBoard = new BitBoards;
 
+//master zobrist object for ai turn
+ZobristH *mZobrist = new ZobristH;
 //master zobrist key for turn
 U64 zobristK;
 
@@ -37,10 +39,10 @@ Ai_Logic::Ai_Logic()
 {
     //construct boards to get zobrist hash
     newBoard->constructBoards();
-    //once opponent move is made update the zorbist hash key
-    zobristK = ZKey->getZobristHash(true, newBoard);
+    //get master zobrist hash for turn
+    mZobrist->getZobristHash(true, newBoard);
     //update zobrsit hash to correct color
-    ZKey->UpdateColor();
+    mZobrist->UpdateColor();
 }
 
 std::string Ai_Logic::iterativeDeep(int depth)
@@ -63,7 +65,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     //search has not run out of time
     searchCutoff = false;
 
-    std::cout << zobKey << std::endl;
+    std::cout << mZobrist->zobristKey << std::endl;
 
     int alpha = -100000;
     int beta = 100000;
@@ -83,7 +85,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         //int val = principleV(distance, alpha, beta, false, currentDepth);
         //std::string tbMove = alphaBetaRoot(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);        
 
-        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard);
+        int val = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist);
 
         //multi threading testing
         //int val = multi(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
@@ -101,7 +103,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
         //if the search is not cutoff
         if(!searchCutoff){
             //get hash of current position
-            int hash = (int)(zobKey % 15485843);
+            int hash = (int)(mZobrist->zobristKey % 15485843);
             //store best move from hash table
             bestMove = transpositionT[hash].move;
             tpositionCount = positionCount;
@@ -112,7 +114,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     std::cout << std::endl;
 
     //make final move on bitboards
-    newBoard->makeMove(bestMove);
+    newBoard->makeMove(bestMove, mZobrist);
 
     newBoard->drawBBA();
 
@@ -136,9 +138,9 @@ int Ai_Logic::multi(int distance, int alpha, int beta, bool isWhite, long curren
     BB1->constructBoards();
     BB2->constructBoards();
 
-    auto f1 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB0);
-    auto f2 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance-1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB1);
-    auto f3 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance+1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB2);
+    auto f1 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB0, mZobrist);
+    auto f2 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance-1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB1, mZobrist);
+    auto f3 = std::async(std::launch::async, &Ai_Logic::alphaBeta, this, distance+1, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, allowNull, BB2, mZobrist);
 
     auto val = f1.get();
     auto val2 = f2.get();
@@ -147,20 +149,20 @@ int Ai_Logic::multi(int distance, int alpha, int beta, bool isWhite, long curren
     return val;
 }
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
     long elapsedTime = time - currentTime;
 
-    //create unqiue hash from zobkey
-    int hash = (int)(zobKey % 15485843);
+    //create unqiue hash from zobrist key
+    int hash = (int)(zobrist->zobristKey % 15485843);
     HashEntry entry = transpositionT[hash];
 
 
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
-    if(entry.depth >= depth && entry.zobrist == zobKey){
+    if(entry.depth >= depth && entry.zobrist == zobrist->zobristKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
             case 3:
@@ -191,17 +193,17 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth == 0 || searchCutoff){
         int queitSD = 16;
         //run capture search to max depth of queitSD
-        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard);
+        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist);
 
         //add move to hash table with exact flag
-        addMoveTT("0", depth, score, 3);
+        addMoveTT("0", depth, score, 3, zobrist);
         return score;
     }
 
 
     //Null move heuristics, disabled if in check
     if(allowNull && depth >= depthR+1 && ! BBBoard->isInCheck(isWhite) && turns < 26){
-        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard);
+        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard, zobrist);
         if(score >= beta){
             return score;
         }
@@ -219,7 +221,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
     //apply heuristics and move entrys from hash table, add to front of moves
-    moves = sortMoves(moves, entry, currentDepth, isWhite, BBBoard);
+    moves = sortMoves(moves, entry, currentDepth, isWhite, BBBoard, zobrist);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
@@ -236,19 +238,19 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         tempMove += moves[i+3];
 
         //make move on BB's store data to string so move can be undone
-        moveToUnmake = BBBoard->makeMove(tempMove);
+        moveToUnmake = BBBoard->makeMove(tempMove, zobrist);
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard);
+        bestTempMove = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard, zobrist);
 
         //undo move on BB's
-        BBBoard->unmakeMove(moveToUnmake);
+        BBBoard->unmakeMove(moveToUnmake, zobrist);
 
         //if move causes a beta cutoff stop searching current branch
         if(bestTempMove >= beta){
 
             //add beta to transpositon table with beta flag
-            addMoveTT(tempMove, depth, beta, 2);
+            addMoveTT(tempMove, depth, beta, 2, zobrist);
 
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
@@ -268,13 +270,13 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
     //add alpha eval to hash table
-    addMoveTT(hashMove, depth, alpha, hashFlag);
+    addMoveTT(hashMove, depth, alpha, hashFlag, zobrist);
 
     return alpha;
 }
 
 
-std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards)
+std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist)
 {
     //sort moves into most valuable victim least valuable attacker order
     //with non captures following all captures
@@ -284,7 +286,7 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
     //moves = killerTest(currentDepth, moves);
     //perfrom look up from transpositon table
 
-    if(entry.move.length() == 4 && entry.zobrist == zobKey){
+    if(entry.move.length() == 4 && entry.zobrist == zobrist->zobristKey){
         std::string m;
         //if entry is a beta match, add beta cutoff move to front of moves
         if(entry.flag == 2){
@@ -389,21 +391,21 @@ void Ai_Logic::addToKillers(int depth, std::string move)
     }
 }
 
-int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard)
+int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist)
 {
     int score;
     //update key color
-    ZKey->UpdateColor();
+    zobrist->UpdateColor();
     //as well as indicate to transposition tables these are null move boards
-    ZKey->UpdateNull();
-    score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard);
-    ZKey->UpdateColor();
-    ZKey->UpdateNull();
+    zobrist->UpdateNull();
+    score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist);
+    zobrist->UpdateColor();
+    zobrist->UpdateNull();
     //if after getting a free move the score is too good, prune this branch
     return score;
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist)
 {
     static int depth = currentDepth;
     int standingPat;
@@ -413,10 +415,10 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     long elapsedTime = time - currentTime;
 
     //transposition hash quiet
-    int hash = (int)(zobKey % 338207);
+    int hash = (int)(zobrist->zobristKey % 338207);
     HashEntry entry = transpositionTQuiet[hash];
 
-    if(entry.depth >= quietDepth && entry.zobrist == zobKey){
+    if(entry.depth >= quietDepth && entry.zobrist == zobrist->zobristKey){
         //return either the eval, the beta, or the alpha depending on flag
         switch(entry.flag){
             case 3:
@@ -477,7 +479,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     //add killers and or exact/beta hash table matches
-    sortMoves(captures, entry, currentDepth, isWhite, BBBoard);
+    sortMoves(captures, entry, currentDepth, isWhite, BBBoard, zobrist);
 
     int score;
     std::string unmake, hashMove, tempMove;
@@ -498,15 +500,15 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             //continue;
         }
 
-        unmake = BBBoard->makeMove(tempMove);
+        unmake = BBBoard->makeMove(tempMove, zobrist);
 
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist);
 
-        BBBoard->unmakeMove(unmake);
+        BBBoard->unmakeMove(unmake, zobrist);
 
         if(score >= beta){
             //add beta to transpositon table with beta flag
-            addTTQuiet(tempMove, currentDepth, beta, 2);
+            addTTQuiet(tempMove, currentDepth, beta, 2, zobrist);
 
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
@@ -522,7 +524,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         }
     }
     //add alpha eval to hash table
-    addTTQuiet(hashMove, currentDepth, alpha, hashFlag);
+    addTTQuiet(hashMove, currentDepth, alpha, hashFlag, zobrist);
     return alpha;
 }
 
@@ -825,40 +827,14 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite, BitBoards *B
 
 }
 
-void Ai_Logic::extractPV(int depthReached, BitBoards *BBBoard)
-{
-
-    int hash = (int)(zobKey % 15485843);
-    HashEntry entry = transpositionT[hash];
-    std::vector<std::string> moveVec;
-
-    char flips[8] = {'8', '7', '6', '5', '4', '3', '2', '1'};
-    char flipsL[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
-
-    //make move and print PV
-    for(int i = 0; i < depthReached; i++){
-        std::cout << flipsL[(int)entry.move[0]] << flips[(int)entry.move[1]] << flipsL[(int)entry.move[2]] << flips[(int)entry.move[3]] << ", ";
-        std::string tmove = BBBoard->makeMove(entry.move);
-        moveVec.push_back(tmove);
-        hash = (int)(zobKey % 15485843);
-        entry = transpositionT[hash];
-    }
-
-    //unmake moves
-    for(int i = depthReached-1; i >= 0; i--){
-        BBBoard->unmakeMove(moveVec[i]);
-    }
-
-}
-
-void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
+void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag, ZobristH *zobrist)
 {
     //get hash of current zobrist key
-    int hash = (int)(zobKey % 15485843);
+    int hash = (int)(zobrist->zobristKey % 15485843);
     //if the depth of the current move is greater than the one it's replacing...
     if(depth >= transpositionT[hash].depth){
         //add position to the table
-        transpositionT[hash].zobrist = zobKey;
+        transpositionT[hash].zobrist = zobrist->zobristKey;
         transpositionT[hash].depth = depth;
         transpositionT[hash].eval = (int)eval;
         transpositionT[hash].flag = flag;
@@ -868,170 +844,18 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag)
 
 }
 
-void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag)
+void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag, ZobristH *zobrist)
 {
     //get hash of current zobrist key
-    int hash = (int)(zobKey % 338207);
+    int hash = (int)(zobrist->zobristKey % 338207);
 
     if(quietDepth >= transpositionTQuiet[hash].depth){
         //add position to the table
-        transpositionTQuiet[hash].zobrist = zobKey;
+        transpositionTQuiet[hash].zobrist = zobrist->zobristKey;
         transpositionTQuiet[hash].depth = quietDepth;
         transpositionTQuiet[hash].eval = (int)eval;
         transpositionTQuiet[hash].move = bestmove;
         transpositionTQuiet[hash].flag = flag;
 
     }
-}
-
-std::string Ai_Logic::debug(std::string ttMove, std::string moves)
-{
-
-    std::string tempMove = ttMove, tempMove1;
-    for(int j = 0; j < moves.size(); j+=4){
-        tempMove1 = moves[j];
-        tempMove1 += moves[j+1];
-        tempMove1 += moves[j+2];
-        tempMove1 += moves[j+3];
-        if(tempMove == tempMove1){
-            tempMove += moves;
-            return tempMove;
-        }
-    }
-
-    if(ttMove.length() > 0 && moves != ""){
-        std::cout << zobKey << std::endl;
-        newBBBoard->drawBBA();
-    }
-
-    return moves;
-}
-
-int Ai_Logic::principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth, BitBoards *BBBoard)
-{
-    int bestScore;
-    int bestMoveIndex = 0;
-
-
-    if(depth == 0){
-        int bestScore = eval->evalBoard(isWhite, BBBoard);
-
-        return bestScore;
-    }
-
-    std::string moves, tempBBMove;
-
-    moves = BBBoard->genWhosMove(isWhite);
-
-    //Do full depth search of first move
-    std::string tempMove;
-    //convert move into a single string
-    tempMove += moves[0];
-    tempMove += moves[1];
-    tempMove += moves[2];
-    tempMove += moves[3];
-
-    //make move on BB's store data to string so move can be undone
-    tempBBMove = BBBoard->makeMove(tempMove);
-
-    //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-    bestScore = -principleV(depth-1, -beta, -alpha,  ! isWhite, currentDepth+1, BBBoard);
-
-    positionCount ++;
-
-    //undo move on BB's
-    BBBoard->unmakeMove(tempBBMove);
-
-    //NEED a mate check here
-
-    //if move is too good to be true
-    if(bestScore >= beta){
-        return bestScore;
-    }
-
-    //if the moves is an improvement
-    if(bestScore > alpha){   
-        //if it's better but not too good to be true
-        alpha = bestScore;
-
-    }
-
-
-    //Do a shallower zero window search of moves other than the first, if they're better
-    //run a full PV search
-    for(int i = bestMoveIndex+4; i < moves.length(); i += 4){
-        int score;
-        positionCount ++;
-        std::string move;
-        //convert move into a single string
-        move += moves[i];
-        move += moves[i+1];
-        move += moves[i+2];
-        move += moves[i+3];
-        //make move
-        tempBBMove = newBBBoard->makeMove(tempMove);
-
-        //zero window search
-        score = -zWSearch(depth -1, -alpha, !isWhite, BBBoard);
-
-        //unmake move
-        newBBBoard->unmakeMove(tempBBMove);
-
-        if((score > alpha) && (score < beta)){
-
-            bestScore = -principleV(depth-1, -beta, -alpha, !isWhite, currentDepth+1, BBBoard);
-
-            if(score > alpha){
-                bestMoveIndex = i;
-                alpha = score;
-            }
-        }
-        if(score > bestScore){
-
-            if(score >= beta){
-                return score;
-            }
-
-            bestScore = score;
-
-            //need checkmate check
-        }
-    }
-     return bestScore;
-}
-
-int Ai_Logic::zWSearch(int depth, int beta, bool isWhite, BitBoards *BBBoard)
-{
-    int score = -999999;
-    //alpha = beta-1;
-
-    if(depth == 0){
-        score = eval->evalBoard(isWhite, BBBoard);
-        return score;
-    }
-
-    std::string moves, tempBBMove;
-    moves = BBBoard->genWhosMove(isWhite);
-
-    for(int i = 4; i < moves.length(); i += 4){
-        std::string move;
-        //convert move into a single string
-        move += moves[i];
-        move += moves[i+1];
-        move += moves[i+2];
-        move += moves[i+3];
-
-        tempBBMove = BBBoard->makeMove(move);
-
-        score = -zWSearch(depth - 1, 1 - beta, ! isWhite, BBBoard);
-
-        BBBoard->unmakeMove(tempBBMove);
-
-        if(score >= beta){
-
-            return score; // fail hard beta cutoff
-        }
-
-    }
-    return beta-1; //same as alpha
 }

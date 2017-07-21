@@ -179,9 +179,6 @@ int main(int argc, char *argv[])
     ZKey->zobristFill();
     //create bitboards to get master zobrist key with
 
-    //set the zobrist key from the random numbers generated
-    ZKey->getZobristHash(true, TBBBoard);
-
     //buttons and other stylings
     buttons(myWidget);
     accessories(myWidget);

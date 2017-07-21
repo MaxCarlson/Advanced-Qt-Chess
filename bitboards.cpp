@@ -1,7 +1,7 @@
 #include "bitboards.h"
 
-#include <iostream>
-#include "externs.h"
+
+
 
 const U64 FileABB = 0x0101010101010101ULL;
 const U64 FileBBB = FileABB << 1;
@@ -940,7 +940,7 @@ std::string BitBoards::genBlockOrTakes(U64 attacker, U64 ourKing, bool isWhite, 
 }
 
 //normal move stuff
-std::string BitBoards::makeMove(std::string move)
+std::string BitBoards::makeMove(std::string move, ZobristH *zobrist)
 {
     std::string savedMove;
     bool wOrB;
@@ -1197,9 +1197,9 @@ std::string BitBoards::makeMove(std::string move)
     //drawBBA();
 
     //Update zobrist hash
-    ZKey->UpdateKey(xyI, xyE, savedMove);
+    zobrist->UpdateKey(xyI, xyE, savedMove);
     //update zobrist hash with color change
-    ZKey->UpdateColor();
+    zobrist->UpdateColor();
 
     return savedMove;
 
@@ -1279,7 +1279,7 @@ char BitBoards::isCapture(U64 landing, bool isWhite)
     return '0';
 }
 
-void BitBoards::unmakeMove(std::string moveKey)
+void BitBoards::unmakeMove(std::string moveKey, ZobristH *zobrist)
 {
 
     //parse string move and change to ints
@@ -1442,9 +1442,9 @@ void BitBoards::unmakeMove(std::string moveKey)
     EmptyTiles = ~FullTiles;
 
     //update zobrist hash
-    ZKey->UpdateKey(xyI, xyE, moveKey);
+    zobrist->UpdateKey(xyI, xyE, moveKey);
     //update zobrist hash with color change
-    ZKey->UpdateColor();
+    zobrist->UpdateColor();
 
 }
 
@@ -1517,6 +1517,9 @@ void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
 //lots of pinned piece functions - subset of moves
 std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 wpawns, U64 wrooks, U64 wknights, U64 wbishops, U64 wqueens, U64 wking, U64 bpawns, U64 brooks, U64 bknights, U64 bbishops, U64 bqueens, U64 bking)
 {
+    //unimportant zobrist object, real keys don't need to be updated during legality checks
+    ZobristH *xx = new ZobristH;
+
     U64 kingSafe;
     std::string move, legalMoves, toUndo;
     //loop through moves and make them, test legal, unmake
@@ -1527,7 +1530,7 @@ std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 
         move += moves[i+2];
         move += moves[i+3];
         //make the move
-        toUndo = makeMove(move);        
+        toUndo = makeMove(move, xx);
         //test if move is legal
         if(isWhite == true){
 
@@ -1549,7 +1552,7 @@ std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 
         }
 
         //undo move
-        unmakeMove(toUndo);
+        unmakeMove(toUndo, xx);
 
     }
 
