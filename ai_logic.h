@@ -23,10 +23,8 @@ private:
     //minmax with alpha beta, the main component of our search
     int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
+    //multithreading test function
     int multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, ZobristH *z0, ZobristH *z1, ZobristH *z2, BitBoards *BB0, BitBoards *BB1, BitBoards *BB2);
-
-        //counts number of piece postitions tried
-        int positionCount = 0;
 
         //sort moves and apply heuristics like killer and transpostion data
         std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist);
@@ -49,8 +47,6 @@ private:
         //orders moves by placing in order of most valuable victim least valuable attacker
         std::string mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard);
 
-        //function to extract PV or best line of moves looked at
-        void extractPV(int depthReached, BitBoards *BBBoard);
 
 //transposition table functions
     //add best move to TT
@@ -58,22 +54,22 @@ private:
     //add to quiescience TT
     void addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag, ZobristH *zobrist);
 
+//object variables
 
-//misc functions that are not implemented or are old
+    //princiapl variation array
+    std::string pVArr[29];
 
-    //root function for recursive move finiding via minimax
-    std::string miniMaxRoot(int depth, bool isMaximisingPlayer, long currentTime, long timeLimmit);
+    //counts number of piece postitions tried
+    int positionCount = 0;
 
-    //bulk of minimax
-    long miniMax(int depth, long alpha, long beta, bool isMaximisingPlayer, long currentTime, long timeLimmit);
+    //value to determine if time for search has run out
+    bool searchCutoff = false;
 
-    std::string debug(std::string ttMove, std::string moves);
+    //count of quiescnce positions checked
+    int qCount = 0;
 
-
-    //TEST
-    int principleV(int depth, int alpha, int beta, bool isWhite, int currentDepth, BitBoards *BBBoard);
-
-    int zWSearch(int depth, int beta, bool isWhite, BitBoards *BBBoard);
+    //number representing amount to reduce search with Null-Moves
+    const int depthR = 2;
 
 
 

@@ -6,18 +6,12 @@
 #include <iostream>
 
 
+//random 64 bit number generation
 std::random_device rd;
-
 std::mt19937_64 mt(rd());
-
 std::uniform_int_distribution<U64> dist(std::llround(std::pow(2,61)), std::llround(std::pow(2,62)));
 
-//U64 zEnPassasnt[8]; ~~restore once implemented
-//U64 zCastle[4];
 
-
-//actual key reprenting game state
-U64 zobristKey;
 
 ZobristH::ZobristH()
 {
@@ -28,9 +22,6 @@ U64 ZobristH::random64()
 {
     //get random 64 bit integer to seed zorbist arrays
     U64 ranUI = dist(mt);
-
-    //std::cout << ranUI << ",   ";
-    //U64 ranUI = rand() * 924032403297933277;
     return ranUI;
 }
 
@@ -177,7 +168,7 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     }
 }
 
-U64 ZobristH::getZobristHash(bool isWhiteTurn, BitBoards *BBBoard)
+U64 ZobristH::getZobristHash(BitBoards *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
@@ -245,12 +236,6 @@ U64 ZobristH::getZobristHash(bool isWhiteTurn, BitBoards *BBBoard)
     }
     //EnPassant and castling stuff add later
 
-    /*
-    //if it isn't whites turn, XOR zobrist key with black move U64
-    if(!isWhiteTurn){
-        returnZKey ^= zBlackMove;
-    }
-    */
 
     zobristKey = returnZKey;
 
@@ -281,13 +266,7 @@ U64 ZobristH::debugKey(bool isWhite, BitBoards *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
-        //if tile is empty skip to next i
-        /*
-        if(((EmptyTiles >> square) & 1) == 1){
-            continue;
-        }
-        */
-        //white and black pawns
+
         //if there is a white pawn on i square
         if(((BBBoard->BBWhitePawns >> square) & 1) == 1)
         {
@@ -346,7 +325,7 @@ U64 ZobristH::debugKey(bool isWhite, BitBoards *BBBoard)
     //EnPassant and castling stuff add later
 
 
-    //if it isn't whites turn, XOR zobrist key with black move U64
+    //if it isn't whites turn, XOR test zobrist key with black move U64
     if(isWhite == false){
         returnZKey ^= zBlackMove;
     }

@@ -65,28 +65,7 @@ extern const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
 0x8040201008040201L, 0x4020100804020100L, 0x2010080402010000L, 0x1008040201000000L,
 0x804020100000000L, 0x402010000000000L, 0x201000000000000L, 0x100000000000000L
 };
-/*
-U64 FullTiles;
-U64 EmptyTiles;
 
-U64 BBWhitePieces;
-
-U64 BBWhitePawns;
-U64 BBWhiteRooks;
-U64 BBWhiteKnights;
-U64 BBWhiteBishops;
-U64 BBWhiteQueens;
-U64 BBWhiteKing;
-
-U64 BBBlackPieces;
-
-U64 BBBlackPawns;
-U64 BBBlackRooks;
-U64 BBBlackKnights;
-U64 BBBlackBishops;
-U64 BBBlackQueens;
-U64 BBBlackKing;
-*/
 
 std::string chessBoard [8][8]= {
     {"r", "n", "b", "q", "k", "b", "n", "r"},
@@ -1198,7 +1177,16 @@ std::string BitBoards::makeMove(std::string move, ZobristH *zobrist)
 
     //Update zobrist hash
     zobrist->UpdateKey(xyI, xyE, savedMove);
-    //update zobrist hash with color change
+
+    if(zobrist->debugKey(wOrB, this) != zobrist->zobristKey){
+        std::cout << std::endl << "mismatch" << std::endl;
+        std::cout << zobrist->zobristKey << std::endl;
+        std::cout << zobrist->debugKey(wOrB, this) << std::endl;
+        std::cout << zobrist->debugKey(!wOrB, this) << std::endl;
+        drawBBA();
+    }
+
+    //change zobrist color after a move
     zobrist->UpdateColor();
 
     return savedMove;
@@ -1443,8 +1431,28 @@ void BitBoards::unmakeMove(std::string moveKey, ZobristH *zobrist)
 
     //update zobrist hash
     zobrist->UpdateKey(xyI, xyE, moveKey);
-    //update zobrist hash with color change
+
+    bool t;
+    if(wOrB == 'w'){
+        t = true;
+    } else {
+        t = false;
+    }
+
+    if(zobrist->debugKey(t, this) != zobrist->zobristKey){
+        std::cout << std::endl << "mismatch" << std::endl;
+        std::cout << zobrist->zobristKey << std::endl;
+        std::cout << zobrist->debugKey(t, this) << std::endl;
+        std::cout << zobrist->debugKey(!t, this) << std::endl;
+        drawBBA();
+    }
+
+    //change cobrist color after a move
     zobrist->UpdateColor();
+
+
+
+
 
 }
 

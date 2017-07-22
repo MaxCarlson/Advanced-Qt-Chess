@@ -16,6 +16,9 @@ public:
     //zobrist key for object
     U64 zobristKey;
 
+    //U64 zEnPassasnt[8]; ~~restore once implemented
+    //U64 zCastle[4];
+
     //generate unsigned 64 bit ints for hash mapping
     U64 random64();
 
@@ -23,7 +26,7 @@ public:
     void zobristFill();
 
     //get zorbist key by XOR ing all pieces random numbers with Zkey
-    U64 getZobristHash(bool isWhiteTurn, BitBoards *BBBoard);
+    U64 getZobristHash(BitBoards *BBBoard);
 
     //Update zobrist key by XOR ing rand numbers in zArray
     void UpdateKey(int start, int end, std::string moveKey);

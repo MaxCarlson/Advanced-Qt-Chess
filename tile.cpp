@@ -18,20 +18,8 @@ Tile *click1;
 
 void Tile::mousePressEvent(QMouseEvent * event){
 
-    //qDebug() << "My Tile knows that you clicked on it!";
     moveChecking(this, ++count);
 
-    //std::cout << ZKey->getZobristHash(true) << std::endl;
-    /*
-    //debugging stuff
-    for(int i = 0; i < 8; i++){
-        for(int j =0; j < 8; j++){
-            std::cout << boardArr[i][j] << ", " ;
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    */
 }
 
 bool Tile::moveChecking(Tile *temp, int countC){
@@ -113,7 +101,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
     }
     
 }
-#include <thread>
+#include <thread> //remove if not threading here later
 
 void Tile::aiTurn(){
 

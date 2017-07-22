@@ -53,7 +53,8 @@ public:
 
     bool isInCheck(bool isWhite);
 
-    U64 FullTiles = 0LL;
+//bitboards
+    U64 FullTiles;
     U64 EmptyTiles;
 
     U64 BBWhitePieces;
