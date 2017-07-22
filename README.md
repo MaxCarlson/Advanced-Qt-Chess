@@ -23,6 +23,8 @@ Currently implemented:
 	
 	Delta pruning for Quiescence
 	
+	Pawn promotions (to queen, need to add some GUI features before selecting them will be possible)
+	
 		
 In the future:
 		
@@ -36,4 +38,5 @@ In the future:
 
 	En-Passants
 	
-	Pawn promotions
+	
+	Lazy SMP 
