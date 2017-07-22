@@ -112,7 +112,7 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     if(wB == 'w') {
         if(piece == 'P'){
             //if normal pawn move
-            if(promotion = 'X'){
+            if(promotion == 'X'){
                 zobristKey ^= zArray[0][0][start];
                 zobristKey ^= zArray[0][0][end];
              //if pawn promotion
@@ -141,7 +141,7 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
     } else if (wB == 'b'){
 
         if(piece == 'p'){
-            if(promotion = 'X'){
+            if(promotion == 'X'){
                 zobristKey ^= zArray[1][0][start];
                 zobristKey ^= zArray[1][0][end];
             } else {
@@ -166,6 +166,8 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
         }
 
     }
+
+
 }
 
 U64 ZobristH::getZobristHash(BitBoards *BBBoard)
@@ -235,7 +237,6 @@ U64 ZobristH::getZobristHash(BitBoards *BBBoard)
         }
     }
     //EnPassant and castling stuff add later
-
 
     zobristKey = returnZKey;
 

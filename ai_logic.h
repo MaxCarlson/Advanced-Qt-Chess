@@ -4,12 +4,15 @@
 #include <string>
 #include <algorithm>
 #include <stack>
+#include <thread>
 
 
 #include "externs.h"
 #include "evaluatebb.h"
 
-
+struct helperThreads {
+    std::thread helpers[4];
+};
 
 class Ai_Logic
 {
@@ -24,7 +27,7 @@ private:
     int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
     //multithreading test function
-    int multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, ZobristH *z0, ZobristH *z1, ZobristH *z2, BitBoards *BB0, BitBoards *BB1, BitBoards *BB2);
+    helperThreads *multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, helperThreads *threads);
 
         //sort moves and apply heuristics like killer and transpostion data
         std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist);
@@ -61,9 +64,6 @@ private:
 
     //counts number of piece postitions tried
     int positionCount = 0;
-
-    //value to determine if time for search has run out
-    bool searchCutoff = false;
 
     //count of quiescnce positions checked
     int qCount = 0;

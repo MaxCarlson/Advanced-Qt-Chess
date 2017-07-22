@@ -101,7 +101,7 @@ bool Tile::moveChecking(Tile *temp, int countC){
     }
     
 }
-#include <thread> //remove if not threading here later
+
 
 void Tile::aiTurn(){
 
