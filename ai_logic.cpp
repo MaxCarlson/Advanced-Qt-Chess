@@ -19,34 +19,48 @@ Ai_Logic::Ai_Logic()
 struct helperThreads {
 
     std::thread helpers[8];
-    ZobristH *zobrists = new ZobristH[8];
-    BitBoards *BBs = new BitBoards[8];
-    evaluateBB *eval = new evaluateBB[8];
-    Ai_Logic *searches = new Ai_Logic[8];
-    int threads;
+    ZobristH zobrists[8];
+    BitBoards BBs[8];
+    evaluateBB eval[8];
+    Ai_Logic searches[8];
+    unsigned threads;
 
-    helperThreads(int numThreads){
+    helperThreads(int numThreads, bool isWhite){
+        //threads = std::thread::hardware_concurrency();
+        threads = numThreads;
 
         for(int i = 0; i < numThreads; i++){
+            //construct thread number of boards
             BBs[i].constructBoards();
+            //construct thread number of zobrist keys
             zobrists[i].getZobristHash(&BBs[i]);
-            zobrists[i].UpdateColor();
+            //if ai is not white XOR zobrist key with black color key
+            if(!isWhite){
+                zobrists[i].UpdateColor();
+            }
+
         }
-        threads = numThreads;
+
     }
 
     void sychThreads(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth){
+        //start thread number of threads searching alpha beta
         for(int i = 0; i < threads; i++){
+            //distance += (int)(i/2);
             helpers[i] = std::thread(&searches[i].alphaBeta, searches[i], distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth+1, true, &BBs[i], &zobrists[i], &eval[i]);
 
         }
     }
 
     void joinThreads(bool stopSearch){
+        //set searchcutoff extern to true so that all threads stop searching once main search is done
         searchCutoff = true;
+
+        //join all active threads
         for(int i = 0; i < threads; i++){
             helpers[i].join();
         }
+        //reset search cutoff to it's real value
         if(stopSearch){
             searchCutoff = true;
         } else {
@@ -79,45 +93,19 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 7000, currentDepth = 0;
+    int timeLimmit = 10000, currentDepth = 0;
     long endTime = IDTimeS + timeLimmit;
 
     std::cout << mZobrist->zobristKey << std::endl;    
+
+    //create helper threads object for lazy SMP
+    //helperThreads *threads = new helperThreads(3, false);
 
     //best overall move as calced
     std::string bestMove;
     int distance = 1, bestScore, alpha = -100000, beta = 100000;
     //search has not run out of time
     searchCutoff = false;
-/*
-    ZobristH *z0 = new ZobristH;
-    ZobristH *z1 = new ZobristH;
-    ZobristH *z2 = new ZobristH;
-
-    z0->getZobristHash(newBoard);
-    z0->UpdateColor();
-    z1->getZobristHash(newBoard);
-    z1->UpdateColor();
-    z2->getZobristHash(newBoard);
-    z2->UpdateColor();
-
-    BitBoards *BB0 = new BitBoards;
-    BitBoards *BB1 = new BitBoards;
-    BitBoards *BB2 = new BitBoards;
-    BB0->constructBoards();
-    BB1->constructBoards();
-    BB2->constructBoards();
-    evaluateBB *e0 = new evaluateBB;
-    evaluateBB *e1 = new evaluateBB;
-    evaluateBB *e2 = new evaluateBB;
-
-    Ai_Logic *nai = new Ai_Logic;
-    Ai_Logic *nai1 = new Ai_Logic;
-
-    std::thread t0(&nai->alphaBeta, nai, distance, -100000, 100000, false, 0, 7000, currentDepth+1, true, BB0, z0, e0);
-    std::thread t1(&nai1->alphaBeta, nai1, distance, -100000, 100000, false, 0, 8000, currentDepth+1, true, BB1, z1, e1);
-*/
-    helperThreads *threads = new helperThreads(3);
 
     //iterative deepening loop starts at depth 1, iterates up till max depth or time cutoff
     while(distance <= depth && IDTimeS < endTime){
@@ -127,11 +115,14 @@ std::string Ai_Logic::iterativeDeep(int depth)
             break;
         }
 
-        threads->sychThreads(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1);
+        //start lazy SMP helper threads ~~ they fill up hash table so main search can get more hits off it
+        //threads->sychThreads(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1);
 
+        //main search
         bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist, mEval);
 
-        threads->joinThreads(searchCutoff);
+        //temporarily set searchcutoff to true, stop and join threads, reset search cutoff to it's prior value
+        //threads->joinThreads(searchCutoff);
 
         //aspiration window correction
         if (bestScore <= alpha || bestScore >= beta) {
@@ -155,10 +146,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
         distance++;
     }
 
-    searchCutoff = true;
-
-    //t0.join();
-    //t1.join();
 
     if(bestMove.length() != 4){
         int a = 5;
@@ -863,40 +850,14 @@ std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite, BitBoards *B
     //ordered as most valuable victim, least valuable attacker ~~ Probably more effeciant order possible
     orderedCaptures += pawnPromotions;
 
-    orderedCaptures += pawnCaps[4];
-    orderedCaptures += knightCaps[4];
-    orderedCaptures += bishopCaps[4];
-    orderedCaptures += rookCaps[4];
-    orderedCaptures += queenCaps[4];
-    orderedCaptures += kingCaps[4];
-
-    orderedCaptures += pawnCaps[3];
-    orderedCaptures += knightCaps[3];
-    orderedCaptures += bishopCaps[3];
-    orderedCaptures += rookCaps[3];
-    orderedCaptures += queenCaps[3];
-    orderedCaptures += kingCaps[3];
-
-    orderedCaptures += pawnCaps[2];   
-    orderedCaptures += knightCaps[2];
-    orderedCaptures += bishopCaps[2];
-    orderedCaptures += rookCaps[2];
-    orderedCaptures += queenCaps[2];
-    orderedCaptures += kingCaps[2];
-
-    orderedCaptures += pawnCaps[1];
-    orderedCaptures += knightCaps[1];
-    orderedCaptures += bishopCaps[1];
-    orderedCaptures += rookCaps[1];
-    orderedCaptures += queenCaps[1];
-    orderedCaptures += kingCaps[1];
-
-    orderedCaptures += pawnCaps[0];
-    orderedCaptures += knightCaps[0];
-    orderedCaptures += bishopCaps[0];
-    orderedCaptures += rookCaps[0];
-    orderedCaptures += queenCaps[0];
-    orderedCaptures += kingCaps[0];
+    for(int i = 4; i > -1; --i){
+        orderedCaptures += pawnCaps[i];
+        orderedCaptures += knightCaps[i];
+        orderedCaptures += bishopCaps[i];
+        orderedCaptures += rookCaps[i];
+        orderedCaptures += queenCaps[i];
+        orderedCaptures += kingCaps[i];
+    }
 
     orderedCaptures += nonCaptures;
 
