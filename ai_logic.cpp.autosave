@@ -89,34 +89,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     int distance = 1, bestScore, alpha = -100000, beta = 100000;
     //search has not run out of time
     searchCutoff = false;
-/*
-    ZobristH *z0 = new ZobristH;
-    ZobristH *z1 = new ZobristH;
-    ZobristH *z2 = new ZobristH;
 
-    z0->getZobristHash(newBoard);
-    z0->UpdateColor();
-    z1->getZobristHash(newBoard);
-    z1->UpdateColor();
-    z2->getZobristHash(newBoard);
-    z2->UpdateColor();
-
-    BitBoards *BB0 = new BitBoards;
-    BitBoards *BB1 = new BitBoards;
-    BitBoards *BB2 = new BitBoards;
-    BB0->constructBoards();
-    BB1->constructBoards();
-    BB2->constructBoards();
-    evaluateBB *e0 = new evaluateBB;
-    evaluateBB *e1 = new evaluateBB;
-    evaluateBB *e2 = new evaluateBB;
-
-    Ai_Logic *nai = new Ai_Logic;
-    Ai_Logic *nai1 = new Ai_Logic;
-
-    std::thread t0(&nai->alphaBeta, nai, distance, -100000, 100000, false, 0, 7000, currentDepth+1, true, BB0, z0, e0);
-    std::thread t1(&nai1->alphaBeta, nai1, distance, -100000, 100000, false, 0, 8000, currentDepth+1, true, BB1, z1, e1);
-*/
     helperThreads *threads = new helperThreads(3);
 
     //iterative deepening loop starts at depth 1, iterates up till max depth or time cutoff
