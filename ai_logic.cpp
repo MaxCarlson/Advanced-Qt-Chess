@@ -93,7 +93,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 10000, currentDepth = 0;
+    int timeLimmit = 100009999, currentDepth = 0;
     long endTime = IDTimeS + timeLimmit;
 
     std::cout << mZobrist->zobristKey << std::endl;    
@@ -111,7 +111,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
     while(distance <= depth && IDTimeS < endTime){
         clock_t currentTime = clock();
 
-        if(currentTime >= endTime){
+        if(currentTime >= endTime-(2/3 * timeLimmit)){
             break;
         }
 
@@ -131,8 +131,8 @@ std::string Ai_Logic::iterativeDeep(int depth)
             continue;
         }
         //if we don't fall out of window, set alpha and beta to a window size to narrow search
-        alpha = bestScore - 25;
-        beta = bestScore + 25;
+        //alpha = bestScore - 25;
+        //beta = bestScore + 25;
 
         //if the search is not cutoff
         if(!searchCutoff){
@@ -212,7 +212,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     int score;
     if(depth <= 0 || searchCutoff){
-        int queitSD = 16;
+        int queitSD = 8;
         //run capture search to max depth of queitSD
         score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
@@ -276,8 +276,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             addMoveTT(tempMove, depth, beta, 2, zobrist);
 
             //push killer move to top of stack for given depth
-            //killerHArr[currentDepth].push(tempMove);
-            addToKillers(currentDepth, tempMove);
+            killerHArr[currentDepth].push(tempMove);
+            //addToKillers(currentDepth, tempMove);
 
             return beta;
         }
@@ -309,8 +309,8 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
     moves = mostVVLVA(moves, isWhite, BBBoards);
 
     //call killer moves + add killers to front of moves if there are any
-    //moves = killerHe(currentDepth, moves);
-    moves = killerTest(currentDepth, moves);
+    moves = killerHe(currentDepth, moves);
+    //moves = killerTest(currentDepth, moves);
 
     //perfrom look up from transpositon table
     if(entry.move.length() == 4 && entry.zobrist == zobrist->zobristKey){
@@ -324,7 +324,7 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
             m = entry.move;
             moves = m + moves;
         }
-/*
+
         //validation that move is legit. Mainly used because of Lazy SMP corrupting hash values
         for(int i = 0; i < moves.length(); i += 4){
             std::string t = "";
@@ -337,7 +337,7 @@ std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentD
                 break;
             }
         }
-*/
+
     }
 
     return moves;
@@ -552,8 +552,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             addTTQuiet(tempMove, currentDepth, beta, 2, zobrist);
 
             //push killer move to top of stack for given depth
-            //killerHArr[currentDepth].push(tempMove);
-            addToKillers(currentDepth, tempMove);
+            killerHArr[currentDepth].push(tempMove);
+            //addToKillers(currentDepth, tempMove);
            return beta;
         }
 

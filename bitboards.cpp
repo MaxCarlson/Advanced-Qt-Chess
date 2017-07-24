@@ -1507,6 +1507,7 @@ std::string BitBoards::makePinnedMovesLegal(bool isWhite,std::string moves, U64 
 {
     //unimportant zobrist object, real keys don't need to be updated during legality checks
     ZobristH *xx = new ZobristH;
+
     xx->getZobristHash(this);
     if(!isWhite){
         xx->UpdateColor();
