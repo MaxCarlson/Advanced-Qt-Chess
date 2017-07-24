@@ -34,12 +34,21 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 
 }
 
-int evaluateBB::returnMateScore(bool isWhite)
+int evaluateBB::returnMateScore(bool isWhite, BitBoards *BBBoard)
 {
+
+    if(BBBoard->isInCheck(isWhite)){
+        if(isWhite){
+            return 88000;
+        } else {
+            return -88000;
+        }
+    }
+
     if(isWhite){
-        return 32000;
+        return 52000;
     } else {
-        return -32000;
+        return -52000;
     }
 }
 

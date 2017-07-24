@@ -3052,20 +3052,6 @@ std::string BitBoards::generateCaptures(bool isWhite)
 
     int x1, y1, xyE;
     U64 pieceMaskE;
-    int length = moves.length();
-    //parse through moves for promotions
-    for(int i = 0; i < length; i += 4){
-        if(moves[i+3] == 'Q'){
-            captures += moves[i];
-            captures += moves[i+1];
-            captures += moves[i+2];
-            captures += moves[i+3];
-            moves.erase(i,4);
-            i -=4;
-            length -=4;
-        }
-    }
-
 
     //search through all moves from turn for captures
     for(int i = 0; i < moves.length(); i += 4){
@@ -3076,11 +3062,19 @@ std::string BitBoards::generateCaptures(bool isWhite)
         tempMove += moves[i+1];
         tempMove += moves[i+2];
         tempMove += moves[i+3];
-        //find number representing board  xy
-        x1 = tempMove[2]-0; y1 = tempMove[3]-0;
-        xyE = y1*8+x1;
-        //create mask of move end position
-        pieceMaskE += 1LL << xyE;
+        //normal move
+        if(moves[i+3] != 'Q'){
+            //find number representing board  xy
+            x1 = tempMove[2]-0; y1 = tempMove[3]-0;
+            xyE = y1*8+x1;
+            //create mask of move end position
+            pieceMaskE += 1LL << xyE;
+        //pawn promotion
+        } else {
+            captures += tempMove;
+            pieceMaskE = 0LL;
+        }
+
         //if move ends on an enemy, it's a capture
         if(pieceMaskE & enemys){
             captures += tempMove;

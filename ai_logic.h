@@ -24,7 +24,6 @@ private:
     int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
     //multithreading test function
-    //helperThreads *multi(int distance, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, helperThreads *threads);
 
         //sort moves and apply heuristics like killer and transpostion data
         std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist);
@@ -46,6 +45,12 @@ private:
 
         //orders moves by placing in order of most valuable victim least valuable attacker
         std::string mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard);
+
+        //Static exchange evaulation test
+        //std::string SSE(std::string captures, bool isWhite, BitBoards *BBBoard);
+
+        //sort moves for QS, grab winning caputres, equal captures, and promotions
+        std::string sortMovesQS(std::string captures, bool isWhite, BitBoards *BBBoard);
 
 
 //transposition table functions
