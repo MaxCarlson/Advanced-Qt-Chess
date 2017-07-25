@@ -282,7 +282,7 @@ void Pieces::kingIsUnsafe(std::string p){
 }
 
 //checking all squares to see where king can move or not
-bool Pieces::whiteKingSaftey(){
+void Pieces::whiteKingSaftey(){
 //denoting we're marking whites un-safe areas
     char w = 'w';
     //array loop to mark board of unsafe areas
@@ -315,7 +315,7 @@ bool Pieces::whiteKingSaftey(){
 
 
 
-bool Pieces::blackKingSafety(){
+void Pieces::blackKingSafety(){
 //denoting we're marking blacks un-safe areas
     char w = 'b';
     //array loop to mark board of unsafe areas

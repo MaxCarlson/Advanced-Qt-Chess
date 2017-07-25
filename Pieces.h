@@ -57,8 +57,8 @@ private:
 
     // kings safe checking + arrays for white and black lines of attack for king
 
-    bool whiteKingSaftey();
-    bool blackKingSafety();
+    void whiteKingSaftey();
+    void blackKingSafety();
 
 
     void kingIsUnsafe(std::string p);

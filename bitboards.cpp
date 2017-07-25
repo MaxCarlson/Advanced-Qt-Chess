@@ -1,8 +1,6 @@
 #include "bitboards.h"
 
 
-
-
 const U64 FileABB = 0x0101010101010101ULL;
 const U64 FileBBB = FileABB << 1;
 const U64 FileCBB = FileABB << 2;
@@ -1835,8 +1833,6 @@ std::string BitBoards::pinnedMoves(U64 pinned, U64 opawns, U64 orooks, U64 obish
     //BB mask without pinned pieces in order to find possible moves
     FullTiles = FullTiles & ~pinned;
 
-    std::string moves;
-
     //calculate move rays from enemy to king wihtout pinned pieces in the way
 
     //king up ray
@@ -1901,6 +1897,8 @@ std::string BitBoards::pinnedMoves(U64 pinned, U64 opawns, U64 orooks, U64 obish
 
 
     U64 enemyPieces = ~ourPieces & FullTiles, empty = ~FullTiles;
+
+	std::string moves;
 
     //only check pinned pieces
     //pawns
@@ -2078,8 +2076,9 @@ std::string BitBoards::pinnedPawnCaptures(U64 opawns, U64 enemyPieces, U64 mrays
 
             }
         }
-        return moves;
+        		
     }
+	return moves;
 }
 
 std::string BitBoards::pinnedPawnPushes(U64 opawns, U64 EmptyTiles, U64 mrays, bool isWhite)
@@ -2437,7 +2436,6 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
 }
 
 //other piece moves
-
 std::string BitBoards::possibleN(U64 wOrBknights, U64 wOrBpieces, U64 oppositeking)
 {
     std::string list;

@@ -47,7 +47,7 @@ struct helperThreads {
         //start thread number of threads searching alpha beta
         for(int i = 0; i < threads; i++){
             //distance += (int)(i/2);
-            helpers[i] = std::thread(&searches[i].alphaBeta, searches[i], distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth+1, true, &BBs[i], &zobrists[i], &eval[i]);
+            //helpers[i] = std::thread(&searches[i].alphaBeta, searches[i], distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth+1, true, &BBs[i], &zobrists[i], &eval[i]);
 
         }
     }

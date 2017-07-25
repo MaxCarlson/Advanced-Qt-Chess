@@ -1,7 +1,6 @@
 #ifndef TILE_H
 #define TILE_H
 
-
 #include <QLabel>
 
 
@@ -22,7 +21,7 @@ public:
     void mousePressEvent(QMouseEvent * event);
 
     //Move checking
-    bool moveChecking(Tile *temp, int count);
+    void moveChecking(Tile *temp, int count);
     
     //display pieces on correct tiles
     void display(std::string elem);
