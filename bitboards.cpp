@@ -2219,86 +2219,106 @@ std::string BitBoards::possibleWP(U64 wpawns, U64 EmptyTiles, U64 blackking)
 
     //forward one
     U64 PAWN_MOVES = northOne(wpawns) & EmptyTiles;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8+1;
-            list+=i%8;
-            list+=i/8;
+    U64 i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8+1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //forward two
     PAWN_MOVES = (wpawns>>16) & EmptyTiles &(EmptyTiles>>8) &rank4;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8+2;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8+2;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //capture right
     PAWN_MOVES = noEaOne(wpawns) & BBBlackPieces & ~blackking;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8-1;
-            list+=i/8+1;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8-1;
+        list+=index/8+1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //capture left
     PAWN_MOVES = noWeOne(wpawns) & BBBlackPieces & ~blackking;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8+1;
-            list+=i/8+1;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8+1;
+        list+=index/8+1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
 //Pawn promotions moving forward one
     PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8+1;
-            list+="F";
-            list+="Q";
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8+1;
+        list+="F";
+        list+="Q";
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
-    //pawn capture promotions
+
+//pawn capture promotions
     //capture right
     PAWN_MOVES = noEaOne(wpawns) & BBBlackPieces & ~blackking & rank8;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8-1;
-            list+=i/8+1;
-            list+=i%8;
-            list+="Q";
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8-1;
+        list+=index/8+1;
+        list+=index%8;
+        list+="Q";
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //capture left
     PAWN_MOVES = noWeOne(wpawns) & BBBlackPieces & ~blackking & rank8;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8+1;
-            list+=i/8+1;
-            list+=i%8;
-            list+="Q";
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8+1;
+        list+=index/8+1;
+        list+=index%8;
+        list+="Q";
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
     return list;
@@ -2309,151 +2329,158 @@ std::string BitBoards::possibleBP(U64 bpawns, U64 EmptyTiles, U64 whiteking)
     std::string list= "";
 
     //forward one
-    U64 PAWN_MOVES = southOne(bpawns) & EmptyTiles;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8-1;
-            list+=i%8;
-            list+=i/8;
+    U64 PAWN_MOVES = southOne(bpawns) & EmptyTiles;   
+    U64 i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8-1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+
     }
 
     //forward two
     PAWN_MOVES = (bpawns<<16) & EmptyTiles &(EmptyTiles<<8) & rank5;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8-2;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8-2;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+
     }
 
     //capture right
     PAWN_MOVES = soEaOne(bpawns) & BBWhitePieces & ~whiteking;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8-1;
-            list+=i/8-1;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8-1;
+        list+=index/8-1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //capture left
     PAWN_MOVES = soWeOne(bpawns) & BBWhitePieces & ~whiteking;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8+1;
-            list+=i/8-1;
-            list+=i%8;
-            list+=i/8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8+1;
+        list+=index/8-1;
+        list+=index%8;
+        list+=index/8;
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
 //promotions
     PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8;
-            list+=i/8-1;
-            list+='F';
-            list+='Q';
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8;
+        list+=index/8-1;
+        list+='F';
+        list+='Q';
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
+
     //capture promotions
     //capture right
     PAWN_MOVES = soEaOne(bpawns) & BBWhitePieces & ~whiteking & rank1;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8-1;
-            list+=i/8-1;
-            list+=i%8;
-            list+='Q';
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8-1;
+        list+=index/8-1;
+        list+=index%8;
+        list+='Q';
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
+
 
     //capture left
     PAWN_MOVES = soWeOne(bpawns) & BBWhitePieces & ~whiteking & rank1;
-    for(int i = 0; i < 64; i++){
-        if(((PAWN_MOVES>>i)&1)==1){
-            list+=i%8+1;
-            list+=i/8-1;
-            list+=i%8;
-            list+='Q';
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-        }
+    while(i != 0){
+        int index = trailingZeros(i);
+        list+=index%8+1;
+        list+=index/8-1;
+        list+=index%8;
+        list+='Q';
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
-    //drawBB(EmptyTiles);
     return list;
 }
 
 //other piece moves
-std::string BitBoards::possibleR(U64 wOrBrooks, U64 wOrBpieces, U64 oppositeking)
-{
-    std::string list;
-    U64 moves;
-    //loop through and find rooks
-    for(int i = 0; i < 64; i++){
-        if(((wOrBrooks>>i) &1) == 1){
-            //map moves that don't collide with friendlys and doesn't illegaly take black king
-            moves = horizVert(i) & ~wOrBpieces & ~oppositeking;
-
-            for(int j = 0; j < 64; j++){
-                if(((moves>>j) &1) == 1){
-                    list+=i%8;
-                    list+=i/8;
-                    list+=j%8;
-                    list+=j/8;
-                }
-            }
-        }
-    }
-
-    return list;
-}
 
 std::string BitBoards::possibleN(U64 wOrBknights, U64 wOrBpieces, U64 oppositeking)
 {
     std::string list;
     U64 moves;
+    U64 i = wOrBknights & ~(wOrBknights-1);
+
     //loop through and find knights
-    for(int i = 0; i < 64; i++){
-        if(((wOrBknights>>i) &1) == 1){
-            //use the knight span board which holds possible knight moves
-            //and apply a shift to the knights current pos
-            if(i > 18){
-                moves = KNIGHT_SPAN<<(i-18);
-            } else {
-                moves = KNIGHT_SPAN>>(18-i);
-            }
+    while(i != 0){
+        int iLocation = trailingZeros(i);
 
-            //making sure the moves don't warp around to other side once shifter
-            //as well as friendly and illegal king capture check
-            if(i % 8 < 4){
-                moves &= ~FILE_GH & ~wOrBpieces & ~oppositeking;
-            } else {
-                moves &= ~FILE_AB & ~wOrBpieces & ~oppositeking;
-            }
-
-            for(int j = 0; j < 64; j++){
-                if(((moves>>j) &1) == 1){
-                    list+=i%8;
-                    list+=i/8;
-                    list+=j%8;
-                    list+=j/8;
-                }
-            }
+        //use the knight span board which holds possible knight moves
+        //and apply a shift to the knights current pos
+        if(iLocation > 18){
+            moves = KNIGHT_SPAN<<(iLocation-18);
+        } else {
+            moves = KNIGHT_SPAN>>(18-iLocation);
         }
+
+        //making sure the moves don't wrap around to other side once shifter
+        //as well as friendly and illegal king capture check
+        if(iLocation % 8 < 4){
+            moves &= ~FILE_GH & ~wOrBpieces & ~oppositeking;
+        } else {
+            moves &= ~FILE_AB & ~wOrBpieces & ~oppositeking;
+        }
+
+        U64 j = moves & ~(moves-1);
+
+        while(j != 0){
+            //store moves
+            int index = trailingZeros(j);
+            list+=iLocation%8;
+            list+=iLocation/8;
+            list+=index%8;
+            list+=index/8;
+
+            moves &= ~j;
+            j = moves & ~(moves-1);
+        }
+        wOrBknights &= ~i;
+        i = wOrBknights & ~(wOrBknights-1);
     }
+
 
     return list;
 }
@@ -2463,45 +2490,87 @@ std::string BitBoards::possibleB(U64 wOrBbishops, U64 wOrBpieces, U64 oppositeki
 
     std::string list;
     U64 moves;
-    //loop through and find bishops
-    for(int i = 0; i < 64; i++){
-        if(((wOrBbishops>>i) &1) == 1){
-            //map moves that don't collide with friendlys and doesn't illegaly take black king
-            moves = DAndAntiDMoves(i) & ~wOrBpieces & ~oppositeking;
-            for(int j = 0; j < 64; j++){
-                if(((moves>>j) &1) == 1){
-                    list+=i%8;
-                    list+=i/8;
-                    list+=j%8;
-                    list+=j/8;
-                }
-            }
+    U64 i = wOrBbishops & ~(wOrBbishops-1);
+
+    while(i != 0){
+        int iLocation = trailingZeros(i);
+        moves =  DAndAntiDMoves(iLocation) & ~wOrBpieces & ~oppositeking;
+
+        U64 j = moves & ~ (moves-1);
+
+        while(j != 0){
+            int index = trailingZeros(j);
+            list+=iLocation%8;
+            list+=iLocation/8;
+            list+=index%8;
+            list+=index/8;
+
+            moves &= ~j;
+            j = moves & ~(moves-1);
         }
+        wOrBbishops &= ~i;
+        i = wOrBbishops & ~(wOrBbishops-1);
     }
+
     return list;
 
+}
+
+std::string BitBoards::possibleR(U64 wOrBrooks, U64 wOrBpieces, U64 oppositeking)
+{
+    std::string list;
+    U64 moves;
+    U64 i = wOrBrooks & ~(wOrBrooks-1);
+
+    while(i != 0){
+        int iLocation = trailingZeros(i);
+        moves =  horizVert(iLocation) & ~wOrBpieces & ~oppositeking;
+
+        U64 j = moves & ~ (moves-1);
+
+        while(j != 0){
+            int index = trailingZeros(j);
+            list+=iLocation%8;
+            list+=iLocation/8;
+            list+=index%8;
+            list+=index/8;
+
+            moves &= ~j;
+            j = moves & ~(moves-1);
+        }
+        wOrBrooks &= ~i;
+        i = wOrBrooks & ~(wOrBrooks-1);
+    }
+
+    return list;
 }
 
 std::string BitBoards::possibleQ(U64 wOrBqueens, U64 wOrBpieces, U64 oppositeking)
 {
     std::string list;
     U64 moves;
-    //loop through and find bishops
-    for(int i = 0; i < 64; i++){
-        if(((wOrBqueens>>i) &1) == 1){
-            //map moves that don't collide with friendlys and doesn't illegaly take black king
-            moves = DAndAntiDMoves(i) + horizVert(i) & ~wOrBpieces & ~oppositeking;
+    U64 i = wOrBqueens & ~(wOrBqueens-1);
 
-            for(int j = 0; j < 64; j++){
-                if(((moves>>j) &1) == 1){
-                    list+=i%8;
-                    list+=i/8;
-                    list+=j%8;
-                    list+=j/8;
-                }
-            }
+    while(i != 0){
+        int iLocation = trailingZeros(i);
+        moves = (DAndAntiDMoves(iLocation) | horizVert(iLocation)) & ~wOrBpieces & ~oppositeking;
+
+        U64 j = moves & ~ (moves-1);
+
+        while(j != 0){
+            int index = trailingZeros(j);
+            list+=iLocation%8;
+            list+=iLocation/8;
+            list+=index%8;
+            list+=index/8;
+
+            moves &= ~j;
+            j = moves & ~(moves-1);
         }
+        wOrBqueens &= ~i;
+        i = wOrBqueens & ~(wOrBqueens-1);
     }
+
 
     return list;
 }
