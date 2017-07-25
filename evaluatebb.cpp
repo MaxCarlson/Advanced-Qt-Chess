@@ -34,21 +34,21 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 
 }
 
-int evaluateBB::returnMateScore(bool isWhite, BitBoards *BBBoard)
+int evaluateBB::returnMateScore(bool isWhite, BitBoards *BBBoard, int depth)
 {
-
+    //if we have no moves and we're in check
     if(BBBoard->isInCheck(isWhite)){
         if(isWhite){
-            return 88000;
+            return 32000 + depth; //increase mate score the faster we find it
         } else {
-            return -88000;
+            return -32000 - depth;
         }
     }
-
+    //if it's a stalemate
     if(isWhite){
-        return 52000;
+        return 25000 + depth;
     } else {
-        return -52000;
+        return -25000 - depth;
     }
 }
 

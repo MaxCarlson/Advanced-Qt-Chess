@@ -28,6 +28,7 @@ public:
 
     //makes a move and returns a string that allows unmaking (both make and unmake change zobrist keys by move and color)
     std::string makeMove(std::string move, ZobristH *zobrist);
+
     //unmakes move
     void unmakeMove(std::string moveKey, ZobristH *zobrist);
 

@@ -17,7 +17,7 @@ public:
 
     int getPieceValue(int location, BitBoards *BBBoard);
 
-    int returnMateScore(bool isWhite, BitBoards *BBBoard);
+    int returnMateScore(bool isWhite, BitBoards *BBBoard, int depth);
 };
 
 #endif // EVALUATEBB_H

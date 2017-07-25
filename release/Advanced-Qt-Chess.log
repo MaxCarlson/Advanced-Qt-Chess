@@ -18,10 +18,6 @@ ai_logic.cpp(1239): warning C4100: 'allowNull': unreferenced formal parameter
 bitboards.cpp(570): warning C4100: 'ourKing': unreferenced formal parameter
 bitboards.cpp(2087): warning C4101: 'PAWN_MOVES': unreferenced local variable
 bitboards.cpp(2839): warning C4100: 'removeVarIfTryingToUseLater': unreferenced formal parameter
-  evaluate.cpp
-evaluate.cpp(67): warning C4244: '*=': conversion from 'double' to 'float', possible loss of data
-evaluate.cpp(70): warning C4244: '*=': conversion from 'double' to 'float', possible loss of data
-evaluate.cpp(132): warning C4100: 'y': unreferenced formal parameter
   evaluatebb.cpp
   hashentry.cpp
   main.cpp

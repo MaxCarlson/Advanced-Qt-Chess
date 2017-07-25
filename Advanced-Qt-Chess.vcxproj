@@ -141,7 +141,6 @@
     <ClCompile Include="Pieces.cpp" />
     <ClCompile Include="ai_logic.cpp" />
     <ClCompile Include="bitboards.cpp" />
-    <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="evaluatebb.cpp" />
     <ClCompile Include="hashentry.cpp" />
     <ClCompile Include="main.cpp" />

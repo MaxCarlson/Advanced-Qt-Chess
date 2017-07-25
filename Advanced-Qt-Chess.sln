@@ -18,6 +18,7 @@ Global
 		{1DB2CC36-12B9-30C0-A8B4-7B63D829D1CB}.Debug|x64.Build.0 = Debug|x64
 		{1DB2CC36-12B9-30C0-A8B4-7B63D829D1CB}.Release|x64.ActiveCfg = Release|x64
 		{1DB2CC36-12B9-30C0-A8B4-7B63D829D1CB}.Release|x64.Build.0 = Release|x64
+		{1DB2CC36-12B9-30C0-A8B4-7B63D829D1CB}.Release|x64.Deploy.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

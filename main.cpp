@@ -75,20 +75,6 @@ void accessories(QWidget *baseWidget)
 
 }
 
-//attempt at new game button, haven't linked it yet
-void buttons(QWidget *baseWidget){
-    QPushButton *newGame = new QPushButton("New Game",baseWidget);
-
-    newGame->setGeometry(1000,665,75,35);
-
-    QObject::connect(newGame, SIGNAL (clicked()), baseWidget, SLOT (handleNewGame(newGame)));
-}
-
-void handleNewGame(QPushButton *newGame){
-    newGame->setGeometry(5,665,5,35);
-}
-
-
 class Border
 {
 public:
@@ -175,7 +161,6 @@ int main(int argc, char *argv[])
     //create bitboards to get master zobrist key with
 
     //buttons and other stylings
-    buttons(myWidget);
     accessories(myWidget);
 
     //create board

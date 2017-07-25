@@ -47,7 +47,7 @@ struct helperThreads {
         //start thread number of threads searching alpha beta
         for(int i = 0; i < threads; i++){
             //distance += (int)(i/2);
-            //helpers[i] = std::thread(&searches[i].alphaBeta, searches[i], distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth+1, true, &BBs[i], &zobrists[i], &eval[i]);
+            helpers[i] = std::thread(&searches[i].alphaBeta, searches[i], distance, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth+1, true, &BBs[i], &zobrists[i], &eval[i]);
 
         }
     }
@@ -142,7 +142,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
             //grab best move out of PV array
             bestMove = pVArr[distance];
 
-            std::cout << (int)bestMove[0] << (int)bestMove[1] << (int)bestMove[2] << (int)bestMove[3] << ", ";
+            //std::cout << (int)bestMove[0] << (int)bestMove[1] << (int)bestMove[2] << (int)bestMove[3] << ", ";
         }
         //increment distance to travel (same as depth at max depth)
         distance++;
@@ -242,7 +242,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //return mate score if there are no more moves
     if(moves.length() == 0){
-       return eval->returnMateScore(isWhite, BBBoard);
+       return eval->returnMateScore(isWhite, BBBoard, depth);
     }
 
     //apply heuristics + MVV/LVA order and move entrys from hash table
@@ -513,14 +513,13 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     //generate moves then parse them for captures
-    std::string captures = BBBoard->generateCaptures(isWhite);
+	 std::string captures = BBBoard->generateCaptures(isWhite);
 
     //if there are no captures, return value of board
     if(captures.length() == 0){
         return standingPat;
     }
 
-    //BBBoard->drawBBA();
 
     //add killers + order captures by MVV/LVA and or exact/beta hash table matches
     captures = sortMoves(captures, entry, currentDepth, isWhite, BBBoard, zobrist);
@@ -1062,14 +1061,15 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag, Z
 {
     //get hash of current zobrist key
     int hash = (int)(zobrist->zobristKey % 15485843);
-    //if the depth of the current move is greater than the one it's replacing...
-    if(depth >= transpositionT[hash].depth){
+    //if the depth of the current move is greater than the one it's replacing or if it's older than
+    if(depth >= transpositionT[hash].depth || transpositionT[hash].ancient <turns - 2){
         //add position to the table
         transpositionT[hash].zobrist = zobrist->zobristKey;
         transpositionT[hash].depth = depth;
         transpositionT[hash].eval = (int)eval;
         transpositionT[hash].flag = flag;
         transpositionT[hash].move = bestmove;
+        transpositionT[hash].ancient = turns;
 
     }
 
@@ -1161,7 +1161,7 @@ int Ai_Logic::PVS(int depth, int alpha, int beta, bool isWhite, long currentTime
 
     //return mate score if there are no more moves
     if(moves.length() == 0){
-       return eval->returnMateScore(isWhite, BBBoard);
+       return eval->returnMateScore(isWhite, BBBoard, depth);
     }
 
     //apply heuristics + MVV/LVA order and move entrys from hash table
@@ -1270,7 +1270,7 @@ int Ai_Logic::zwSearch(int depth, int beta, bool isWhite, long currentTime, long
 
     //return mate score if there are no more moves
     if(moves.length() == 0){
-       return eval->returnMateScore(isWhite, BBBoard);
+       return eval->returnMateScore(isWhite, BBBoard, depth);
     }
 
     //apply heuristics + MVV/LVA order and move entrys from hash table

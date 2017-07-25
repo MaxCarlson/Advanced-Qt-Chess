@@ -1,4 +1,15 @@
-﻿  tile.cpp
-tile.cpp(19): warning C4100: 'event': unreferenced formal parameter
+﻿  ai_logic.cpp
+ai_logic.cpp(48): warning C4018: '<': signed/unsigned mismatch
+ai_logic.cpp(46): warning C4100: 'currentDepth': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'timeLimmit': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'currentTime': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'isWhite': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'beta': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'alpha': unreferenced formal parameter
+ai_logic.cpp(46): warning C4100: 'distance': unreferenced formal parameter
+ai_logic.cpp(60): warning C4018: '<': signed/unsigned mismatch
+ai_logic.cpp(153): warning C4189: 'a': local variable is initialized but not referenced
+ai_logic.cpp(350): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+ai_logic.cpp(1241): warning C4100: 'allowNull': unreferenced formal parameter
   Advanced-Qt-Chess.vcxproj -> C:\Users\C-60\Desktop\QtPrograms\Advanced-Qt-Chess\debug\Advanced-Qt-Chess.exe
   Advanced-Qt-Chess.vcxproj -> debug\Advanced-Qt-Chess.pdb (Full PDB)
