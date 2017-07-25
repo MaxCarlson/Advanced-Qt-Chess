@@ -3,6 +3,10 @@
 
 const U64 full  = 0xffffffffffffffffULL;
 
+//adjustments of piece value based on our color pawn count
+const int knight_adj[9] = { -20, -16, -12, -8, -4,  0,  4,  8, 10};
+const int rook_adj[9] =   {  15,  12,   9,  6,  3,  0, -3, -6, -9};
+
 /*
 piece values
   P = 100
@@ -21,10 +25,21 @@ evaluateBB::evaluateBB()
 int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 {
     int totalEvaualtion = 0;
+    whitePawnCount = 0; blackPawnCount = 0;
 
     for(int i = 0; i < 64; i++){
         totalEvaualtion += getPieceValue(i, BBBoard);
     }
+
+    //knight + rook score adjust based on pawn count
+    if(isWhite){
+        totalEvaualtion += knight_adj[whitePawnCount];
+        totalEvaualtion += rook_adj[whitePawnCount];
+    } else {
+        totalEvaualtion -= knight_adj[blackPawnCount];
+        totalEvaualtion -= rook_adj[blackPawnCount];
+    }
+
 
     if(isWhite){
         return totalEvaualtion;
@@ -221,6 +236,7 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
     //white pieces
     if(BBBoard->BBWhitePieces & pieceLocation){
         if(pieceLocation & BBBoard->BBWhitePawns){
+            whitePawnCount ++;
             return 100 + wPawnsSqT[location];
         } else if(pieceLocation & BBBoard->BBWhiteRooks){
             return 500 + wRooksSqT[location];
@@ -233,14 +249,15 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
         } else if(pieceLocation & BBBoard->BBWhiteKing){
             //If both sides have no queens use king end game board
             if((BBBoard->BBWhiteQueens | BBBoard->BBBlackQueens) & full){
-                return 9000 + wKingEndSqT[location];
+                return 20000 + wKingEndSqT[location];
             }
             //if end game conditions fail use mid game king board
-            return 9000 + wKingMidSqT[location];
+            return 20000 + wKingMidSqT[location];
 
         }
     } else if (BBBoard->BBBlackPieces & pieceLocation) {
         if(pieceLocation & BBBoard->BBBlackPawns ){
+            blackPawnCount ++;
             return -100 -bPawnSqT[location];
         } else if(pieceLocation & BBBoard->BBBlackRooks){
             return -500 -bRookSqT[location];
@@ -252,9 +269,9 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
             return -900 -bQueenSqT[location];
         } else if(pieceLocation & BBBoard->BBBlackKing){
             if((BBBoard->BBBlackQueens | BBBoard->BBWhiteQueens) & full){
-                return -9000 -bKingEndSqT[location];
+                return -20000 -bKingEndSqT[location];
             }
-         return -9000 -bKingMidSqT[location];
+         return -20000 -bKingMidSqT[location];
         }
     }
     return 0;

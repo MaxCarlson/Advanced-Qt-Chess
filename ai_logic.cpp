@@ -214,7 +214,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     int score;
     if(depth <= 0 || searchCutoff){
-        int queitSD = 11;
+        int queitSD = 7;
         //run capture search to max depth of queitSD
         score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
@@ -1062,7 +1062,7 @@ void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag, Z
     //get hash of current zobrist key
     int hash = (int)(zobrist->zobristKey % 15485843);
     //if the depth of the current move is greater than the one it's replacing or if it's older than
-    if(depth >= transpositionT[hash].depth || transpositionT[hash].ancient <turns - 2){
+    if(depth >= transpositionT[hash].depth || transpositionT[hash].ancient < turns - 5){
         //add position to the table
         transpositionT[hash].zobrist = zobrist->zobristKey;
         transpositionT[hash].depth = depth;

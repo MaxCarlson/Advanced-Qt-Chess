@@ -15,9 +15,18 @@ public:
     //forms total evaluation for baord state
     int evalBoard(bool isWhite, BitBoards *BBBoard);
 
+    //returns mate or stalemate score
+    int returnMateScore(bool isWhite, BitBoards *BBBoard, int depth);
+
+private:
+
+    int whitePawnCount = 0;
+    int blackPawnCount = 0;
+
+    //gets rudimentry value of piece + square table value
     int getPieceValue(int location, BitBoards *BBBoard);
 
-    int returnMateScore(bool isWhite, BitBoards *BBBoard, int depth);
+
 };
 
 #endif // EVALUATEBB_H
