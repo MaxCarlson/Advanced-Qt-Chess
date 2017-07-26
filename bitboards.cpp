@@ -1,46 +1,7 @@
 #include "bitboards.h"
 
 
-const U64 FileABB = 0x0101010101010101ULL;
-const U64 FileBBB = FileABB << 1;
-const U64 FileCBB = FileABB << 2;
-const U64 FileDBB = FileABB << 3;
-const U64 FileEBB = FileABB << 4;
-const U64 FileFBB = FileABB << 5;
-const U64 FileGBB = FileABB << 6;
-const U64 FileHBB = FileABB << 7;
-
-//totally full bitboard
-const U64 full  = 0xffffffffffffffffULL;
-const U64 Totallyempty = 0LL;
-
-//files to keep pieces from moving left or right off board
-extern const U64 notAFile = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
-extern const U64 notHFile = 0xfefefefefefefefe; // ~0x0101010101010101
-
-
-extern const U64 rank4 = 1095216660480L;
-extern const U64 rank5=4278190080L;
-extern const U64 rank6 = rank5 >> 8;
-extern const U64 rank7 = rank6 >> 8;
-extern const U64 rank8 = rank7 >> 8;
-//ugh
-extern const U64 rank3 = rank4 << 8;
-extern const U64 rank2 = rank3 << 8;
-extern const U64 rank1 = rank2 << 8;
-
-
-//board for knight moves that can be shifted
-extern const U64 KNIGHT_SPAN=43234889994L;
-
-    //files for keeping knight moves from wrapping
-extern const U64 FILE_AB=FileABB + FileBBB;
-extern const U64 FILE_GH=FileGBB + FileHBB;
-
-//Bitboard of all king movements that can then be shifted
-extern const U64 KING_SPAN=460039L;
-
-extern const U64 RankMasks8[8] =/*from rank1 to rank8*/
+extern const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
     {
         0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
     };

@@ -7,6 +7,10 @@ const U64 full  = 0xffffffffffffffffULL;
 const int knight_adj[9] = { -20, -16, -12, -8, -4,  0,  4,  8, 10};
 const int rook_adj[9] =   {  15,  12,   9,  6,  3,  0, -3, -6, -9};
 
+//values definitely need to be adjusted
+const int rookOpenFile = 10;
+const int rookHalfOpenFile = 5;
+
 /*
 piece values
   P = 100
@@ -24,13 +28,17 @@ evaluateBB::evaluateBB()
 
 int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 {
+    //reset values
     int totalEvaualtion = 0;
+    gamePhase = 0;
+    attCount[0] = 0; attCount[1] = 0;
+    attWeight[0] = 0; attWeight[1] = 0;
     whitePawnCount = 0; blackPawnCount = 0;
 
     for(int i = 0; i < 64; i++){
         totalEvaualtion += getPieceValue(i, BBBoard);
     }
-
+/*
     //knight + rook score adjust based on pawn count
     if(isWhite){
         totalEvaualtion += knight_adj[whitePawnCount];
@@ -39,7 +47,7 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
         totalEvaualtion -= knight_adj[blackPawnCount];
         totalEvaualtion -= rook_adj[blackPawnCount];
     }
-
+*/
 
     if(isWhite){
         return totalEvaualtion;
@@ -275,5 +283,262 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
         }
     }
     return 0;
+}
+
+U64 evaluateBB::generateKingZone(bool isWhite, BitBoards *BBBoard)
+{
+    U64 king;
+    if(isWhite){
+        king = BBBoard->BBWhiteKing;
+    } else {
+        king = BBBoard->BBBlackKing;
+    }
+
+    //draw 8 tile zone around king to psuedo king BB
+    king |= BBBoard->northOne(king);
+    king |= BBBoard->noEaOne(king);
+    king |= BBBoard->eastOne(king);
+    king |= BBBoard->soEaOne(king);
+    king |= BBBoard->southOne(king);
+    king |= BBBoard->soWeOne(king);
+    king |= BBBoard->westOne(king);
+    king |= BBBoard->noWeOne(king);
+
+    if(isWhite){
+        wKingZ = king;
+    } else {
+        bKingZ = king;
+    }
+
+}
+
+void evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
+{
+    int result = 0;
+    int flagIsPassed = 1; // we will be trying to disprove that
+    int flagIsWeak = 1;   // we will be trying to disprove that
+    int flagIsOpposed = 0;
+}
+
+void evaluateBB::evalKnight(bool isWhite, int location, BitBoards *BBBoard)
+{
+    int kAttks = 0, mob = 0, side;
+    gamePhase += 1;
+
+    U64 knight = 0LL, friends, eking, kingZone;
+    knight += 1LL << location;
+    if(isWhite){
+        friends = BBBoard->BBWhitePieces;
+        eking = BBBoard->BBBlackKing;
+        kingZone = bKingZ;
+        side = 0;
+    } else {
+        friends = BBBoard->BBBlackPieces;
+        eking = BBBoard->BBWhiteKing;
+        kingZone = wKingZ;
+        side = 1;
+    }
+
+//similar to move generation code except we increment mobility counter and king area attack counters
+    U64 moves;
+
+    if(location > 18){
+        moves = BBBoard->KNIGHT_SPAN<<(location-18);
+    } else {
+        moves = BBBoard->KNIGHT_SPAN>>(18-location);
+    }
+
+    if(location % 8 < 4){
+        moves &= ~BBBoard->FILE_GH & ~friends & ~eking;
+    } else {
+        moves &= ~BBBoard->FILE_AB & ~friends & ~eking;
+    }
+
+    U64 j = moves & ~(moves-1);
+
+    while(j != 0){
+        //for each move not on friends increment mobility
+        ++mob;
+
+        if(j & kingZone){
+            ++kAttks; //this knight is attacking zone around enemy king
+        }
+        moves &= ~j;
+        j = moves & ~(moves-1);
+    }
+
+    //Evaluate mobility. We try to do it in such a way zero represent average mob
+    midGMobility[side] += 4 *(mob-4);
+    endGMobility[side] += 4 *(mob-4);
+
+    //save data on king attacks
+    if(kAttks){
+        attCount[side] ++;
+        attWeight[side] += 2 * kAttks;
+    }
+
+}
+
+void evaluateBB::evalBishop(bool isWhite, int location, BitBoards *BBBoard)
+{
+    int kAttks = 0, mob = 0, side;
+    gamePhase += 1;
+
+    U64 bishop = 0LL, friends, eking, kingZone;
+    bishop += 1LL << location;
+    if(isWhite){
+        friends = BBBoard->BBWhitePieces;
+        eking = BBBoard->BBBlackKing;
+        kingZone = bKingZ;
+        side = 0;
+    } else {
+        friends = BBBoard->BBBlackPieces;
+        eking = BBBoard->BBWhiteKing;
+        kingZone = wKingZ;
+        side = 1;
+    }
+
+    U64 moves = BBBoard->DAndAntiDMoves(location) & ~friends & ~eking;
+
+    U64 j = moves & ~ (moves-1);
+    while(j != 0){
+        ++mob; //increment bishop mobility
+
+        if(j & kingZone){
+            ++kAttks; //this bishop is attacking zone around enemy king
+        }
+        moves &= ~j;
+        j = moves & ~(moves-1);
+    }
+
+    //Evaluate mobility. We try to do it in such a way zero represent average mob
+    midGMobility[side] += 3 *(mob-7);
+    endGMobility[side] += 3 *(mob-7);
+
+    //save data on king attacks
+    if(kAttks){
+        attCount[side] ++;
+        attWeight[side] += 2 * kAttks;
+    }
+
+
+}
+
+void evaluateBB::evalRook(bool isWhite, int location, BitBoards *BBBoard)
+{
+    bool  ownBlockingPawns = false, oppBlockingPawns = false;
+    int kAttks = 0, mob = 0, side;
+    gamePhase += 2;
+
+    U64 rook = 0LL, friends, eking, kingZone, currentFile, opawns, epawns;
+    rook += 1LL << location;
+
+    int x = location % 8;
+    currentFile = BBBoard->FileABB << x;
+
+    if(isWhite){
+        friends = BBBoard->BBWhitePieces;
+        eking = BBBoard->BBBlackKing;
+        kingZone = bKingZ;
+        side = 0;
+
+        opawns = BBBoard->BBWhitePawns;
+        epawns = BBBoard->BBBlackPawns;
+    } else {
+        friends = BBBoard->BBBlackPieces;
+        eking = BBBoard->BBWhiteKing;
+        kingZone = wKingZ;
+        side = 1;
+
+        opawns = BBBoard->BBBlackPawns;
+        epawns = BBBoard->BBWhitePawns;
+    }
+
+//open and half open file detection add bonus to mobility score of side
+    if(currentFile & opawns){
+        ownBlockingPawns = true;
+    } else if (currentFile & epawns){
+        oppBlockingPawns = true;
+    }
+
+    if(!ownBlockingPawns){
+        if(!oppBlockingPawns){
+            midGMobility[side] += rookOpenFile;
+            endGMobility[side] += rookOpenFile;
+        } else {
+            midGMobility[side] += rookHalfOpenFile;
+            endGMobility[side] == rookHalfOpenFile;
+        }
+    }
+
+//mobility and king attack gen/detection
+    U64 moves = BBBoard->horizVert(location) & ~friends & ~eking;
+
+    U64 j = moves & ~ (moves-1);
+    while(j != 0){
+        ++mob; //increment bishop mobility
+
+        if(j & kingZone){
+            ++kAttks; //this bishop is attacking zone around enemy king
+        }
+        moves &= ~j;
+        j = moves & ~(moves-1);
+    }
+
+    //Evaluate mobility. We try to do it in such a way zero represent average mob
+    midGMobility[side] += 2 *(mob-7);
+    endGMobility[side] += 4 *(mob-7);
+
+    //save data on king attacks
+    if(kAttks){
+        attCount[side] ++;
+        attWeight[side] += 3 * kAttks;
+    }
+}
+
+void evaluateBB::evalQueen(bool isWhite, int location, BitBoards *BBBoard)
+{
+    gamePhase += 4;
+    int kAttks = 0, mob = 0;
+
+    U64 queen = 0LL, friends, eking, kingZone;
+    queen += 1LL << location;
+    if(isWhite){
+        friends = BBBoard->BBWhitePieces;
+        eking = BBBoard->BBBlackKing;
+        kingZone = bKingZ;
+        side = 0;
+    } else {
+        friends = BBBoard->BBBlackPieces;
+        eking = BBBoard->BBWhiteKing;
+        kingZone = wKingZ;
+        side = 1;
+    }
+
+//similar to move gen, increment mobility and king attacks
+    U64 moves = (BBBoard->DAndAntiDMoves(location) | BBBoard->horizVert(location)) & ~friends & ~eking;
+
+    U64 j = moves & ~ (moves-1);
+    while(j != 0){
+        ++mob; //increment bishop mobility
+
+        if(j & kingZone){
+            ++kAttks; //this bishop is attacking zone around enemy king
+        }
+        moves &= ~j;
+        j = moves & ~(moves-1);
+    }
+
+    //Evaluate mobility. We try to do it in such a way zero represent average mob
+    midGMobility[side] += 1 *(mob-14);
+    endGMobility[side] += 2 *(mob-14);
+
+    //save data on king attacks
+    if(kAttks){
+        attCount[side] ++;
+        attWeight[side] += 4 * kAttks;
+    }
+
+
 }
 
