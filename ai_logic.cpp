@@ -280,7 +280,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //generate normal moves
     moves = BBBoard->genWhosMove(isWhite);
 
-    //return mate score if there are no more moves
+    //return mate/stalemate score if there are no more moves ~~ less by # depth
     if(moves.length() == 0){
        return eval->returnMateScore(isWhite, BBBoard, depth);
     }
@@ -484,12 +484,12 @@ int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long curre
     //update key color
     zobrist->UpdateColor();
     //as well as indicate to transposition tables these are null move boards
-    zobrist->UpdateNull();
+    //zobrist->UpdateNull();
 
     int score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist, eval);
     //int score = -PVS(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist, eval);
 
-    zobrist->UpdateNull();
+    //zobrist->UpdateNull();
     zobrist->UpdateColor();
     return score;
 }

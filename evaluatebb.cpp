@@ -125,32 +125,32 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
 
     midGScore +=(midGMobility[0] - midGMobility[1]);
     endGScore +=(endGMobility[0] - endGMobility[1]);
+    if (gamePhase > 24) gamePhase = 24;
     int mgWeight = gamePhase;
     int egWeight = 24 - gamePhase;
 
     totalEvaualtion +=( (midGScore * mgWeight) + (endGScore * egWeight)) / 24;
 
 
-    //store eval into eval hash table
-    entry.zobrist = zobrist->zobristKey;
+    //switch for color
+    if(!isWhite) totalEvaualtion = -totalEvaualtion;
 
-    if(isWhite){
-        transpositionEval[hash].zobrist = zobrist->zobristKey;
-        transpositionEval[hash].flag = 0;
-        transpositionEval[hash].eval = totalEvaualtion;
-
-    } else {
-        totalEvaualtion = -totalEvaualtion;
-        transpositionEval[hash].zobrist = zobrist->zobristKey;
-        transpositionEval[hash].flag = 1;
-        transpositionEval[hash].eval = totalEvaualtion;
-    }
-
-
+    //save to TT eval table
+    saveTT(isWhite, zobrist, totalEvaualtion, hash);
 
     return totalEvaualtion;
 
 
+}
+
+void evaluateBB::saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, int hash)
+{
+    //store eval into eval hash table
+    transpositionEval[hash].eval = totalEvaualtion;
+    transpositionEval[hash].zobrist = zobrist->zobristKey;
+
+    if(isWhite) transpositionEval[hash].flag = 0;
+    else transpositionEval[hash].flag = 1;
 }
 
 int evaluateBB::returnMateScore(bool isWhite, BitBoards *BBBoard, int depth)
@@ -832,4 +832,6 @@ void evaluateBB::evalQueen(bool isWhite, int location, BitBoards *BBBoard)
 
 
 }
+
+
 

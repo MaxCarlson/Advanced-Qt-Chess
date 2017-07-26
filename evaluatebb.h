@@ -58,6 +58,8 @@ private:
 
     void evalQueen(bool isWhite, int location, BitBoards *BBBoard);
 
+    void saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, int hash);
+
 
 };
 
