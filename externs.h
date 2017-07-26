@@ -45,5 +45,6 @@ extern U64 zNullMove;
 //array for storing objects containing zorbist key for position as well as depth and eval
 extern HashEntry transpositionT[15485843];
 extern HashEntry transpositionTQuiet[338207];
+extern HashEntry transpositionEval[5021983];
 
 #endif // EXTERNS_H

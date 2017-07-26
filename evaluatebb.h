@@ -13,7 +13,7 @@ public:
     evaluateBB();
 
     //forms total evaluation for baord state
-    int evalBoard(bool isWhite, BitBoards *BBBoard);
+    int evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist);
 
     //returns mate or stalemate score
     int returnMateScore(bool isWhite, BitBoards *BBBoard, int depth);

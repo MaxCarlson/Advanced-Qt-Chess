@@ -44,8 +44,28 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
+int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
 {
+    //transposition hash quiet
+    int hash = (int)(zobrist->zobristKey % 5021983);
+    HashEntry entry = transpositionEval[hash];
+
+    //if we get a hash-table hit, return the evaluation
+    if(entry.zobrist == zobrist->zobristKey){
+        if(isWhite){
+
+            if(!entry.flag) return entry.eval;
+            else return -entry.eval;
+        } else {
+
+            if(!entry.flag) return - entry.eval;
+            else return entry.eval;
+        }
+
+    }
+
+
+
 //reset values
     int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
     gamePhase = 0;
@@ -57,6 +77,8 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
     rookCount[0] = 0; rookCount[1] = 0;
     midGMobility[0] = 0; midGMobility[1] = 0;
     endGMobility[0] = 0; endGMobility[1] = 0;
+
+
 
 //generate zones around kings
     generateKingZones(true, BBBoard);
@@ -109,9 +131,22 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
     totalEvaualtion +=( (midGScore * mgWeight) + (endGScore * egWeight)) / 24;
 
 
+    //store eval into eval hash table
+    entry.zobrist = zobrist->zobristKey;
+
+    if(isWhite){
+        transpositionEval[hash].zobrist = zobrist->zobristKey;
+        transpositionEval[hash].flag = 0;
+        transpositionEval[hash].eval = totalEvaualtion;
+
+    } else {
+        totalEvaualtion = -totalEvaualtion;
+        transpositionEval[hash].zobrist = zobrist->zobristKey;
+        transpositionEval[hash].flag = 1;
+        transpositionEval[hash].eval = totalEvaualtion;
+    }
 
 
-    if(!isWhite) totalEvaualtion = -totalEvaualtion;
 
     return totalEvaualtion;
 

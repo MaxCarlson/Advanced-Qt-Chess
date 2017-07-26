@@ -224,7 +224,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth < 1 || searchCutoff){
         //run capture search to max depth of queitSD
         score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
-        //score = eval->evalBoard(isWhite, BBBoard);
+        //score = eval->evalBoard(isWhite, BBBoard, zobrist);
 
         //add move to hash table with exact flag
         addMoveTT("0", depth, score, 3, zobrist);
@@ -237,7 +237,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
-        int static_eval = eval->evalBoard(isWhite, BBBoard);
+        int static_eval = eval->evalBoard(isWhite, BBBoard, zobrist);
         int eval_margin = 120 * depth;
         if(static_eval - eval_margin >= beta){
             return static_eval - eval_margin;
@@ -260,7 +260,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(!FlagInCheck && allowNull && depth <= 3){
         int threshold = alpha - 300 - (depth - 1) * 60;
 
-        if(eval->evalBoard(isWhite, BBBoard) < threshold){
+        if(eval->evalBoard(isWhite, BBBoard, zobrist) < threshold){
             score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
             if(score < threshold) return alpha;
@@ -269,7 +269,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //do we want to futility prune?
     int fmargin[4] = { 0, 200, 300, 500 };
-    if(depth <= 3 && !FlagInCheck && abs(alpha) < 9000 && eval->evalBoard(isWhite, BBBoard) +fmargin[depth] <= alpha){
+    if(depth <= 3 && !FlagInCheck && abs(alpha) < 9000 && eval->evalBoard(isWhite, BBBoard, zobrist) +fmargin[depth] <= alpha){
         f_prune = 1;
     }
 
@@ -513,7 +513,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //evaluate board position (if curentDepth is even return -eval)
 
-    standingPat = eval->evalBoard(isWhite, BBBoard);
+    standingPat = eval->evalBoard(isWhite, BBBoard, zobrist);
 
     if(quietDepth <= 0 || searchCutoff){
         return standingPat;

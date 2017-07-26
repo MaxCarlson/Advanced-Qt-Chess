@@ -39,6 +39,8 @@ U64 zNullMove;
 HashEntry transpositionT[15485843];
 //transpositon table for quiescence search
 HashEntry transpositionTQuiet[338207];
+//TTable of evals
+HashEntry transpositionEval[5021983];
 
 
 //color piece arrays
