@@ -23,12 +23,6 @@ private:
     //minmax with alpha beta, the main component of our search
     int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
-    //PVS TEST
-    int PVS(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
-    int zwSearch(int depth, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
-
-    //multithreading test function
-
         //sort moves and apply heuristics like killer and transpostion data
         std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist);
 
@@ -46,15 +40,12 @@ private:
         int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
         //if a capture cannot increase alpha, don't bother searching it
         bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, BitBoards *BBBoard);
+        bool badCapture(std::string move, bool isWhite, BitBoards *BBBoard);
 
         //orders moves by placing in order of most valuable victim least valuable attacker
         std::string mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard);
 
-        //Static exchange evaulation test
-        //std::string SSE(std::string captures, bool isWhite, BitBoards *BBBoard);
-
-        //sort moves for QS, grab winning caputres, equal captures, and promotions
-        std::string sortMovesQS(std::string captures, bool isWhite, BitBoards *BBBoard);
+        bool isCapture(std::string move, bool isWhite, BitBoards *BBBoard);
 
 
 //transposition table functions
@@ -75,9 +66,11 @@ private:
     int qCount = 0;
 
     //number representing amount to reduce search with Null-Moves
-    const int depthR = 2;
+    int depthR = 2;
 
-
+    //PVS TEST
+    int PVS(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
+    int zwSearch(int depth, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
 };
 

@@ -7,9 +7,27 @@ const U64 full  = 0xffffffffffffffffULL;
 const int knight_adj[9] = { -20, -16, -12, -8, -4,  0,  4,  8, 10};
 const int rook_adj[9] =   {  15,  12,   9,  6,  3,  0, -3, -6, -9};
 
-//values definitely need to be adjusted
+//values definitely need to be adjusted and file/rank/side variable
 const int rookOpenFile = 10;
 const int rookHalfOpenFile = 5;
+
+const int BISHOP_PAIR = 30;
+const int KNIGHT_PAIR = 8;
+const int ROOK_PAIR = 16;
+
+static const int SafetyTable[100] = {
+    0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+  18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+  68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+ 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+ 260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+ 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+ 494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+};
+
 
 /*
 piece values
@@ -28,32 +46,75 @@ evaluateBB::evaluateBB()
 
 int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard)
 {
-    //reset values
-    int totalEvaualtion = 0;
+//reset values
+    int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
     gamePhase = 0;
     attCount[0] = 0; attCount[1] = 0;
     attWeight[0] = 0; attWeight[1] = 0;
-    whitePawnCount = 0; blackPawnCount = 0;
+    pawnCount[0] = 0; pawnCount[1] = 0;
+    knightCount[0] = 0; knightCount[1] = 0;
+    bishopCount[0] = 0; bishopCount [1] = 0;
+    rookCount[0] = 0; rookCount[1] = 0;
+    midGMobility[0] = 0; midGMobility[1] = 0;
+    endGMobility[0] = 0; endGMobility[1] = 0;
 
+//generate zones around kings
+    generateKingZones(true, BBBoard);
+    generateKingZones(false, BBBoard);
+
+
+//loop through all pieces and gather numbers, mobility, king attacks, etc
     for(int i = 0; i < 64; i++){
         totalEvaualtion += getPieceValue(i, BBBoard);
     }
-/*
-    //knight + rook score adjust based on pawn count
-    if(isWhite){
-        totalEvaualtion += knight_adj[whitePawnCount];
-        totalEvaualtion += rook_adj[whitePawnCount];
-    } else {
-        totalEvaualtion -= knight_adj[blackPawnCount];
-        totalEvaualtion -= rook_adj[blackPawnCount];
-    }
-*/
 
-    if(isWhite){
-        return totalEvaualtion;
-    } else {
-        return -totalEvaualtion;
-    }
+
+//adjusting meterial value of pieces bonus for bishop, small penalty for others
+    if(bishopCount[0] > 1) totalEvaualtion += BISHOP_PAIR;
+    if(bishopCount[1] > 1) totalEvaualtion -= BISHOP_PAIR;
+    if(knightCount[0] > 1) totalEvaualtion -= KNIGHT_PAIR;
+    if(knightCount[1] > 1) totalEvaualtion += KNIGHT_PAIR;
+    if(rookCount[0] > 1) totalEvaualtion -= KNIGHT_PAIR;
+    if(rookCount[1] > 1) totalEvaualtion += KNIGHT_PAIR;
+
+
+    totalEvaualtion += knight_adj[pawnCount[0]];
+    totalEvaualtion += rook_adj[pawnCount[0]];
+    totalEvaualtion -= knight_adj[pawnCount[1]];
+    totalEvaualtion -= rook_adj[pawnCount[1]];
+
+    /********************************************************************
+     *  Merge king attack score. We don't apply this value if there are *
+     *  less than two attackers or if the attacker has no queen.        *
+     *******************************************************************/
+
+    if(attCount[0] < 2 || BBBoard->BBWhiteQueens == 0LL) attWeight[0] = 0;
+    if(attCount[1] < 2 || BBBoard->BBBlackQueens == 0LL) attWeight[1] = 0;
+    totalEvaualtion += SafetyTable[attWeight[0]];
+    totalEvaualtion -= SafetyTable[attWeight[1]];
+
+
+    /********************************************************************
+    *  Merge midgame and endgame score. We interpolate between these    *
+    *  two values, using a gamePhase value, based on remaining piece    *
+    *  material on both sides. With less pieces, endgame score beco-    *
+    *  mes more influential.                                            *
+    ********************************************************************/
+
+    midGScore +=(midGMobility[0] - midGMobility[1]);
+    endGScore +=(endGMobility[0] - endGMobility[1]);
+    int mgWeight = gamePhase;
+    int egWeight = 24 - gamePhase;
+
+    totalEvaualtion +=( (midGScore * mgWeight) + (endGScore * egWeight)) / 24;
+
+
+
+
+    if(!isWhite) totalEvaualtion = -totalEvaualtion;
+
+    return totalEvaualtion;
+
 
 }
 
@@ -235,6 +296,48 @@ int bKingEndSqT[64] = {
     -50, -40, -30, -20, -20, -30, -40, -50,
 };
 
+int weak_pawn_pcsq[2][64] = { {
+     0,   0,   0,   0,   0,   0,   0,   0,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+     0,   0,   0,   0,   0,   0,   0,   0
+}, {
+   0, 0, 0, 0, 0, 0, 0, 0,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   -10, -12, -14, -16, -16, -14, -12, -10,
+   0, 0, 0, 0, 0, 0, 0, 0,
+}
+};
+
+int passed_pawn_pcsq[2][64] = { {
+     0,   0,   0,   0,   0,   0,   0,   0,
+   140, 140, 140, 140, 140, 140, 140, 140,
+    92,  92,  92,  92,  92,  92,  92,  92,
+    56,  56,  56,  56,  56,  56,  56,  56,
+    32,  32,  32,  32,  32,  32,  32,  32,
+    20,  20,  20,  20,  20,  20,  20,  20,
+    20,  20,  20,  20,  20,  20,  20,  20,
+     0,   0,   0,   0,   0,   0,   0,   0
+}, {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20,
+    32, 32, 32, 32, 32, 32, 32, 32,
+    56, 56, 56, 56, 56, 56, 56, 56,
+    92, 92, 92, 92, 92, 92, 92, 92,
+    140, 140, 140, 140, 140, 140, 140, 140,
+    0, 0, 0, 0, 0, 0, 0, 0,
+}
+};
+
 int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
 {
     //create an empty board then shift a 1 over to the current i location
@@ -244,18 +347,31 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
     //white pieces
     if(BBBoard->BBWhitePieces & pieceLocation){
         if(pieceLocation & BBBoard->BBWhitePawns){
-            pawnEval(true, location, BBBoard);
-            whitePawnCount ++;
-            return 100 + wPawnsSqT[location];
+
+            pawnCount[0] ++;
+            return 100 +  pawnEval(true, location, BBBoard);
+
         } else if(pieceLocation & BBBoard->BBWhiteRooks){
+            rookCount[0] ++;
+            evalRook(true, location, BBBoard);
             return 500 + wRooksSqT[location];
+
         } else if(pieceLocation & BBBoard->BBWhiteKnights){
+            knightCount[0] ++;
+            evalKnight(true, location, BBBoard);
             return 320 + wKnightsSqT[location];
+
         } else if(pieceLocation & BBBoard->BBWhiteBishops){
+            bishopCount[0] ++;
+            evalBishop(true, location, BBBoard);
             return 330 + wBishopsSqT[location];
+
         } else if(pieceLocation & BBBoard->BBWhiteQueens){
+            evalQueen(true, location, BBBoard);
             return 900 + wQueensSqt[location];
+
         } else if(pieceLocation & BBBoard->BBWhiteKing){
+
             //If both sides have no queens use king end game board
             if((BBBoard->BBWhiteQueens | BBBoard->BBBlackQueens) & full){
                 return 20000 + wKingEndSqT[location];
@@ -266,16 +382,29 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
         }
     } else if (BBBoard->BBBlackPieces & pieceLocation) {
         if(pieceLocation & BBBoard->BBBlackPawns ){
-            blackPawnCount ++;
-            return -100 -bPawnSqT[location];
+            pawnCount[1] ++;
+            return -100  - pawnEval(false, location, BBBoard);
+
         } else if(pieceLocation & BBBoard->BBBlackRooks){
+            rookCount[1] ++;
+            evalRook(false, location, BBBoard);
             return -500 -bRookSqT[location];
+
         } else if(pieceLocation & BBBoard->BBBlackKnights){
+            knightCount[1] ++;
+            evalKnight(false, location, BBBoard);
             return -320 -bKnightSqT[location];
+
         } else if(pieceLocation & BBBoard->BBBlackBishops){
+            bishopCount[1] ++;
+            evalBishop(false, location, BBBoard);
             return -330 -bBishopsSqT[location];
+
         } else if(pieceLocation & BBBoard->BBBlackQueens){
+
+            evalQueen(false, location, BBBoard);
             return -900 -bQueenSqT[location];
+
         } else if(pieceLocation & BBBoard->BBBlackKing){
             if((BBBoard->BBBlackQueens | BBBoard->BBWhiteQueens) & full){
                 return -20000 -bKingEndSqT[location];
@@ -286,7 +415,7 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
     return 0;
 }
 
-U64 evaluateBB::generateKingZone(bool isWhite, BitBoards *BBBoard)
+void evaluateBB::generateKingZones(bool isWhite, BitBoards *BBBoard)
 {
     U64 king;
     if(isWhite){
@@ -313,7 +442,7 @@ U64 evaluateBB::generateKingZone(bool isWhite, BitBoards *BBBoard)
 
 }
 
-void evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
+int evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
 {
     int side;
     int result = 0;
@@ -321,34 +450,130 @@ void evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
     int flagIsWeak = 1;   // we will be trying to disprove that
     int flagIsOpposed = 0;
 
-    U64 pawn = 0LL, friends, eking, kingZone, opawns, epawns;
+    U64 pawn = 0LL, opawns, epawns;
     pawn += 1LL << location;
     if(isWhite){
-        friends = BBBoard->BBWhitePieces;
-        eking = BBBoard->BBBlackKing;
         opawns = BBBoard->BBWhitePawns;
         epawns = BBBoard->BBBlackPawns;
-        kingZone = bKingZ;
         side = 0;
     } else {
-        friends = BBBoard->BBBlackPieces;
-        eking = BBBoard->BBWhiteKing;
         opawns = BBBoard->BBBlackPawns;
         epawns = BBBoard->BBWhitePawns;
-        kingZone = wKingZ;
         side = 1;
     }
-
+/*
     BBBoard->drawBB(pawn);
     pawn = pawn << 8;
     BBBoard->drawBB(pawn);
-
-
     pawn = pawn >> 8;
     BBBoard->drawBB(pawn);
+*/
+    //loop through and find out if pawn is doubled, passed, or opposed
+    U64 tpawn = pawn;
+    while(tpawn != 0LL){
+        if(isWhite){
+            tpawn = tpawn >> 8; //move "pawn" one step north
+            flagIsPassed = 0;
+            //if pawn is blocked by our pawn
+            if(tpawn & opawns){
+                result -= 20; //doubled penalty
 
+            } else if (tpawn & epawns) {
+                flagIsOpposed = 1; //if pawn is opposed
+            }
 
+            //if there is an enemy pawn to the north east or north west, pawn is no longer passed
+            //Not file A/H used to ensure wrapping doesn't occur
+            if((BBBoard->noWeOne(tpawn) & epawns & ~ BBBoard->FileHBB) || (BBBoard->noEaOne(tpawn) & epawns & ~BBBoard->FileABB)){
+                flagIsPassed = 0;
+            }
 
+        } else {
+            tpawn = tpawn << 8; //one step south
+            flagIsPassed = 0;
+            //if pawn is blocked by our pawn
+            if(tpawn & opawns){
+                result -= 20; //doubled penalty
+
+            } else if (tpawn & epawns) {
+                flagIsOpposed = 1; //if pawn is opposed
+            }
+
+            //if there is an enemy pawn to the south east or south west, pawn is no longer passed
+            if((BBBoard->soWeOne(tpawn) & epawns & ~ BBBoard->FileHBB) || (BBBoard->soEaOne(tpawn) & epawns) & ~BBBoard->FileABB){
+                flagIsPassed = 0;
+            }
+
+        }
+    }
+
+//another loop going backwards looking if the pawn is supported by friendly pawns
+    tpawn = pawn;
+
+    while(tpawn != 0LL){
+        if(isWhite){
+            tpawn = tpawn << 8; //south one
+
+            if(BBBoard->soWeOne(tpawn) & opawns &~ BBBoard->FileHBB){
+                flagIsWeak = 0;
+                break;
+            }
+
+            if(BBBoard->soEaOne(tpawn) & opawns & ~BBBoard->FileABB){
+                flagIsWeak = 0;
+                break;
+            }
+        } else {
+            tpawn = tpawn >> 8; //north one
+
+            if(BBBoard->noWeOne(tpawn) & opawns &~ BBBoard->FileHBB){
+                flagIsWeak = 0;
+                break;
+            }
+
+            if(BBBoard->noEaOne(tpawn) & opawns & ~BBBoard->FileABB){
+                flagIsWeak = 0;
+                break;
+            }
+        }
+    }
+
+    //evaluate passed pawns, scoring them higher if they are protected or
+    //if their advance is supported by friendly pawns
+    if(flagIsPassed){
+        if(isPawnSupported(isWhite, BBBoard, pawn, opawns)){
+            result += (passed_pawn_pcsq[side][location] * 10) / 8;
+        } else {
+            result += passed_pawn_pcsq[side][location];
+        }
+    }
+
+    //eval weak pawns, increasing the penalty if they are in a half open file
+    if(flagIsWeak){
+        result += weak_pawn_pcsq[side][location];
+
+        if(flagIsOpposed){
+            result -= 4;
+        }
+    }
+
+    return result;
+
+}
+
+int evaluateBB::isPawnSupported(bool isWhite, BitBoards *BBBoard, U64 pawn, U64 pawns)
+{
+    if(BBBoard->westOne(pawn) & pawns) return 1;
+    if(BBBoard->eastOne(pawn) & pawns) return 1;
+
+    if(isWhite){
+        if(BBBoard->soWeOne(pawn) & pawns) return 1;
+        if(BBBoard->soEaOne(pawn) & pawns) return 1;
+    } else {
+        if(BBBoard->noWeOne(pawn) & pawns) return 1;
+        if(BBBoard->noEaOne(pawn) & pawns) return 1;
+    }
+    return 0;
 }
 
 void evaluateBB::evalKnight(bool isWhite, int location, BitBoards *BBBoard)
@@ -498,7 +723,7 @@ void evaluateBB::evalRook(bool isWhite, int location, BitBoards *BBBoard)
             endGMobility[side] += rookOpenFile;
         } else {
             midGMobility[side] += rookHalfOpenFile;
-            endGMobility[side] == rookHalfOpenFile;
+            endGMobility[side] += rookHalfOpenFile;
         }
     }
 
