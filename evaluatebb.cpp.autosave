@@ -346,7 +346,48 @@ void evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
 
     pawn = pawn >> 8;
     BBBoard->drawBB(pawn);
+    
+    U64 tpawn = pawn;
+        
+    while(tpawn){
+        if(isWhite){
+            tpawn >> 8; //move "pawn" one step north
+            flagIsPassed = 0;
+            //if pawn is blocked by our pawn
+            if(tpawn & opawns){
+                result -= 20; //doubled penalty
+                
+            } else if (tpawn & epawns) {
+                flagIsOpposed = 1; //if pawn is opposed
+            }
+            
+            //if there is an enemy pawn to the north east or north west, pawn is no longer passed
+            //Not file A/H used to ensure wrapping doesn't occur
+            if((BBBoard->noWeOne(tpawn) & opawns & ~ BBBoard->FileHBB) || (BBBoard->noEaOne(tpawn) & opawns & ~BBBoard->FileABB)){
+                flagIsPassed = 0;
+            }
+            
+            
+        } else {
+            tpawn << 8; //one step south
+            flagIsPassed = 0;
+            //if pawn is blocked by our pawn
+            if(tpawn & opawns){
+                result -= 20; //doubled penalty
+                
+            } else if (tpawn & epawns) {
+                flagIsOpposed = 1; //if pawn is opposed
+            }
+            
+            //if there is an enemy pawn to the south east or south west, pawn is no longer passed
+            if((BBBoard->soWeOne(tpawn) & opawns & ~ BBBoard->FileHBB) || (BBBoard->soEaOne(tpawn) & opawns) & ~BBBoard->FileABB){
+                flagIsPassed = 0;
+            }
+                    
+        }   
+    }
 
+    
 
 
 }
