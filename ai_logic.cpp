@@ -279,17 +279,22 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //generate normal moves
     moves = BBBoard->genWhosMove(isWhite);
-
+    //moves = BBBoard->generatePsMoves(isWhite);
+/*
     //return mate/stalemate score if there are no more moves ~~ less by # depth
     if(moves.length() == 0){
        return eval->returnMateScore(isWhite, BBBoard, depth);
     }
-
+*/
     //apply heuristics + MVV/LVA order and move entrys from hash table
     moves = sortMoves(moves, entry, currentDepth, isWhite, BBBoard, zobrist);
 
     //set hash flag equal to alpha Flag
     int hashFlag = 1, movesNum = moves.length();
+
+    //U64 king;
+    //if(isWhite) king = BBBoard->BBWhiteKing;
+    //else king = BBBoard->BBBlackKing;
 
     std::string tempMove, moveToUnmake, hashMove;
     for(int i = 0; i < movesNum; i+=4){
@@ -304,7 +309,12 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
         //make move on BB's store data to string so move can be undone
         moveToUnmake = BBBoard->makeMove(tempMove, zobrist);
-
+        /*
+        if(BBBoard->isAttacked(isWhite, king)){
+            BBBoard->unmakeMove(moveToUnmake, zobrist);
+            continue;
+        }
+        */
         //futility pruning
         if(f_prune && i > 0 && tempMove[3] != 'Q' && !isCapture(tempMove, isWhite, BBBoard)){
             BBBoard->unmakeMove(moveToUnmake, zobrist);
@@ -528,7 +538,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     //generate moves then parse them for captures
-	 std::string captures = BBBoard->generateCaptures(isWhite);
+    std::string captures = BBBoard->generateCaptures(isWhite);
 
     //if there are no captures, return value of board
     if(captures.length() == 0){
@@ -542,6 +552,10 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     std::string unmake, hashMove, tempMove;
     //set hash flag equal to alpha Flag
     int hashFlag = 1;
+
+    //U64 king;
+    //if(isWhite) king = BBBoard->BBWhiteKing;
+    //else king = BBBoard->BBBlackKing;
 
     for(int i = 0; i < captures.length(); i+=4)
     {
@@ -563,7 +577,12 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         }
 
         unmake = BBBoard->makeMove(tempMove, zobrist);
-
+        /*
+        if(BBBoard->isAttacked(isWhite, king)){
+            BBBoard->unmakeMove(unmake, zobrist);
+            continue;
+        }
+        */
         score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist, eval);
 
         BBBoard->unmakeMove(unmake, zobrist);

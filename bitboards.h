@@ -23,6 +23,12 @@ class BitBoards
 public:
     BitBoards();
 
+    //test psuedo legal
+    std::string generatePsMoves(bool isWhite);
+    U64 unsafeTW;
+    U64 unsafeTB;
+    bool isAttacked(bool isWhite, U64 piece);
+
     //builds boards through reading an array
     void constructBoards();
 

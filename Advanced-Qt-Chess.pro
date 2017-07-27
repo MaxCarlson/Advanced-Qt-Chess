@@ -32,7 +32,8 @@ SOURCES += \
     evaluate.cpp \
     evaluatebb.cpp \
     zobristh.cpp \
-    hashentry.cpp
+    hashentry.cpp \
+    movegen.cpp
 
 
 HEADERS += \
@@ -44,7 +45,8 @@ HEADERS += \
     evaluate.h \
     evaluatebb.h \
     zobristh.h \
-    hashentry.h
+    hashentry.h \
+    movegen.h
 
 
 FORMS +=

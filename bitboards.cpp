@@ -42,41 +42,62 @@ BitBoards::BitBoards()
 {
 
 }
-/*
-std::string BitBoards::generatePsMoves()
+
+std::string BitBoards::generatePsMoves(bool isWhite)
 {
-    std::string moves;
+    std::string moveList;
+    U64 opieces, knights, rooks, bishops, queens, king, eking;
 
-    //moves += possiblePW(BBWhitePawns, EmptyTiles);
-    //moves += possiblePB(BBBlackPawns, EmptyTiles);
-    //U64 a = horizVert(20);
-    //U64 a = DAndAntiDMoves(20);
-   // std::string a = possibleWN(BBWhiteKnights, BBWhitePieces, BBBlackKing);
-    //std::string b = possibleBN(BBBlackKnights, BBBlackPieces, BBWhiteKing);
-    //std::string d = possibleK(BBWhiteKing, BBWhitePieces);
-    //U64 a = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
-    //U64 b = unsafeForWhite(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
-    //std::string f = possibleMovesW(BBWhitePieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
-    //std::string g = possibleMovesB(BBBlackPieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
-    //U64 a = pinnedBB(BBBlackRooks, BBBlackBishops, BBBlackQueens, BBWhiteKing);
-    std::string f = possibleMovesW(BBWhitePieces, BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
-    int c = 5;
+    if(isWhite){
+        opieces = BBWhitePieces;
+        knights = BBWhiteKnights;
+        bishops = BBWhiteBishops;
+        rooks = BBWhiteRooks;
+        queens = BBWhiteQueens;
+        king = BBWhiteKing;
+        eking = BBBlackKing;
+        moveList += possibleWP(BBWhitePawns, EmptyTiles, eking);
 
+    } else {
+        opieces = BBBlackPieces;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+        eking = BBWhiteKing;
+        moveList += possibleBP(BBBlackPawns, EmptyTiles, eking);
 
-    for(int i = 0; i < 64; i++){
-        if(a & (1ULL << i)){
-            std::cout<< 1 <<", ";
-        } else {
-            std::cout << 0 << ", ";
-        }
-        if((i+1)%8 == 0){
-            std::cout<< std::endl;
-        }
     }
 
+    //standard move gen without pinned pieces
+
+    moveList += possibleR(rooks, opieces, eking);
+    moveList += possibleN(knights, opieces, eking);
+    moveList += possibleB(bishops, opieces, eking);
+    moveList += possibleQ(queens, opieces, eking);
+    moveList += possibleK(king, opieces, 0LL);
+
+    return moveList;
 
 }
-*/
+
+bool BitBoards::isAttacked(bool isWhite, U64 piece)
+{
+    if(isWhite){
+        unsafeTW = unsafeForWhite(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+        if(unsafeTW & piece){
+            return true;
+        }
+    } else {
+        unsafeTB = unsafeForBlack(BBWhitePawns, BBWhiteRooks, BBWhiteKnights, BBWhiteBishops, BBWhiteQueens, BBWhiteKing, BBBlackPawns, BBBlackRooks, BBBlackKnights, BBBlackBishops, BBBlackQueens, BBBlackKing);
+        if(unsafeTB & piece){
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string BitBoards::genWhosMove(bool isWhite)
 {
     std::string moves;
@@ -3067,6 +3088,7 @@ std::string BitBoards::generateCaptures(bool isWhite)
 {
     //parses normal moves generated for captures and promotions
     std::string moves = genWhosMove(isWhite);
+    //std::string moves = generatePsMoves(isWhite);
 
     U64 enemys;
     std::string tempMove, captures;
