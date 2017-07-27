@@ -6,17 +6,17 @@
 typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
 
-
+class MoveGen;
 class evaluateBB
 {
 public:
     evaluateBB();
 
     //forms total evaluation for baord state
-    int evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist);
+    int evalBoard(bool isWhite, MoveGen *BBBoard, ZobristH *zobrist);
 
     //returns mate or stalemate score
-    int returnMateScore(bool isWhite, BitBoards *BBBoard, int depth);
+    int returnMateScore(bool isWhite, MoveGen *BBBoard, int depth);
 
 private:
     //material value representing wheter we call end game/mid game
@@ -36,27 +36,27 @@ private:
     int endGMobility[2];
 
     //gets rudimentry value of piece + square table value
-    int getPieceValue(int location, BitBoards *BBBoard);
+    int getPieceValue(int location, MoveGen *BBBoard);
 
     //generate zone around king ///Up for debate as to how large zone should be, currently encompasses 8 tiles directly around king
     //currently includes blocking pieces in zone
-    void generateKingZones(bool isWhite, BitBoards *BBBoard);
+    void generateKingZones(bool isWhite, MoveGen *BBBoard);
         U64 wKingZ;
         U64 bKingZ;
 
 
 
 //piece evaluation for mobility, attacking king squares, etc
-    int pawnEval(bool isWhite, int location, BitBoards *BBBoard);
-        int isPawnSupported(bool isWhite, BitBoards *BBBoard, U64 pawn, U64 pawns);
+    int pawnEval(bool isWhite, int location, MoveGen *BBBoard);
+        int isPawnSupported(bool isWhite, MoveGen *BBBoard, U64 pawn, U64 pawns);
 
-    void evalKnight(bool isWhite, int location, BitBoards *BBBoard);
+    void evalKnight(bool isWhite, int location, MoveGen *BBBoard);
 
-    void evalBishop(bool isWhite, int location, BitBoards *BBBoard);
+    void evalBishop(bool isWhite, int location, MoveGen *BBBoard);
 
-    void evalRook(bool isWhite, int location, BitBoards *BBBoard);
+    void evalRook(bool isWhite, int location, MoveGen *BBBoard);
 
-    void evalQueen(bool isWhite, int location, BitBoards *BBBoard);
+    void evalQueen(bool isWhite, int location, MoveGen *BBBoard);
 
     void saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, int hash);
 

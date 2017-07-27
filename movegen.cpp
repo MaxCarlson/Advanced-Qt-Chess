@@ -29,52 +29,64 @@ MoveGen::MoveGen()
 
 }
 
-void MoveGen::generatePsMoves(bool isWhite)
+void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
 {
-    moveCount = 0;
+    moveCount[ply] = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
 
     if(isWhite){
         friends = BBWhitePieces;
         enemys = BBBlackPieces;
+
         pawns = BBWhitePawns;
         knights = BBWhiteKnights;
         bishops = BBWhiteBishops;
         rooks = BBWhiteRooks;
         queens = BBWhiteQueens;
         king = BBWhiteKing;
+
         eking = BBBlackKing;
         //generate pawn moves
-        possibleWP(BBWhitePawns, eking);
+        possibleWP(pawns, eking, capturesOnly, ply);
 
     } else {
         friends = BBBlackPieces;
         enemys = BBWhitePieces;
+
         pawns = BBBlackPawns;
         knights = BBBlackKnights;
         bishops = BBBlackBishops;
         rooks = BBBlackRooks;
         queens = BBBlackQueens;
         king = BBBlackKing;
+
         eking = BBWhiteKing;
-        possibleBP(BBBlackPawns, eking);
+        possibleBP(pawns, eking, capturesOnly, ply);
 
     }
 
+
+    //if we don't want to only generate captures
+    U64 capsOnly = full;
+    //if we only want to generate captures
+    if(capturesOnly) capsOnly = enemys;
+
+    //loop through board an generate ps legal moves for our side
     U64 piece = 0LL;
     for(int i = 0; i < 64; i++){
         piece = 0LL;
         piece += 1LL << i;
-        if(knights & piece) possibleN(isWhite, i, friends, enemys, eking);
-        if(bishops & piece) possibleB(isWhite, i, friends, enemys, eking);
-        if(rooks & piece) possibleR(isWhite, i, friends, enemys, eking);
-        if(queens & piece) possibleQ(isWhite, i, friends, enemys, eking);
+        if(knights & piece) possibleN(isWhite, i, friends, enemys, eking, capsOnly, ply);
+        else if(bishops & piece) possibleB(isWhite, i, friends, enemys, eking, capsOnly, ply);
+        else if(rooks & piece) possibleR(isWhite, i, friends, enemys, eking, capsOnly, ply);
+        else if(queens & piece) possibleQ(isWhite, i, friends, enemys, eking, capsOnly, ply);
+        else if(king & piece) possibleK(isWhite, i, friends, enemys, capsOnly, ply);
     }
 
 }
 
 //pawn moves
-void MoveGen::possibleWP(U64 wpawns, U64 blackking)
+void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
 {
     char piece = 'p';
     char captured;
@@ -85,39 +97,59 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
     U64 PAWN_MOVES = northOne(wpawns) & EmptyTiles;
     U64 i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = index/8+1;
-        x1 = index%8;
-        y1 = index/8;
+    if(!capturesOnly){
+        while(i != 0){
+            int index = trailingZeros(i);
+            x = index%8;
+            y = index/8+1;
+            x1 = index%8;
+            y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, '0');
-        moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
+            moveCount[ply] ++;
 
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+            PAWN_MOVES &= ~i;
+            i= PAWN_MOVES & ~(PAWN_MOVES-1);
+        }
+
+
+        //forward two
+        PAWN_MOVES = (wpawns>>16) & EmptyTiles &(EmptyTiles>>8) &rank4;
+        i = PAWN_MOVES &~ (PAWN_MOVES-1);
+
+        while(i != 0){
+            int index = trailingZeros(i);
+            x = index%8;
+            y = index/8+2;
+            x1 = index%8;
+            y1 = index/8;
+
+            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
+            moveCount[ply] ++;
+
+            PAWN_MOVES &= ~i;
+            i= PAWN_MOVES & ~(PAWN_MOVES-1);
+        }
+
+        //Pawn promotions moving forward one
+            PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
+            i = PAWN_MOVES &~ (PAWN_MOVES-1);
+
+            while(i != 0){
+                int index = trailingZeros(i);
+                x = index%8;
+                y = index/8+1;
+                x1 = x;
+                y1 = 7;
+
+                movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
+                moveCount[ply] ++;
+
+                PAWN_MOVES &= ~i;
+                i= PAWN_MOVES & ~(PAWN_MOVES-1);
+            }
+
     }
-
-
-    //forward two
-    PAWN_MOVES = (wpawns>>16) & EmptyTiles &(EmptyTiles>>8) &rank4;
-    i = PAWN_MOVES &~ (PAWN_MOVES-1);
-
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = index/8+2;
-        x1 = index%8;
-        y1 = index/8;
-
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, '0');
-        moveCount ++;
-
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
-    }
-
 
     //capture right
     PAWN_MOVES = noEaOne(wpawns) & BBBlackPieces & ~blackking;
@@ -134,8 +166,8 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
         landing += 1LL << index;
         captured = whichPieceCaptured(isWhite, landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -157,31 +189,14 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
         landing += 1LL << index;
         captured = whichPieceCaptured(isWhite, landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
 
-//Pawn promotions moving forward one
-    PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
-    i = PAWN_MOVES &~ (PAWN_MOVES-1);
-
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = index/8+1;
-        x1 = x;
-        y1 = 7;
-
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, 'Q');
-        moveCount ++;
-
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
-    }
 
 //pawn capture promotions
     //capture right
@@ -199,8 +214,8 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
         landing += 1LL << index;
         captured = whichPieceCaptured(isWhite, landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, 'Q');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -222,8 +237,8 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
         landing += 1LL << index;
         captured = whichPieceCaptured(isWhite, landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, 'Q');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -231,7 +246,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking)
 
 }
 
-void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
+void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
 {
     char piece = 'p';
     char captured;
@@ -242,37 +257,57 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
     U64 PAWN_MOVES = southOne(bpawns) & EmptyTiles;
     U64 i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = index/8-1;
-        x1 = index%8;
-        y1 = index/8;
+    if(!capturesOnly){
+        while(i != 0){
+            int index = trailingZeros(i);
+            x = index%8;
+            y = index/8-1;
+            x1 = index%8;
+            y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, '0');
-        moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
+            moveCount[ply] ++;
 
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+            PAWN_MOVES &= ~i;
+            i= PAWN_MOVES & ~(PAWN_MOVES-1);
 
-    }
+        }
 
-    //forward two
-    PAWN_MOVES = (bpawns<<16) & EmptyTiles &(EmptyTiles<<8) & rank5;
-    i = PAWN_MOVES &~ (PAWN_MOVES-1);
+        //forward two
+        PAWN_MOVES = (bpawns<<16) & EmptyTiles &(EmptyTiles<<8) & rank5;
+        i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = index/8-2;
-        x1 = index%8;
-        y1 = index/8;
+        while(i != 0){
+            int index = trailingZeros(i);
+            x = index%8;
+            y = index/8-2;
+            x1 = index%8;
+            y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, '0');
-        moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
+            moveCount[ply] ++;
 
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+            PAWN_MOVES &= ~i;
+            i= PAWN_MOVES & ~(PAWN_MOVES-1);
+
+        }
+        //forward promotions
+            PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
+            i = PAWN_MOVES &~ (PAWN_MOVES-1);
+
+            while(i != 0){
+                int index = trailingZeros(i);
+                x = index%8;
+                y = 0;
+                x1 = x;
+                y1 = 0;
+
+                movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
+                moveCount[ply] ++;
+
+                PAWN_MOVES &= ~i;
+                i= PAWN_MOVES & ~(PAWN_MOVES-1);
+            }
 
     }
 
@@ -291,8 +326,8 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
         x1 = index%8;
         y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -314,31 +349,13 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
         x1 = index%8;
         y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
-
-//promotions
-    PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
-    i = PAWN_MOVES &~ (PAWN_MOVES-1);
-
-    while(i != 0){
-        int index = trailingZeros(i);
-        x = index%8;
-        y = 0;
-        x1 = x;
-        y1 = 0;
-
-        movegen_push(x, y, x1, y1, piece, '0', moveCount, 'Q');
-        moveCount ++;
-
-        PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
-    }
 
     //capture promotions
     //capture right
@@ -356,8 +373,8 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
         x1 = index%8;
         y1 = 0;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, 'Q');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -380,8 +397,8 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
         x1 =index%8;
         y1 = 0;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, 'Q');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
+        moveCount[ply] ++;
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -390,7 +407,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking)
 }
 
 //other piece moves
-void MoveGen::possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking)
+void MoveGen::possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
 {
     char piece;
     if(isWhite) piece = 'N';
@@ -408,9 +425,9 @@ void MoveGen::possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64
     //making sure the moves don't wrap around to other side once shifter
     //as well as friendly and illegal king capture check
     if(location % 8 < 4){
-        moves &= ~FILE_GH & ~friends & ~oppositeking;
+        moves &= ~FILE_GH & ~friends & ~oppositeking & capturesOnly;
     } else {
-        moves &= ~FILE_AB & ~friends & ~oppositeking;
+        moves &= ~FILE_AB & ~friends & ~oppositeking & capturesOnly;
     }
 
     U64 j = moves & ~(moves-1);
@@ -431,21 +448,21 @@ void MoveGen::possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         moves &= ~j;
         j = moves & ~(moves-1);
     }
 }
 
-void MoveGen::possibleB(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking)
+void MoveGen::possibleB(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
 {
     char piece;
     if(isWhite) piece = 'B';
     else piece = 'b';
 
-    U64 moves =  DAndAntiDMoves(location) & ~friends & ~oppositeking;
+    U64 moves =  DAndAntiDMoves(location) & ~friends & ~oppositeking & capturesOnly;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -464,21 +481,21 @@ void MoveGen::possibleB(bool isWhite, int location, U64 friends, U64 enemys, U64
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         moves &= ~j;
         j = moves & ~(moves-1);
     }
 }
 
-void MoveGen::possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking)
+void MoveGen::possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
 {
     char piece;
     if(isWhite) piece = 'R';
     else piece = 'r';
 
-    U64 moves = horizVert(location) & ~friends & ~oppositeking;
+    U64 moves = horizVert(location) & ~friends & ~oppositeking & capturesOnly;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -497,8 +514,8 @@ void MoveGen::possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         moves &= ~j;
         j = moves & ~(moves-1);
@@ -506,13 +523,13 @@ void MoveGen::possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64
 
 }
 
-void MoveGen::possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking)
+void MoveGen::possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
 {
     char piece;
     if(isWhite) piece = 'Q';
     else piece = 'q';
 
-    U64 moves = (DAndAntiDMoves(location) | horizVert(location)) & ~friends & ~oppositeking;
+    U64 moves = (DAndAntiDMoves(location) | horizVert(location)) & ~friends & ~oppositeking & capturesOnly;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -532,8 +549,8 @@ void MoveGen::possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         moves &= ~j;
         j = moves & ~(moves-1);
@@ -541,7 +558,7 @@ void MoveGen::possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64
 
 }
 
-void MoveGen::possibleK(bool isWhite, int location, U64 friends, U64 enemys)
+void MoveGen::possibleK(bool isWhite, int location, U64 friends, U64 enemys, U64 capturesOnly, int ply)
 {
     U64 moves;
     char piece;
@@ -557,10 +574,10 @@ void MoveGen::possibleK(bool isWhite, int location, U64 friends, U64 enemys)
     }
 
     if(location % 8 < 4){
-        moves &= ~FILE_GH & ~friends;
+        moves &= ~FILE_GH & ~friends & capturesOnly;
 
     } else {
-        moves &= ~FILE_AB & ~friends;
+        moves &= ~FILE_AB & ~friends & capturesOnly;
     }
 
     U64 j = moves &~(moves-1);
@@ -581,26 +598,26 @@ void MoveGen::possibleK(bool isWhite, int location, U64 friends, U64 enemys)
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, moveCount, '0');
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
+        moveCount[ply] ++;
 
         moves &= ~j;
         j = moves &~ (moves-1);
     }
 
-
-
 }
 
-void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captured, int moveCount, char flag)
+void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag, int ply)
 {
-    moveAr[moveCount]->x = x;
-    moveAr[moveCount]->y = y;
-    moveAr[moveCount]->x1 = x1;
-    moveAr[moveCount]->y1 = y1;
-    moveAr[moveCount]->piece = piece;
-    moveAr[moveCount]->captured = captured;
+    int mc = moveCount[ply];
+    moveAr[ply][mc].x = x;
+    moveAr[ply][mc].y = y;
+    moveAr[ply][mc].x1 = x1;
+    moveAr[ply][mc].y1 = y1;
+    moveAr[ply][mc].piece = piece;
+    moveAr[ply][mc].captured = captured;
 
+    //need history heristics for quiet moves!!!!!!!
 
     //scoring capture moves
     if(captured != '0'){
@@ -619,11 +636,30 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
         else if(piece == 'R' || piece == 'r') cVal = 500;
         else if(piece == 'Q' || piece == 'q') cVal = 900;
 
-        moveAr[moveCount]->score = cVal - pVal + 50;
+        moveAr[ply][mc].score = cVal - pVal + 50;
 
+    //temp quiet scoring
+    } else {
+        moveAr[ply][mc].score = 0;
     }
 
+    //pawn promotions
+    if(moveAr[ply][mc].flag = 'Q') moveAr[ply][mc].score += 800;
 
+}
+
+Move MoveGen::movegen_sort(int ply)
+{
+    int best = -999999;
+    int high;
+    for(int i = 0; i < moveCount[ply]; i++){
+        if(moveAr[ply][i].score > best && !moveAr[ply][i].tried){
+            high = i;
+        }
+    }
+    moveAr[ply][high].tried = true;
+
+    return moveAr[ply][high];
 }
 
 char MoveGen::whichPieceCaptured(bool isWhite, U64 landing)
@@ -641,6 +677,7 @@ char MoveGen::whichPieceCaptured(bool isWhite, U64 landing)
         if(landing & BBWhiteQueens) return 'Q';
         if(landing & BBWhiteKing) return 'K';
     }
+    drawBBA();
     std::cout << "which piece captured error" << std::endl;
     return '0';
 }
@@ -781,60 +818,102 @@ void MoveGen::constructBoards()
 
 }
 
-U64 MoveGen::northOne(U64 b)
+bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
 {
-    return b >> 8;
+    U64 attacks, friends, enemys, pawns, knights, rooks, bishops, queens, king;
+    //int x, y, x1, y1;
+
+    if(isWhite){
+        friends = BBWhitePieces;
+        enemys = BBBlackPieces;
+        pawns = BBBlackPawns;
+        knights = BBBlackKnights;
+        bishops = BBBlackBishops;
+        rooks = BBBlackRooks;
+        queens = BBBlackQueens;
+        king = BBBlackKing;
+
+        //pawns
+        //capture right
+        attacks = soEaOne(pawns) & pieceLoc;
+        //capture left
+        attacks |= soWeOne(pawns) & pieceLoc;
+
+    } else {
+        friends = BBBlackPieces;
+        enemys = BBWhitePieces;
+        pawns = BBWhitePawns;
+        knights = BBWhiteKnights;
+        bishops = BBWhiteBishops;
+        rooks = BBWhiteRooks;
+        queens = BBWhiteQueens;
+        king = BBWhiteKing;
+
+        //capture right
+        attacks = noEaOne(pawns) & pieceLoc;
+        //capture left
+        attacks |= noWeOne(pawns) & pieceLoc;
+    }
+
+    if(attacks) return true;
+
+    //knight attacks
+    int location = trailingZeros(pieceLoc);
+
+    if(location > 18){
+        attacks = KNIGHT_SPAN<<(location-18);
+    } else {
+        attacks = KNIGHT_SPAN>>(18-location);
+    }
+
+    //making sure the moves don't wrap around to other side once shifter
+    //as well as friendly and illegal king capture check
+    if(location % 8 < 4){
+        attacks &= ~FILE_GH & ~friends;
+    } else {
+        attacks &= ~FILE_AB & ~friends;
+    }
+
+    if(attacks & knights) return true;
+
+    U64 BQ = bishops | queens;
+
+    attacks = DAndAntiDMoves(location) & BQ;
+
+    if(attacks & BQ) return true;
+
+    U64 BR = bishops | queens;
+
+    attacks = horizVert(location) & BR;
+
+    if(attacks & BR) return true;
+
+    attacks = northOne(pieceLoc);
+    attacks |= noEaOne(pieceLoc);
+    attacks |= eastOne(pieceLoc);
+    attacks |= soEaOne(pieceLoc);
+    attacks |= southOne(pieceLoc);
+    attacks |= soWeOne(pieceLoc);
+    attacks |= westOne(pieceLoc);
+    attacks |= noWeOne(pieceLoc);
+
+    if(attacks & king) return true;
+
+return false;
 }
-
-U64 MoveGen::southOne(U64 b)
-{
-    return b << 8;
-}
-
-U64 MoveGen::eastOne (U64 b)
-{
-    return (b << 1) & notHFile;
-}
-
-U64 MoveGen::noEaOne(U64 b)
-{
-    return (b >> 7) & notHFile;;
-}
-
-U64 MoveGen::soEaOne(U64 b)
-{
-    return (b << 9) & notHFile;
-}
-
-U64 MoveGen::westOne(U64 b)
-{
-    return (b >> 1) & notAFile;
-}
-
-U64 MoveGen::soWeOne(U64 b)
-{
-
-    return (b << 7) & notAFile;
-}
-
-U64 MoveGen::noWeOne(U64 b)
-{
-    return (b >> 9) & notAFile;
-}
-
 
 //normal move stuff
-std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
+std::string MoveGen::makeMove(Move move, ZobristH *zobrist)
 {
     std::string savedMove;
     bool wOrB;
-    int x, y, x1, y1, xyI, xyE;
+    int xyI, xyE;
     //inital spot piece mask and end spot mask
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
     //for normal moves
 
-    xyI = move->y * 8 + move->x;
-    xyE = move->y1* 8 + move->x1;
+    xyI = move.y * 8 + move.x;
+    xyE = move.y1 * 8 + move.x1;
 
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
@@ -843,10 +922,10 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
 
     //store coordiantes for undoing move
     //final order is x, y, x1, y1, piece moved, piece captured (0 if none)
-    savedMove += x;
-    savedMove += y;
-    savedMove += x1;
-    savedMove += y1;
+    savedMove += move.x;
+    savedMove += move.y;
+    savedMove += move.x1;
+    savedMove += move.y1;
 
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
@@ -863,9 +942,9 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             //adds piece to move to be returned in order to undo move
             savedMove += "P";
             //removes piece from capture location if capture and returns piece char
-            savedMove += move->captured;
+            savedMove += move.captured;
 
-            if(move->flag != 'Q'){
+            if(move.flag != 'Q'){
                 //add piece to landing spot
                 BBWhitePawns |= pieceMaskE;
 
@@ -885,7 +964,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "R";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBWhiteRooks |= pieceMaskE;
             //add to color pieces then full tiles
@@ -897,7 +976,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "N";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBWhiteKnights |= pieceMaskE;
             //add to color pieces then full tiles
@@ -909,7 +988,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "B";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBWhiteBishops |= pieceMaskE;
             //add to color pieces then full tiles
@@ -921,19 +1000,22 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "Q";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBWhiteQueens |= pieceMaskE;
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            if(move.captured == 'P'){
+                drawBBA();
+            }
 
         } else if (BBWhiteKing & pieceMaskI){
             BBWhiteKing &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "K";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBWhiteKing |= pieceMaskE;
             //add to color pieces then full tiles
@@ -948,9 +1030,9 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "p";
-            savedMove += move->captured;
+            savedMove += move.captured;
 
-            if(move->flag != 'Q'){
+            if(move.flag != 'Q'){
                 //add piece to landing spot
                 BBBlackPawns |= pieceMaskE;
 
@@ -970,7 +1052,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "r";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBBlackRooks |= pieceMaskE;
             //add to color pieces then full tiles
@@ -982,7 +1064,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "n";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBBlackKnights |= pieceMaskE;
             //add to color pieces then full tiles
@@ -994,7 +1076,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "b";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBBlackBishops |= pieceMaskE;
             //add to color pieces then full tiles
@@ -1006,7 +1088,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "q";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBBlackQueens |= pieceMaskE;
             //add to color pieces then full tiles
@@ -1018,7 +1100,7 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
             savedMove += "k";
-            savedMove += move->captured;
+            savedMove += move.captured;
             //add piece
             BBBlackKing |= pieceMaskE;
             //add to color pieces then full tiles
@@ -1026,7 +1108,6 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
             FullTiles |= pieceMaskE;
         }
     }
-
 
 
     if(wOrB == true){
@@ -1054,6 +1135,11 @@ std::string MoveGen::makeMove(Move *move, ZobristH *zobrist)
 
 void MoveGen::unmakeMove(std::string moveKey, ZobristH *zobrist)
 {
+
+    if(EmptyTiles & FullTiles){
+
+        drawBBA();
+    }
 
     //parse string move and change to ints
     int x = moveKey[0] - 0;
@@ -1286,7 +1372,7 @@ void MoveGen::undoCapture(U64 location, char piece, char whiteOrBlack)
                 BBBlackPieces |= location;
                 break;
             default:
-
+                drawBBA();
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
         }
     } else {
@@ -1295,3 +1381,110 @@ void MoveGen::undoCapture(U64 location, char piece, char whiteOrBlack)
     }
 }
 
+void MoveGen::drawBBA()
+{
+    char flips[8] = {'8', '7', '6', '5', '4', '3', '2', '1'};
+    char flipsL[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    int c = 0;
+
+    for(int i = 0; i < 64; i++){
+        if((i)%8 == 0){
+            std::cout<< std::endl;
+            std::cout << flips[c] << " | ";
+            c++;
+        }
+
+        if(BBWhitePawns & (1ULL<<i)){
+            std::cout << "P" << ", ";
+        }
+        if(BBWhiteRooks & (1ULL<<i)){
+            std::cout << "R" << ", ";
+        }
+        if(BBWhiteKnights & (1ULL<<i)){
+            std::cout << "N" << ", ";
+        }
+        if(BBWhiteBishops & (1ULL<<i)){
+            std::cout << "B" << ", ";
+        }
+        if(BBWhiteQueens & (1ULL<<i)){
+            std::cout << "Q" << ", ";
+        }
+        if(BBWhiteKing & (1ULL<<i)){
+            std::cout << "K" << ", ";
+        }
+        if(BBBlackPawns & (1ULL<<i)){
+            std::cout << "p" << ", ";
+        }
+        if(BBBlackRooks & (1ULL<<i)){
+            std::cout << "r" << ", ";
+        }
+        if(BBBlackKnights & (1ULL<<i)){
+            std::cout << "n" << ", ";
+        }
+        if(BBBlackBishops & (1ULL<<i)){
+            std::cout << "b" << ", ";
+        }
+        if(BBBlackQueens & (1ULL<<i)){
+            std::cout << "q" << ", ";
+        }
+        if(BBBlackKing & (1ULL<<i)){
+            std::cout << "k" << ", ";
+        }
+        if(EmptyTiles & (1ULL<<i)){
+            std::cout << " " << ", ";
+        }
+
+        //if(i % 8 == 7){
+        //    std::cout << "| " << flips[c] ;
+       //     c++;
+       // }
+    }
+
+    std::cout << std::endl << "    ";
+    for(int i = 0; i < 8; i++){
+        std::cout << flipsL[i] << "  ";
+    }
+
+    std::cout << std::endl << std::endl;;
+}
+
+U64 MoveGen::northOne(U64 b)
+{
+    return b >> 8;
+}
+
+U64 MoveGen::southOne(U64 b)
+{
+    return b << 8;
+}
+
+U64 MoveGen::eastOne (U64 b)
+{
+    return (b << 1) & notHFile;
+}
+
+U64 MoveGen::noEaOne(U64 b)
+{
+    return (b >> 7) & notHFile;;
+}
+
+U64 MoveGen::soEaOne(U64 b)
+{
+    return (b << 9) & notHFile;
+}
+
+U64 MoveGen::westOne(U64 b)
+{
+    return (b >> 1) & notAFile;
+}
+
+U64 MoveGen::soWeOne(U64 b)
+{
+
+    return (b << 7) & notAFile;
+}
+
+U64 MoveGen::noWeOne(U64 b)
+{
+    return (b >> 9) & notAFile;
+}

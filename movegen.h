@@ -18,6 +18,7 @@ struct Move{
     char captured;
     int score;
     char flag;
+    bool tried = false;
 
 
 };
@@ -28,8 +29,20 @@ class MoveGen
 public:
     MoveGen();
 
-    //array of move objects
-    Move *moveAr[256];
+    //array of move objects by ply then number of moves
+    Move moveAr[25][256];
+
+    int moveCount[25] = {0};
+
+    void generatePsMoves(bool isWhite, bool capturesOnly, int ply);
+    void constructBoards();
+
+    bool isAttacked(U64 pieceLoc, bool isWhite);
+
+    Move movegen_sort(int ply);
+
+    void unmakeMove(std::string moveKey, ZobristH *zobrist);
+    std::string makeMove(Move move, ZobristH *zobrist);
 
     //bitboards
         U64 FullTiles;
@@ -81,28 +94,6 @@ public:
         const U64 KING_SPAN=460039L;
 
         int trailingZeros(U64 i);
-        void generatePsMoves(bool isWhite);
-        void constructBoards();
-
-
-private:
-        int moveCount;
-        //assigns a score to moves and adds them to the move array
-        void movegen_push(int x, int y, int x1, int y1, char piece, char captured, int moveCount, char flag);
-
-        char whichPieceCaptured(bool isWhite, U64 landing);
-
-
-        //psuedo legal move gen
-
-
-        void possibleWP(U64 wpawns, U64 blackking);
-        void possibleBP(U64 bpawns, U64 whiteking);
-        void possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking);
-        void possibleB(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking);
-        void possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking);
-        void possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking);
-        void possibleK(bool isWhite, int location, U64 friends, U64 enemys);
         U64 horizVert(int s);
         U64 DAndAntiDMoves(int s);
         U64 ReverseBits(U64 input);
@@ -116,9 +107,28 @@ private:
         U64 northOne(U64 b);
 
 
+        void drawBBA();
+private:
+
+        //assigns a score to moves and adds them to the move array
+        void movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag, int ply);
+
+        char whichPieceCaptured(bool isWhite, U64 landing);
+
+
+        //psuedo legal move gen
+
+        void possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply);
+        void possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply);
+        void possibleN(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
+        void possibleB(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
+        void possibleR(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
+        void possibleQ(bool isWhite, int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
+        void possibleK(bool isWhite, int location, U64 friends, U64 enemys, U64 capturesOnly, int ply);
+
+
         void undoCapture(U64 location, char piece, char whiteOrBlack);
-        void unmakeMove(std::string moveKey, ZobristH *zobrist);
-        std::string makeMove(Move *move, ZobristH *zobrist);
+
 };
 
 #endif // MOVEGEN_H

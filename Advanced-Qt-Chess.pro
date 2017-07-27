@@ -28,7 +28,6 @@ SOURCES += \
     tile.cpp \
     Pieces.cpp \
     ai_logic.cpp \
-    bitboards.cpp \
     evaluate.cpp \
     evaluatebb.cpp \
     zobristh.cpp \
@@ -41,7 +40,6 @@ HEADERS += \
     externs.h \
     Pieces.h \
     ai_logic.h \
-    bitboards.h \
     evaluate.h \
     evaluatebb.h \
     zobristh.h \

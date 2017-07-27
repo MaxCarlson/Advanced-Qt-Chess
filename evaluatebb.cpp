@@ -1,5 +1,6 @@
 #include "evaluatebb.h"
 #include "externs.h"
+#include "movegen.h"
 
 const U64 full  = 0xffffffffffffffffULL;
 
@@ -44,7 +45,7 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
+int evaluateBB::evalBoard(bool isWhite, MoveGen *BBBoard, ZobristH *zobrist)
 {
     //transposition hash quiet
     int hash = (int)(zobrist->zobristKey % 5021983);
@@ -153,10 +154,14 @@ void evaluateBB::saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, in
     else transpositionEval[hash].flag = 1;
 }
 
-int evaluateBB::returnMateScore(bool isWhite, BitBoards *BBBoard, int depth)
+int evaluateBB::returnMateScore(bool isWhite, MoveGen *BBBoard, int depth)
 {
+    U64 king;
+    if(isWhite) king = BBBoard->BBWhiteKing;
+    else king = BBBoard->BBBlackKing;
+
     //if we have no moves and we're in check
-    if(BBBoard->isInCheck(isWhite)){
+    if(BBBoard->isAttacked(king, isWhite)){
         if(isWhite){
             return 32000 + depth; //increase mate score the faster we find it
         } else {
@@ -373,7 +378,7 @@ int passed_pawn_pcsq[2][64] = { {
 }
 };
 
-int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
+int evaluateBB::getPieceValue(int location, MoveGen *BBBoard)
 {
     //create an empty board then shift a 1 over to the current i location
     U64 pieceLocation = 0LL;
@@ -450,7 +455,7 @@ int evaluateBB::getPieceValue(int location, BitBoards *BBBoard)
     return 0;
 }
 
-void evaluateBB::generateKingZones(bool isWhite, BitBoards *BBBoard)
+void evaluateBB::generateKingZones(bool isWhite, MoveGen *BBBoard)
 {
     U64 king;
     if(isWhite){
@@ -477,7 +482,7 @@ void evaluateBB::generateKingZones(bool isWhite, BitBoards *BBBoard)
 
 }
 
-int evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
+int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
 {
     int side;
     int result = 0;
@@ -596,7 +601,7 @@ int evaluateBB::pawnEval(bool isWhite, int location, BitBoards *BBBoard)
 
 }
 
-int evaluateBB::isPawnSupported(bool isWhite, BitBoards *BBBoard, U64 pawn, U64 pawns)
+int evaluateBB::isPawnSupported(bool isWhite, MoveGen *BBBoard, U64 pawn, U64 pawns)
 {
     if(BBBoard->westOne(pawn) & pawns) return 1;
     if(BBBoard->eastOne(pawn) & pawns) return 1;
@@ -611,7 +616,7 @@ int evaluateBB::isPawnSupported(bool isWhite, BitBoards *BBBoard, U64 pawn, U64 
     return 0;
 }
 
-void evaluateBB::evalKnight(bool isWhite, int location, BitBoards *BBBoard)
+void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *BBBoard)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -670,7 +675,7 @@ void evaluateBB::evalKnight(bool isWhite, int location, BitBoards *BBBoard)
 
 }
 
-void evaluateBB::evalBishop(bool isWhite, int location, BitBoards *BBBoard)
+void evaluateBB::evalBishop(bool isWhite, int location, MoveGen *BBBoard)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -715,7 +720,7 @@ void evaluateBB::evalBishop(bool isWhite, int location, BitBoards *BBBoard)
 
 }
 
-void evaluateBB::evalRook(bool isWhite, int location, BitBoards *BBBoard)
+void evaluateBB::evalRook(bool isWhite, int location, MoveGen *BBBoard)
 {
     bool  ownBlockingPawns = false, oppBlockingPawns = false;
     int kAttks = 0, mob = 0, side;
@@ -787,7 +792,7 @@ void evaluateBB::evalRook(bool isWhite, int location, BitBoards *BBBoard)
     }
 }
 
-void evaluateBB::evalQueen(bool isWhite, int location, BitBoards *BBBoard)
+void evaluateBB::evalQueen(bool isWhite, int location, MoveGen *BBBoard)
 {
     gamePhase += 4;
     int kAttks = 0, mob = 0, side;

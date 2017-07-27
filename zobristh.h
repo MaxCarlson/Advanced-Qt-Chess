@@ -7,6 +7,7 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
 
 class BitBoards;
+class MoveGen;
 
 class ZobristH
 {
@@ -26,7 +27,8 @@ public:
     void zobristFill();
 
     //get zorbist key by XOR ing all pieces random numbers with Zkey
-    U64 getZobristHash(BitBoards *BBBoard);
+    //U64 getZobristHash(BitBoards *BBBoard);
+    U64 getZobristHash(MoveGen *BBBoard);
 
     //Update zobrist key by XOR ing rand numbers in zArray
     void UpdateKey(int start, int end, std::string moveKey);
@@ -38,7 +40,7 @@ public:
     void testDistibution();
 
     //used for checking if keys match when generated from scratch ~~ without changing master key
-    U64 debugKey(bool isWhite, BitBoards *BBBoard);
+    U64 debugKey(bool isWhite, MoveGen *BBBoard);
 
 };
 

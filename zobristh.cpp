@@ -1,5 +1,6 @@
 #include "zobristh.h"
 #include "externs.h"
+#include "movegen.h"
 
 #include <cmath>
 #include <random>
@@ -170,7 +171,7 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
 
 }
 
-U64 ZobristH::getZobristHash(BitBoards *BBBoard)
+U64 ZobristH::getZobristHash(MoveGen *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
@@ -263,7 +264,7 @@ void ZobristH::testDistibution()
 
 }
 
-U64 ZobristH::debugKey(bool isWhite, BitBoards *BBBoard)
+U64 ZobristH::debugKey(bool isWhite, MoveGen *BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
