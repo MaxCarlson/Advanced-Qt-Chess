@@ -141,6 +141,7 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
     //save to TT eval table
     saveTT(isWhite, zobrist, totalEvaualtion, hash);
 
+    delete gen_moves;
     return totalEvaualtion;
 
 

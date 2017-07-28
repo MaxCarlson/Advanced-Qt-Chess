@@ -85,10 +85,7 @@ void BitBoards::constructBoards()
             BBBlackKing += 1LL<<i;
             BBBlackPieces += 1LL<<i;
             FullTiles += 1LL<<i;
-        } //else if (boardArr[i/8][i%8] == " "){
-          //  EmptyTiles += 1LL<<i;
-       // }
-
+        }
     }
 
     //mark empty tiles with 1's
@@ -111,6 +108,7 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
 
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
+
     if(BBWhitePieces & pieceMaskI) wOrB = true;
     else wOrB = false;
 
@@ -121,9 +119,10 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
     savedMove += move.x1;
     savedMove += move.y1;
 
-    if(EmptyTiles & BBWhitePieces || EmptyTiles & BBBlackPieces){
+    if(BBWhiteQueens & BBBlackKnights){
         drawBBA();
     }
+
 
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
@@ -307,6 +306,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
         }
     }
 
+    //remove captured piece from BB's
+    if(move.captured != '0') removeCapturedPiece(move.captured, pieceMaskE);
+
 
     if(wOrB == true){
         savedMove += 'w';
@@ -320,10 +322,10 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
     //EmptyTiles &= ~FullTiles
     //drawBBA();
 
-    if(BBWhiteQueens & EmptyTiles){
+    if(BBWhiteQueens & BBBlackKnights){
         drawBBA();
-        drawBB(BBWhiteQueens);
     }
+
 
     if(EmptyTiles & BBWhitePieces || EmptyTiles & BBBlackPieces){
         drawBBA();
@@ -668,6 +670,54 @@ void BitBoards::drawBBA()
     }
 
     std::cout << std::endl << std::endl;;
+}
+
+void BitBoards::removeCapturedPiece(char captured, U64 location)
+{
+    switch(captured){
+    case 'P':
+        BBWhitePawns &= ~location;
+        BBWhitePieces &= ~location;
+        break;
+    case 'N':
+        BBWhiteKnights &= ~location;
+        BBWhitePieces &= ~location;
+        break;
+    case 'B':
+        BBWhiteBishops &= ~location;
+        BBWhitePieces &= ~location;
+        break;
+    case 'R':
+        BBWhiteRooks &= ~location;
+        BBWhitePieces &= ~location;
+        break;
+    case 'Q':
+        BBWhiteQueens &= ~location;
+        BBWhitePieces &= ~location;
+        break;
+    case 'p':
+        BBBlackPawns &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    case 'n':
+        BBBlackKnights &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    case 'b':
+        BBBlackBishops &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    case 'r':
+        BBBlackRooks &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    case 'q':
+        BBBlackQueens &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    default:
+        std::cout << "Remove Captured Piece on make move ERROR" << std::endl;
+    }
 }
 
 

@@ -3,15 +3,15 @@
 #include <string>
 #include <stack>
 #include <thread>
+#include "move.h"
 
 
 
-class Pieces;
 class ZobristH;
 class BitBoards;
-class MoveGen;
 class evaluateBB;
 class HashEntry;
+
 
 class Ai_Logic
 {
@@ -19,7 +19,7 @@ public:
     Ai_Logic();
 
     //iterative deepening
-    std::string iterativeDeep(int depth);
+    Move iterativeDeep(int depth);
 
 private:
     //minmax with alpha beta, the main component of our search
@@ -60,7 +60,7 @@ private:
 //object variables
 
     //princiapl variation array
-    std::string pVArr[29];
+    Move pVArr[29];
 
     //counts number of piece postitions tried
     int positionCount = 0;

@@ -107,22 +107,22 @@ void Tile::aiTurn(){
 
     Ai_Logic *newMove = new Ai_Logic;
 
-    std::string bestMove;
     //generate best move (number represents max search depth)
-    bestMove = newMove->iterativeDeep(6);
+    Move bestMove = newMove->iterativeDeep(6);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;
     Tile *aiClick1;
 
+    tempx = bestMove.x;
+    tempy = bestMove.y;
+    tempx2 = bestMove.x1;
+    tempy2 = bestMove.y1;
+
+    delete newMove;
+
     //if not pawn promotion
-    if(bestMove[3] != 'Q'){
-        //ready coordinates to give to Pieces
-        //std::string bMove = best_moves[tester];
-        tempx = (int)bestMove[0]-0;
-        tempy = (int)bestMove[1]-0;
-        tempx2 = (int)bestMove[2]-0;
-        tempy2 = (int)bestMove[3]-0;
+    if(bestMove.flag == '0'){
 
         //swap piece to its desitnation and make prior spot blank
         boardArr[tempy2][tempx2] = boardArr[tempy][tempx];
@@ -130,26 +130,6 @@ void Tile::aiTurn(){
 
     //pawn promotions
     } else {
-        tempx = (int)bestMove[0]-0;
-        tempy = (int)bestMove[1]-0;
-        //forward promotion
-        if(bestMove[2] == 'F'){
-            tempx2 = tempx;
-            if(turns%2 == 0){
-                tempy2 = tempy-1;
-            } else {
-                tempy2 = tempy+1;
-            }
-        //capture promotion
-        } else {
-            tempx2 = (int)bestMove[3]-0;
-            if(turns%2 == 0){
-                tempy2 = tempy-1;
-            } else {
-                tempy2 = tempy+1;
-            }
-
-        }
         //swap piece to its desitnation and make prior spot blank
         if(turns%2 == 0){
             boardArr[tempy2][tempx2] = "Q";
@@ -159,6 +139,7 @@ void Tile::aiTurn(){
         boardArr[tempy][tempx] = " ";
 
     }
+
 
     //give Tile objects same value as rect[y][x]'s
     aiClick = ::rect[tempy][tempx];
@@ -193,7 +174,6 @@ void Tile::aiTurn(){
     //increment turns, ready next click for user
     turns++;
     count = 0;
-
 
     /*
     //FOR TESTING

@@ -93,7 +93,7 @@ void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply, BitBoard
 //pawn moves
 void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
 {
-    char piece = 'p';
+    char piece = 'P';
     char captured;
     int x, y, x1, y1;
     bool isWhite = true;
@@ -614,13 +614,14 @@ void MoveGen::possibleK(bool isWhite, int location, U64 friends, U64 enemys, U64
 
 void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag, int ply)
 {
-
+    //store move data to move object array
     moveAr[moveCount].x = x;
     moveAr[moveCount].y = y;
     moveAr[moveCount].x1 = x1;
     moveAr[moveCount].y1 = y1;
     moveAr[moveCount].piece = piece;
     moveAr[moveCount].captured = captured;
+    moveAr[moveCount].flag = flag;
 
     //need history heristics for quiet moves!!!!!!!
 
@@ -634,12 +635,13 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
         else if(piece == 'B' || piece == 'b') pVal = 330;
         else if(piece == 'R' || piece == 'r') pVal = 500;
         else if(piece == 'Q' || piece == 'q') pVal = 900;
+        else if (piece == 'K' || piece == 'k') pVal = 1100; //different value from actual piece value
 
-        if(piece == 'P' || piece == 'p') cVal = 100;
-        else if(piece == 'N' || piece == 'n') cVal = 320;
-        else if(piece == 'B' || piece == 'b') cVal = 330;
-        else if(piece == 'R' || piece == 'r') cVal = 500;
-        else if(piece == 'Q' || piece == 'q') cVal = 900;
+        if(captured == 'P' || captured == 'p') cVal = 100;
+        else if(captured == 'N' || captured == 'n') cVal = 320;
+        else if(captured == 'B' || captured == 'b') cVal = 330;
+        else if(captured == 'R' || captured == 'r') cVal = 500;
+        else if(captured == 'Q' || captured == 'q') cVal = 900;
 
         moveAr[moveCount].score = cVal - pVal + 50;
 
@@ -673,12 +675,14 @@ char MoveGen::whichPieceCaptured(bool isWhite, U64 landing)
         if(landing & BBBlackPawns) return 'p';
         if(landing & BBBlackKnights) return 'n';
         if(landing & BBBlackBishops) return 'b';
+        if(landing & BBBlackRooks) return 'r';
         if(landing & BBBlackQueens) return 'q';
         if(landing & BBBlackKing) return 'k';
     } else {
         if(landing & BBWhitePawns) return 'P';
         if(landing & BBWhiteKnights) return 'N';
         if(landing & BBWhiteBishops) return 'B';
+        if(landing & BBWhiteRooks) return 'R';
         if(landing & BBWhiteQueens) return 'Q';
         if(landing & BBWhiteKing) return 'K';
     }
@@ -826,6 +830,7 @@ void MoveGen::grab_boards(BitBoards *BBBoard)
 {
     FullTiles = BBBoard->FullTiles;
     EmptyTiles = BBBoard->EmptyTiles;
+
     BBWhitePieces = BBBoard->BBWhitePieces;
     BBWhitePawns = BBBoard->BBWhitePawns;
     BBWhiteKnights = BBBoard->BBWhiteKnights;
@@ -835,7 +840,6 @@ void MoveGen::grab_boards(BitBoards *BBBoard)
     BBWhiteKing = BBBoard->BBWhiteKing;
 
     BBBlackPieces = BBBoard->BBBlackPieces;
-
     BBBlackPawns = BBBoard->BBBlackPawns;
     BBBlackKnights = BBBoard->BBBlackKnights;
     BBBlackBishops = BBBoard->BBBlackBishops;
