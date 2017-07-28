@@ -7,21 +7,11 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #include <iostream>
 #include <string>
 
+#include "move.h"
+
+class Pieces;
+class BitBoards;
 class ZobristH;
-
-struct Move{
-    int x;
-    int y;
-    int x1;
-    int y1;
-    char piece;
-    char captured;
-    int score;
-    char flag;
-    bool tried = false;
-
-
-};
 
 
 class MoveGen
@@ -30,19 +20,21 @@ public:
     MoveGen();
 
     //array of move objects by ply then number of moves
-    Move moveAr[25][256];
+    Move moveAr[256];
 
-    int moveCount[25] = {0};
+    int moveCount = 0;
 
-    void generatePsMoves(bool isWhite, bool capturesOnly, int ply);
+    void generatePsMoves(bool isWhite, bool capturesOnly, int ply, BitBoards *BBBoard);
+    void clearMove(int ply, int numMoves);
     void constructBoards();
+    void grab_boards(BitBoards *BBBoard);
 
     bool isAttacked(U64 pieceLoc, bool isWhite);
 
     Move movegen_sort(int ply);
 
-    void unmakeMove(std::string moveKey, ZobristH *zobrist);
-    std::string makeMove(Move move, ZobristH *zobrist);
+    //void unmakeMove(std::string moveKey, ZobristH *zobrist);
+    //std::string makeMove(Move move, ZobristH *zobrist);
 
     //bitboards
         U64 FullTiles;
@@ -108,6 +100,7 @@ public:
 
 
         void drawBBA();
+        void drawBB(U64 board);
 private:
 
         //assigns a score to moves and adds them to the move array
@@ -127,7 +120,7 @@ private:
         void possibleK(bool isWhite, int location, U64 friends, U64 enemys, U64 capturesOnly, int ply);
 
 
-        void undoCapture(U64 location, char piece, char whiteOrBlack);
+        //void undoCapture(U64 location, char piece, char whiteOrBlack);
 
 };
 

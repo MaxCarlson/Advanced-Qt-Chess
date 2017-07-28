@@ -45,11 +45,13 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, MoveGen *BBBoard, ZobristH *zobrist)
+int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
 {
     //transposition hash quiet
     int hash = (int)(zobrist->zobristKey % 5021983);
     HashEntry entry = transpositionEval[hash];
+    MoveGen *gen_moves = new MoveGen;
+    gen_moves->grab_boards(BBBoard);
 
     //if we get a hash-table hit, return the evaluation
     if(entry.zobrist == zobrist->zobristKey){
@@ -82,13 +84,13 @@ int evaluateBB::evalBoard(bool isWhite, MoveGen *BBBoard, ZobristH *zobrist)
 
 
 //generate zones around kings
-    generateKingZones(true, BBBoard);
-    generateKingZones(false, BBBoard);
+    generateKingZones(true, gen_moves);
+    generateKingZones(false, gen_moves);
 
 
 //loop through all pieces and gather numbers, mobility, king attacks, etc
     for(int i = 0; i < 64; i++){
-        totalEvaualtion += getPieceValue(i, BBBoard);
+        totalEvaualtion += getPieceValue(i, gen_moves);
     }
 
 
@@ -154,14 +156,14 @@ void evaluateBB::saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, in
     else transpositionEval[hash].flag = 1;
 }
 
-int evaluateBB::returnMateScore(bool isWhite, MoveGen *BBBoard, int depth)
+int evaluateBB::returnMateScore(bool isWhite, MoveGen *move_gen, int depth)
 {
     U64 king;
-    if(isWhite) king = BBBoard->BBWhiteKing;
-    else king = BBBoard->BBBlackKing;
+    if(isWhite) king = move_gen->BBWhiteKing;
+    else king = move_gen->BBBlackKing;
 
     //if we have no moves and we're in check
-    if(BBBoard->isAttacked(king, isWhite)){
+    if(move_gen->isAttacked(king, isWhite)){
         if(isWhite){
             return 32000 + depth; //increase mate score the faster we find it
         } else {
@@ -378,75 +380,75 @@ int passed_pawn_pcsq[2][64] = { {
 }
 };
 
-int evaluateBB::getPieceValue(int location, MoveGen *BBBoard)
+int evaluateBB::getPieceValue(int location, MoveGen *gen_moves)
 {
     //create an empty board then shift a 1 over to the current i location
     U64 pieceLocation = 0LL;
-    pieceLocation += 1LL<<location;
+    pieceLocation += 1LL << location;
 
     //white pieces
-    if(BBBoard->BBWhitePieces & pieceLocation){
-        if(pieceLocation & BBBoard->BBWhitePawns){
+    if(gen_moves->BBWhitePieces & pieceLocation){
+        if(pieceLocation & gen_moves->BBWhitePawns){
 
             pawnCount[0] ++;
-            return 100 +  pawnEval(true, location, BBBoard);
+            return 100 + pawnEval(true, location, gen_moves);
 
-        } else if(pieceLocation & BBBoard->BBWhiteRooks){
+        } else if(pieceLocation & gen_moves->BBWhiteRooks){
             rookCount[0] ++;
-            evalRook(true, location, BBBoard);
+            evalRook(true, location, gen_moves);
             return 500 + wRooksSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBWhiteKnights){
+        } else if(pieceLocation & gen_moves->BBWhiteKnights){
             knightCount[0] ++;
-            evalKnight(true, location, BBBoard);
+            evalKnight(true, location, gen_moves);
             return 320 + wKnightsSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBWhiteBishops){
+        } else if(pieceLocation & gen_moves->BBWhiteBishops){
             bishopCount[0] ++;
-            evalBishop(true, location, BBBoard);
+            evalBishop(true, location, gen_moves);
             return 330 + wBishopsSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBWhiteQueens){
-            evalQueen(true, location, BBBoard);
+        } else if(pieceLocation & gen_moves->BBWhiteQueens){
+            evalQueen(true, location, gen_moves);
             return 900 + wQueensSqt[location];
 
-        } else if(pieceLocation & BBBoard->BBWhiteKing){
+        } else if(pieceLocation & gen_moves->BBWhiteKing){
 
             //If both sides have no queens use king end game board
-            if((BBBoard->BBWhiteQueens | BBBoard->BBBlackQueens) & full){
+            if((gen_moves->BBWhiteQueens | gen_moves->BBBlackQueens) & full){
                 return 20000 + wKingEndSqT[location];
             }
             //if end game conditions fail use mid game king board
             return 20000 + wKingMidSqT[location];
 
         }
-    } else if (BBBoard->BBBlackPieces & pieceLocation) {
-        if(pieceLocation & BBBoard->BBBlackPawns ){
+    } else if (gen_moves->BBBlackPieces & pieceLocation) {
+        if(pieceLocation & gen_moves->BBBlackPawns ){
             pawnCount[1] ++;
-            return -100  - pawnEval(false, location, BBBoard);
+            return -100  - pawnEval(false, location, gen_moves);
 
-        } else if(pieceLocation & BBBoard->BBBlackRooks){
+        } else if(pieceLocation & gen_moves->BBBlackRooks){
             rookCount[1] ++;
-            evalRook(false, location, BBBoard);
+            evalRook(false, location, gen_moves);
             return -500 -bRookSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBBlackKnights){
+        } else if(pieceLocation & gen_moves->BBBlackKnights){
             knightCount[1] ++;
-            evalKnight(false, location, BBBoard);
+            evalKnight(false, location, gen_moves);
             return -320 -bKnightSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBBlackBishops){
+        } else if(pieceLocation & gen_moves->BBBlackBishops){
             bishopCount[1] ++;
-            evalBishop(false, location, BBBoard);
+            evalBishop(false, location, gen_moves);
             return -330 -bBishopsSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBBlackQueens){
+        } else if(pieceLocation & gen_moves->BBBlackQueens){
 
-            evalQueen(false, location, BBBoard);
+            evalQueen(false, location, gen_moves);
             return -900 -bQueenSqT[location];
 
-        } else if(pieceLocation & BBBoard->BBBlackKing){
-            if((BBBoard->BBBlackQueens | BBBoard->BBWhiteQueens) & full){
+        } else if(pieceLocation & gen_moves->BBBlackKing){
+            if((gen_moves->BBBlackQueens | gen_moves->BBWhiteQueens) & full){
                 return -20000 -bKingEndSqT[location];
             }
          return -20000 -bKingMidSqT[location];
@@ -455,24 +457,24 @@ int evaluateBB::getPieceValue(int location, MoveGen *BBBoard)
     return 0;
 }
 
-void evaluateBB::generateKingZones(bool isWhite, MoveGen *BBBoard)
+void evaluateBB::generateKingZones(bool isWhite, MoveGen *move_gen)
 {
     U64 king;
     if(isWhite){
-        king = BBBoard->BBWhiteKing;
+        king = move_gen->BBWhiteKing;
     } else {
-        king = BBBoard->BBBlackKing;
+        king = move_gen->BBBlackKing;
     }
-
+    MoveGen *m;
     //draw 8 tile zone around king to psuedo king BB
-    king |= BBBoard->northOne(king);
-    king |= BBBoard->noEaOne(king);
-    king |= BBBoard->eastOne(king);
-    king |= BBBoard->soEaOne(king);
-    king |= BBBoard->southOne(king);
-    king |= BBBoard->soWeOne(king);
-    king |= BBBoard->westOne(king);
-    king |= BBBoard->noWeOne(king);
+    king |= move_gen->northOne(king);
+    king |= move_gen->noEaOne(king);
+    king |= move_gen->eastOne(king);
+    king |= move_gen->soEaOne(king);
+    king |= move_gen->southOne(king);
+    king |= move_gen->soWeOne(king);
+    king |= move_gen->westOne(king);
+    king |= move_gen->noWeOne(king);
 
     if(isWhite){
         wKingZ = king;
@@ -482,7 +484,7 @@ void evaluateBB::generateKingZones(bool isWhite, MoveGen *BBBoard)
 
 }
 
-int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
+int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *move_gen)
 {
     int side;
     int result = 0;
@@ -493,12 +495,12 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
     U64 pawn = 0LL, opawns, epawns;
     pawn += 1LL << location;
     if(isWhite){
-        opawns = BBBoard->BBWhitePawns;
-        epawns = BBBoard->BBBlackPawns;
+        opawns = move_gen->BBWhitePawns;
+        epawns = move_gen->BBBlackPawns;
         side = 0;
     } else {
-        opawns = BBBoard->BBBlackPawns;
-        epawns = BBBoard->BBWhitePawns;
+        opawns = move_gen->BBBlackPawns;
+        epawns = move_gen->BBWhitePawns;
         side = 1;
     }
 /*
@@ -524,7 +526,7 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
 
             //if there is an enemy pawn to the north east or north west, pawn is no longer passed
             //Not file A/H used to ensure wrapping doesn't occur
-            if((BBBoard->noWeOne(tpawn) & epawns & ~ BBBoard->FileHBB) || (BBBoard->noEaOne(tpawn) & epawns & ~BBBoard->FileABB)){
+            if((move_gen->noWeOne(tpawn) & epawns & ~ move_gen->FileHBB) || (move_gen->noEaOne(tpawn) & epawns & ~move_gen->FileABB)){
                 flagIsPassed = 0;
             }
 
@@ -540,7 +542,7 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
             }
 
             //if there is an enemy pawn to the south east or south west, pawn is no longer passed
-            if((BBBoard->soWeOne(tpawn) & epawns & ~ BBBoard->FileHBB) || (BBBoard->soEaOne(tpawn) & epawns) & ~BBBoard->FileABB){
+            if((move_gen->soWeOne(tpawn) & epawns & ~ move_gen->FileHBB) || (move_gen->soEaOne(tpawn) & epawns) & ~move_gen->FileABB){
                 flagIsPassed = 0;
             }
 
@@ -554,24 +556,24 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
         if(isWhite){
             tpawn = tpawn << 8; //south one
 
-            if(BBBoard->soWeOne(tpawn) & opawns &~ BBBoard->FileHBB){
+            if(move_gen->soWeOne(tpawn) & opawns &~ move_gen->FileHBB){
                 flagIsWeak = 0;
                 break;
             }
 
-            if(BBBoard->soEaOne(tpawn) & opawns & ~BBBoard->FileABB){
+            if(move_gen->soEaOne(tpawn) & opawns & ~move_gen->FileABB){
                 flagIsWeak = 0;
                 break;
             }
         } else {
             tpawn = tpawn >> 8; //north one
 
-            if(BBBoard->noWeOne(tpawn) & opawns &~ BBBoard->FileHBB){
+            if(move_gen->noWeOne(tpawn) & opawns &~ move_gen->FileHBB){
                 flagIsWeak = 0;
                 break;
             }
 
-            if(BBBoard->noEaOne(tpawn) & opawns & ~BBBoard->FileABB){
+            if(move_gen->noEaOne(tpawn) & opawns & ~move_gen->FileABB){
                 flagIsWeak = 0;
                 break;
             }
@@ -581,7 +583,7 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
     //evaluate passed pawns, scoring them higher if they are protected or
     //if their advance is supported by friendly pawns
     if(flagIsPassed){
-        if(isPawnSupported(isWhite, BBBoard, pawn, opawns)){
+        if(isPawnSupported(isWhite, move_gen, pawn, opawns)){
             result += (passed_pawn_pcsq[side][location] * 10) / 8;
         } else {
             result += passed_pawn_pcsq[side][location];
@@ -601,22 +603,22 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen *BBBoard)
 
 }
 
-int evaluateBB::isPawnSupported(bool isWhite, MoveGen *BBBoard, U64 pawn, U64 pawns)
+int evaluateBB::isPawnSupported(bool isWhite, MoveGen *move_gen, U64 pawn, U64 pawns)
 {
-    if(BBBoard->westOne(pawn) & pawns) return 1;
-    if(BBBoard->eastOne(pawn) & pawns) return 1;
+    if(move_gen->westOne(pawn) & pawns) return 1;
+    if(move_gen->eastOne(pawn) & pawns) return 1;
 
     if(isWhite){
-        if(BBBoard->soWeOne(pawn) & pawns) return 1;
-        if(BBBoard->soEaOne(pawn) & pawns) return 1;
+        if(move_gen->soWeOne(pawn) & pawns) return 1;
+        if(move_gen->soEaOne(pawn) & pawns) return 1;
     } else {
-        if(BBBoard->noWeOne(pawn) & pawns) return 1;
-        if(BBBoard->noEaOne(pawn) & pawns) return 1;
+        if(move_gen->noWeOne(pawn) & pawns) return 1;
+        if(move_gen->noEaOne(pawn) & pawns) return 1;
     }
     return 0;
 }
 
-void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *BBBoard)
+void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *move_gen)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -624,13 +626,13 @@ void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *BBBoard)
     U64 knight = 0LL, friends, eking, kingZone;
     knight += 1LL << location;
     if(isWhite){
-        friends = BBBoard->BBWhitePieces;
-        eking = BBBoard->BBBlackKing;
+        friends = move_gen->BBWhitePieces;
+        eking = move_gen->BBBlackKing;
         kingZone = bKingZ;
         side = 0;
     } else {
-        friends = BBBoard->BBBlackPieces;
-        eking = BBBoard->BBWhiteKing;
+        friends = move_gen->BBBlackPieces;
+        eking = move_gen->BBWhiteKing;
         kingZone = wKingZ;
         side = 1;
     }
@@ -639,15 +641,15 @@ void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *BBBoard)
     U64 moves;
 
     if(location > 18){
-        moves = BBBoard->KNIGHT_SPAN<<(location-18);
+        moves = move_gen->KNIGHT_SPAN<<(location-18);
     } else {
-        moves = BBBoard->KNIGHT_SPAN>>(18-location);
+        moves = move_gen->KNIGHT_SPAN>>(18-location);
     }
 
     if(location % 8 < 4){
-        moves &= ~BBBoard->FILE_GH & ~friends & ~eking;
+        moves &= ~move_gen->FILE_GH & ~friends & ~eking;
     } else {
-        moves &= ~BBBoard->FILE_AB & ~friends & ~eking;
+        moves &= ~move_gen->FILE_AB & ~friends & ~eking;
     }
 
     U64 j = moves & ~(moves-1);
@@ -675,7 +677,7 @@ void evaluateBB::evalKnight(bool isWhite, int location, MoveGen *BBBoard)
 
 }
 
-void evaluateBB::evalBishop(bool isWhite, int location, MoveGen *BBBoard)
+void evaluateBB::evalBishop(bool isWhite, int location, MoveGen *move_gen)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -683,18 +685,18 @@ void evaluateBB::evalBishop(bool isWhite, int location, MoveGen *BBBoard)
     U64 bishop = 0LL, friends, eking, kingZone;
     bishop += 1LL << location;
     if(isWhite){
-        friends = BBBoard->BBWhitePieces;
-        eking = BBBoard->BBBlackKing;
+        friends = move_gen->BBWhitePieces;
+        eking = move_gen->BBBlackKing;
         kingZone = bKingZ;
         side = 0;
     } else {
-        friends = BBBoard->BBBlackPieces;
-        eking = BBBoard->BBWhiteKing;
+        friends = move_gen->BBBlackPieces;
+        eking = move_gen->BBWhiteKing;
         kingZone = wKingZ;
         side = 1;
     }
 
-    U64 moves = BBBoard->DAndAntiDMoves(location) & ~friends & ~eking;
+    U64 moves = move_gen->DAndAntiDMoves(location) & ~friends & ~eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){
@@ -720,7 +722,7 @@ void evaluateBB::evalBishop(bool isWhite, int location, MoveGen *BBBoard)
 
 }
 
-void evaluateBB::evalRook(bool isWhite, int location, MoveGen *BBBoard)
+void evaluateBB::evalRook(bool isWhite, int location, MoveGen *move_gen)
 {
     bool  ownBlockingPawns = false, oppBlockingPawns = false;
     int kAttks = 0, mob = 0, side;
@@ -730,24 +732,24 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen *BBBoard)
     rook += 1LL << location;
 
     int x = location % 8;
-    currentFile = BBBoard->FileABB << x;
+    currentFile = move_gen->FileABB << x;
 
     if(isWhite){
-        friends = BBBoard->BBWhitePieces;
-        eking = BBBoard->BBBlackKing;
+        friends = move_gen->BBWhitePieces;
+        eking = move_gen->BBBlackKing;
         kingZone = bKingZ;
         side = 0;
 
-        opawns = BBBoard->BBWhitePawns;
-        epawns = BBBoard->BBBlackPawns;
+        opawns = move_gen->BBWhitePawns;
+        epawns = move_gen->BBBlackPawns;
     } else {
-        friends = BBBoard->BBBlackPieces;
-        eking = BBBoard->BBWhiteKing;
+        friends = move_gen->BBBlackPieces;
+        eking = move_gen->BBWhiteKing;
         kingZone = wKingZ;
         side = 1;
 
-        opawns = BBBoard->BBBlackPawns;
-        epawns = BBBoard->BBWhitePawns;
+        opawns = move_gen->BBBlackPawns;
+        epawns = move_gen->BBWhitePawns;
     }
 
 //open and half open file detection add bonus to mobility score of side
@@ -768,7 +770,7 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen *BBBoard)
     }
 
 //mobility and king attack gen/detection
-    U64 moves = BBBoard->horizVert(location) & ~friends & ~eking;
+    U64 moves = move_gen->horizVert(location) & ~friends & ~eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){
@@ -792,7 +794,7 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen *BBBoard)
     }
 }
 
-void evaluateBB::evalQueen(bool isWhite, int location, MoveGen *BBBoard)
+void evaluateBB::evalQueen(bool isWhite, int location, MoveGen *move_gen)
 {
     gamePhase += 4;
     int kAttks = 0, mob = 0, side;
@@ -800,19 +802,19 @@ void evaluateBB::evalQueen(bool isWhite, int location, MoveGen *BBBoard)
     U64 queen = 0LL, friends, eking, kingZone;
     queen += 1LL << location;
     if(isWhite){
-        friends = BBBoard->BBWhitePieces;
-        eking = BBBoard->BBBlackKing;
+        friends = move_gen->BBWhitePieces;
+        eking = move_gen->BBBlackKing;
         kingZone = bKingZ;
         side = 0;
     } else {
-        friends = BBBoard->BBBlackPieces;
-        eking = BBBoard->BBWhiteKing;
+        friends = move_gen->BBBlackPieces;
+        eking = move_gen->BBWhiteKing;
         kingZone = wKingZ;
         side = 1;
     }
 
 //similar to move gen, increment mobility and king attacks
-    U64 moves = (BBBoard->DAndAntiDMoves(location) | BBBoard->horizVert(location)) & ~friends & ~eking;
+    U64 moves = (move_gen->DAndAntiDMoves(location) | move_gen->horizVert(location)) & ~friends & ~eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){

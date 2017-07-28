@@ -1,9 +1,11 @@
 #ifndef HASHENTRY_H
 #define HASHENTRY_H
 #include <string>
-
+#pragma once;
 typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
+
+
 
 class HashEntry
 {

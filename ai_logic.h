@@ -1,16 +1,17 @@
 #ifndef AI_LOGIC_H
 #define AI_LOGIC_H
-
 #include <string>
-#include <algorithm>
 #include <stack>
 #include <thread>
 
 
-#include "externs.h"
-#include "evaluatebb.h"
-#include "movegen.h"
 
+class Pieces;
+class ZobristH;
+class BitBoards;
+class MoveGen;
+class evaluateBB;
+class HashEntry;
 
 class Ai_Logic
 {
@@ -22,7 +23,7 @@ public:
 
 private:
     //minmax with alpha beta, the main component of our search
-    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval);
+    int alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
         //sort moves and apply heuristics like killer and transpostion data
         std::string sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist);
@@ -35,10 +36,10 @@ private:
         void addToKillers(int depth, std::string move);
 
         //Null moves function
-        int nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval);
+        int nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
 
         //Quiescent search ~~ search positions farther if there are captures on horizon
-        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval);
+        int quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
         //if a capture cannot increase alpha, don't bother searching it
         /*
         bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, BitBoards *BBBoard);

@@ -1,17 +1,23 @@
 #include "ai_logic.h"
-#include "zobristh.h"
-#include "bitboards.h"
-#include "tile.h"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
+#include "externs.h"
+
+#include "move.h"
+#include "evaluatebb.h"
+#include "bitboards.h"
+#include "movegen.h"
+#include "zobristh.h"
+#include "bitboards.cpp"
 
 //value to determine if time for search has run out
 extern bool searchCutoff;
 bool searchCutoff = false;
 
-int ASPIRATION = 50;
+const int ASPIRATION = 50;
 
 Ai_Logic::Ai_Logic()
 {
@@ -76,20 +82,16 @@ std::string Ai_Logic::iterativeDeep(int depth)
 {
 
     //master bitboard for turn
-    //BitBoards *newBoard = new BitBoards;
+    BitBoards *newBoard = new BitBoards;
+    newBoard->constructBoards();
 
     //master zobrist object for ai turn
     ZobristH *mZobrist = new ZobristH;
+    mZobrist->UpdateColor();
+    mZobrist->getZobristHash(newBoard);
 
     //master evaluation object - evaluates board position and gives an int value (- for black)
     evaluateBB *mEval = new evaluateBB;
-
-    //construct boards to get zobrist hash
-    //newBoard->constructBoards();
-    //get master zobrist hash for turn
-    //mZobrist->getZobristHash(newBoard);
-    //update zobrsit hash to correct color
-    //mZobrist->UpdateColor();
 
     //iterative deepening start time
     clock_t IDTimeS = clock();
@@ -107,10 +109,6 @@ std::string Ai_Logic::iterativeDeep(int depth)
     //search has not run out of time
     searchCutoff = false;
 
-    MoveGen *newBoard = new MoveGen;
-    newBoard->constructBoards();
-    mZobrist->getZobristHash(newBoard);
-    mZobrist->UpdateColor();
     std::cout << mZobrist->zobristKey << std::endl;
 
     //iterative deepening loop starts at depth 1, iterates up till max depth or time cutoff
@@ -183,7 +181,7 @@ std::string Ai_Logic::iterativeDeep(int depth)
 }
 
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
 
     //iterative deeping timer stuff
@@ -239,10 +237,12 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //are we in check?
     //FlagInCheck = BBBoard->isInCheck(isWhite);
+    MoveGen *gen_moves = new MoveGen;
+
     U64 king;
     if(isWhite) king = BBBoard->BBWhiteKing;
     else king = BBBoard->BBBlackKing;
-    FlagInCheck = BBBoard->isAttacked(king, isWhite);
+    FlagInCheck = gen_moves->isAttacked(king, isWhite);
 
     //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
@@ -288,7 +288,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //generate normal moves
     //moves = BBBoard->genWhosMove(isWhite);
-    BBBoard->generatePsMoves(isWhite, false, currentDepth);
+    gen_moves->generatePsMoves(isWhite, false, currentDepth, BBBoard);
 
 /*
     //return mate/stalemate score if there are no more moves ~~ less by # depth
@@ -301,7 +301,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //set hash flag equal to alpha Flag
     //int hashFlag = 1, movesNum = moves.length();
-    int hashFlag = 1, movesNum = BBBoard->moveCount[currentDepth];
+    int hashFlag = 1, movesNum = gen_moves->moveCount;
 
     std::string tempMove, moveToUnmake, hashMove;
     for(int i = 0; i < movesNum; i+=4){
@@ -313,7 +313,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         //tempMove += moves[i+1];
         //tempMove += moves[i+2];
         //tempMove += moves[i+3];
-        Move newmove = BBBoard->movegen_sort(currentDepth);
+        Move newmove = gen_moves->movegen_sort(currentDepth);
 
 
         tempMove += newmove.x;
@@ -326,7 +326,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         //moveToUnmake = BBBoard->makeMove(tempMove, zobrist);
         moveToUnmake = BBBoard->makeMove(newmove, zobrist);
 
-        if(BBBoard->isAttacked(king, isWhite)){
+        if(gen_moves->isAttacked(king, isWhite)){
             BBBoard->unmakeMove(moveToUnmake, zobrist);
             continue;
         }
@@ -352,7 +352,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             //push killer move to top of stack for given depth
             killerHArr[depth].push(tempMove);
             //addToKillers(currentDepth, tempMove);
-
             return beta;
         }
 
@@ -371,7 +370,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //add alpha eval to hash table
     addMoveTT(hashMove, depth, alpha, hashFlag, zobrist);
-
     return alpha;
 }
 
@@ -505,7 +503,7 @@ void Ai_Logic::addToKillers(int depth, std::string move)
     }
 }
 
-int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     //update key color
     zobrist->UpdateColor();
@@ -520,7 +518,7 @@ int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long curre
     return score;
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, MoveGen *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     int standingPat;
 
@@ -538,7 +536,6 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     //evaluate board position (if curentDepth is even return -eval)
-
     standingPat = eval->evalBoard(isWhite, BBBoard, zobrist);
 
     if(quietDepth <= 0 || searchCutoff){
@@ -555,20 +552,19 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //generate moves then parse them for captures
     //std::string captures = BBBoard->generateCaptures(isWhite);
-    BBBoard->generatePsMoves(isWhite, true, currentDepth);
+    MoveGen *gen_moves = new MoveGen;
+    gen_moves->generatePsMoves(isWhite, true, currentDepth, BBBoard);
 /*
     //if there are no captures, return value of board
     if(captures.length() == 0){
         return standingPat;
     }
 */
-    //add killers + order captures by MVV/LVA and or exact/beta hash table matches
-    //captures = sortMoves(captures, entry, currentDepth, isWhite, BBBoard, zobrist);
 
     int score;
     std::string unmake, hashMove, tempMove;
     //set hash flag equal to alpha Flag
-    int hashFlag = 1; int moveNum = BBBoard->moveCount[currentDepth];
+    int hashFlag = 1, moveNum = gen_moves->moveCount;
 
     U64 king;
     if(isWhite) king = BBBoard->BBWhiteKing;
@@ -579,14 +575,14 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         qCount ++;
         tempMove = "";
 
-        Move newmove = BBBoard->movegen_sort(currentDepth);
+        Move newmove = gen_moves->movegen_sort(currentDepth);
         //convert move into a single string
         tempMove += newmove.x;
         tempMove += newmove.y;
         tempMove += newmove.x1;
         tempMove += newmove.y1;
 
-        if(BBBoard->isAttacked(king, isWhite)){
+        if(gen_moves->isAttacked(king, isWhite)){
             continue;
         }
         /*
@@ -618,7 +614,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
             //addToKillers(currentDepth, tempMove);
-           return beta;
+            return beta;
         }
 
         if(score > alpha){
