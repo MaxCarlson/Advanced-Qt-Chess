@@ -142,7 +142,7 @@ void Tile::aiTurn(){
     //pawn promotions
     } else {
         //swap piece to its desitnation and make prior spot blank
-        if(turns%2 == 0){
+        if(turns % 2 == 0){
             boardArr[tempy2][tempx2] = "Q";
         } else {
             boardArr[tempy2][tempx2] = "q";

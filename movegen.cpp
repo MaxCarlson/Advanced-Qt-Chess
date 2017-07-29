@@ -45,10 +45,8 @@ MoveGen::MoveGen()
 
 }
 
-void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply, BitBoards *BBBoard)
+void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
 {
-    //grab the bitboards and store to this
-    grab_boards(BBBoard);
 
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
@@ -668,6 +666,7 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
     //pawn promotions
     if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += 800;
 
+    return;
 }
 
 Move MoveGen::movegen_sort(int ply)
@@ -739,7 +738,7 @@ U64 MoveGen::horizVert(int s)
 
 U64 MoveGen::DAndAntiDMoves(int s)
 {
-    U64 binaryS = 1LL <<s;
+    U64 binaryS = 1LL << s;
 
     U64 possibilitiesDiagonal = ((FullTiles & DiagonalMasks8[(s / 8) + (s % 8)]) - (2 * binaryS)) ^ ReverseBits(ReverseBits(FullTiles & DiagonalMasks8[(s / 8) + (s % 8)]) - (2 * ReverseBits(binaryS)));
 
@@ -830,10 +829,7 @@ void MoveGen::constructBoards()
             BBBlackKing += 1LL<<i;
             BBBlackPieces += 1LL<<i;
             FullTiles += 1LL<<i;
-        } //else if (boardArr[i/8][i%8] == " "){
-          //  EmptyTiles += 1LL<<i;
-       // }
-
+        }
     }
 
     //mark empty tiles with 1's
@@ -865,7 +861,7 @@ void MoveGen::grab_boards(BitBoards *BBBoard)
 
 bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
 {
-    U64 attacks, friends, enemys, pawns, knights, rooks, bishops, queens, king;
+    U64 attacks = 0LL, friends, enemys, pawns, knights, rooks, bishops, queens, king;
     //int x, y, x1, y1;
 
     if(isWhite){
@@ -880,9 +876,9 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
 
         //pawns
         //capture right
-        attacks = soEaOne(pawns) & pieceLoc;
+        attacks = soEaOne(pawns);
         //capture left
-        attacks |= soWeOne(pawns) & pieceLoc;
+        attacks |= soWeOne(pawns);
 
     } else {
         friends = BBBlackPieces;
@@ -895,44 +891,55 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
         king = BBWhiteKing;
 
         //capture right
-        attacks = noEaOne(pawns) & pieceLoc;
+        attacks = noEaOne(pawns);
         //capture left
-        attacks |= noWeOne(pawns) & pieceLoc;
+        attacks |= noWeOne(pawns);
     }
+    drawBBA();
+    drawBB(attacks);
 
-    if(attacks) return true;
+    if(attacks & pieceLoc) return true;
 
-    //knight attacks
+    //int is piece/square attacked location on board
     int location = trailingZeros(pieceLoc);
 
+//very similar to move generation code just ending with generated bitboards of attacks
+    //knight attacks
     if(location > 18){
         attacks = KNIGHT_SPAN<<(location-18);
     } else {
         attacks = KNIGHT_SPAN>>(18-location);
     }
 
-    //making sure the moves don't wrap around to other side once shifter
-    //as well as friendly and illegal king capture check
     if(location % 8 < 4){
         attacks &= ~FILE_GH & ~friends;
     } else {
         attacks &= ~FILE_AB & ~friends;
     }
 
+    drawBB(attacks);
+
     if(attacks & knights) return true;
 
+    //diagonal of bishops and queens attack check
     U64 BQ = bishops | queens;
 
     attacks = DAndAntiDMoves(location) & BQ;
 
+    drawBB(attacks);
+
     if(attacks & BQ) return true;
 
+    //horizontal of rooks and queens attack check
     U64 BR = bishops | queens;
 
     attacks = horizVert(location) & BR;
 
+    drawBB(attacks);
+
     if(attacks & BR) return true;
 
+    //king attack checks
     attacks = northOne(pieceLoc);
     attacks |= noEaOne(pieceLoc);
     attacks |= eastOne(pieceLoc);
@@ -941,6 +948,8 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
     attacks |= soWeOne(pieceLoc);
     attacks |= westOne(pieceLoc);
     attacks |= noWeOne(pieceLoc);
+
+    drawBB(attacks);
 
     if(attacks & king) return true;
 

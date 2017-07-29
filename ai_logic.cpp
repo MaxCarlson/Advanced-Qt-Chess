@@ -156,11 +156,9 @@ Move Ai_Logic::iterativeDeep(int depth)
 
     std::cout << std::endl;
 
-    //make final move on bitboards
+    //make final move on bitboards + draw
     newBoard->makeMove(bestMove, mZobrist);
-
     newBoard->drawBBA();
-
 
 
     clock_t IDTimeE = clock();
@@ -173,8 +171,6 @@ Move Ai_Logic::iterativeDeep(int depth)
     delete newBoard;
     delete mZobrist;
     delete mEval;
-
-	
 
     return bestMove;
 }
@@ -236,6 +232,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 
     MoveGen gen_moves;
+    gen_moves.grab_boards(BBBoard); //grab bitboards from BBBoard object and stor to var
 
     //are we in check?
     U64 king;
@@ -283,7 +280,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 */
 
 //generate psuedo legal moves
-    gen_moves.generatePsMoves(isWhite, false, currentDepth, BBBoard);
+    gen_moves.generatePsMoves(isWhite, false, currentDepth);
 
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
@@ -539,7 +536,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //generate only captures with true capture gen var
     MoveGen gen_moves;
-    gen_moves.generatePsMoves(isWhite, true, currentDepth, BBBoard);
+    gen_moves.grab_boards(BBBoard);
+    gen_moves.generatePsMoves(isWhite, true, currentDepth);
 /*
     //if there are no captures, return value of board
     if(captures.length() == 0){

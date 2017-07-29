@@ -24,7 +24,7 @@ public:
 
     int moveCount = 0;
 
-    void generatePsMoves(bool isWhite, bool capturesOnly, int ply, BitBoards *BBBoard);
+    void generatePsMoves(bool isWhite, bool capturesOnly, int ply);
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(BitBoards *BBBoard);
