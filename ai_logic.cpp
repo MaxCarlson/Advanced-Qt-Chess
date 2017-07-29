@@ -6,12 +6,15 @@
 #include <iostream>
 #include "externs.h"
 
-#include "move.h"
+//#include "move.h"
 #include "evaluatebb.h"
 #include "bitboards.h"
 #include "movegen.h"
 #include "zobristh.h"
 #include "bitboards.cpp"
+
+
+
 
 //value to determine if time for search has run out
 extern bool searchCutoff;
@@ -171,6 +174,8 @@ Move Ai_Logic::iterativeDeep(int depth)
     delete mZobrist;
     delete mEval;
 
+	
+
     return bestMove;
 }
 
@@ -230,13 +235,13 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 
 
-    MoveGen *gen_moves = new MoveGen;
+    MoveGen gen_moves;
 
     //are we in check?
     U64 king;
     if(isWhite) king = BBBoard->BBWhiteKing;
     else king = BBBoard->BBBlackKing;
-    FlagInCheck = gen_moves->isAttacked(king, isWhite);
+    FlagInCheck = gen_moves.isAttacked(king, isWhite);
 /*
 //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
@@ -278,10 +283,10 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 */
 
 //generate psuedo legal moves
-    gen_moves->generatePsMoves(isWhite, false, currentDepth, BBBoard);
+    gen_moves.generatePsMoves(isWhite, false, currentDepth, BBBoard);
 
 
-    int hashFlag = 1, movesNum = gen_moves->moveCount, legalMoves = 0;
+    int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
 //search through psuedo legal moves checking against king safety
     std::string tempMove, moveToUnmake, hashMove;
@@ -290,7 +295,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         //change board accoriding to i possible move
         tempMove = "";
         //grab best scoring move
-        Move newMove = gen_moves->movegen_sort(currentDepth);
+        Move newMove = gen_moves.movegen_sort(currentDepth);
 
         tempMove += newMove.x;
         tempMove += newMove.y;
@@ -301,7 +306,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         moveToUnmake = BBBoard->makeMove(newMove, zobrist);
 
         //is move legal? if not skip it
-        if(gen_moves->isAttacked(king, isWhite)){
+        if(gen_moves.isAttacked(king, isWhite)){
             BBBoard->unmakeMove(moveToUnmake, zobrist);
             continue;
         }
@@ -325,14 +330,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             //add beta to transpositon table with beta flag
             addMoveTT(tempMove, depth, beta, 2, zobrist);
 
-            if(currentDepth == 1){
-                std::cout << "what the fuck" << std::endl;
-            }
-
             //push killer move to top of stack for given depth
             killerHArr[depth].push(tempMove);
 
-            delete gen_moves;
             //addToKillers(currentDepth, tempMove);
             return beta;
         }
@@ -356,8 +356,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     }
 */
     //add alpha eval to hash table
-    delete gen_moves;
     addMoveTT(hashMove, depth, alpha, hashFlag, zobrist);
+
+
     return alpha;
 }
 
@@ -537,8 +538,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     }
 
     //generate only captures with true capture gen var
-    MoveGen *gen_moves = new MoveGen;
-    gen_moves->generatePsMoves(isWhite, true, currentDepth, BBBoard);
+    MoveGen gen_moves;
+    gen_moves.generatePsMoves(isWhite, true, currentDepth, BBBoard);
 /*
     //if there are no captures, return value of board
     if(captures.length() == 0){
@@ -549,7 +550,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     int score;
     std::string unmake, hashMove, tempMove;
     //set hash flag equal to alpha Flag
-    int hashFlag = 1, moveNum = gen_moves->moveCount;
+    int hashFlag = 1, moveNum = gen_moves.moveCount;
 
     U64 king;
     if(isWhite) king = BBBoard->BBWhiteKing;
@@ -560,14 +561,14 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         qCount ++;
         tempMove = "";
 
-        Move newMove = gen_moves->movegen_sort(currentDepth);
+        Move newMove = gen_moves.movegen_sort(currentDepth);
         //convert move into a single string
         tempMove += newMove.x;
         tempMove += newMove.y;
         tempMove += newMove.x1;
         tempMove += newMove.y1;
 
-        if(gen_moves->isAttacked(king, isWhite)){
+        if(gen_moves.isAttacked(king, isWhite)){
             continue;
         }
         /*
@@ -599,7 +600,6 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             //push killer move to top of stack for given depth
             killerHArr[currentDepth].push(tempMove);
             //addToKillers(currentDepth, tempMove);
-            delete gen_moves;
             return beta;
         }
 
@@ -610,7 +610,6 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
            hashMove = tempMove;
         }
     }
-    delete gen_moves;
     //add alpha eval to hash table
     //addTTQuiet(hashMove, currentDepth, alpha, hashFlag, zobrist);
     return alpha;

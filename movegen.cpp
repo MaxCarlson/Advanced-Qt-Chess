@@ -2,6 +2,20 @@
 //#include "bitboards.h"
 #include "Pieces.h"
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#ifdef _DEBUG
+#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
+#else
+#define DEBUG_CLIENTBLOCK
+#endif // _DEBUG
+
+#ifdef _DEBUG
+#define new DEBUG_CLIENTBLOCK
+#endif
+
 const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
     {
         0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
@@ -86,6 +100,7 @@ void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply, BitBoard
         else if(queens & piece) possibleQ(isWhite, i, friends, enemys, eking, capsOnly, ply);
         else if(king & piece) possibleK(isWhite, i, friends, enemys, capsOnly, ply);
     }
+	
 
 }
 

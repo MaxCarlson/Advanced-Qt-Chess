@@ -5,6 +5,19 @@
 #include "bitboards.h"
 #include "ai_logic.h"
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#ifdef _DEBUG
+#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
+#else
+#define DEBUG_CLIENTBLOCK
+#endif // _DEBUG
+
+#ifdef _DEBUG
+#define new DEBUG_CLIENTBLOCK
+#endif
 
 Pieces *isValid = new Pieces();
 
@@ -105,10 +118,10 @@ void Tile::moveChecking(Tile *temp, int countC){
 
 void Tile::aiTurn(){
 
-    Ai_Logic *newMove = new Ai_Logic;
+    Ai_Logic newMove;
 
     //generate best move (number represents max search depth)
-    Move bestMove = newMove->iterativeDeep(6);
+    Move bestMove = newMove.iterativeDeep(6);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;
@@ -118,8 +131,6 @@ void Tile::aiTurn(){
     tempy = bestMove.y;
     tempx2 = bestMove.x1;
     tempy2 = bestMove.y1;
-
-    delete newMove;
 
     //if not pawn promotion
     if(bestMove.flag == '0'){

@@ -16,7 +16,6 @@ public:
 
     //zobrist key for object
     U64 zobristKey;
-
     //U64 zEnPassasnt[8]; ~~restore once implemented
     //U64 zCastle[4];
 

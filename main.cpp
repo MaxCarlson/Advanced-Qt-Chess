@@ -9,6 +9,24 @@
 #include <hashentry.h>
 #include <iostream>
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#ifdef _DEBUG
+#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
+#else
+#define DEBUG_CLIENTBLOCK
+#endif // _DEBUG
+
+#ifdef _DEBUG
+#define new DEBUG_CLIENTBLOCK
+#endif
+
+
+
+//#include <vld.h> //memory leak detection in visual studio
+
 //create an object array to to represent chess board tiles
 Tile * rect[8][8];
 
@@ -25,9 +43,6 @@ int tempx, tempy, tempx2, tempy2;
 //whether ai is on  //FUTURE and which side it's playing
 int aiOn = 1;
 
-//zorbist key object
-//zorbirst key gen for transposition tables
-ZobristH *ZKey;
 //array for random numbers used to gen zobrist key
 U64 zArray[2][6][64];
 //used to change color of move
@@ -99,7 +114,7 @@ public:
 void chessBoard(QWidget *baseWidget, Tile *rect[8][8]){
 
     //set chessboard border
-    Border *border[4]={ NULL };
+    Border *border[4] = { NULL };
     {
     border[0]->outline(baseWidget,330,105,0);
     border[1]->outline(baseWidget,330,637,0);
@@ -153,23 +168,28 @@ void chessBoard(QWidget *baseWidget, Tile *rect[8][8]){
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    //create widget + set  intial size
-    QWidget *myWidget = new QWidget();
-    myWidget->setGeometry(0,0,1370,700);
+	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+	
 
-    //calculate all zobrist numbers to later use with transpostion table
-    ZKey->zobristFill();
-    //create bitboards to get master zobrist key with
+	QApplication a(argc, argv);
+	//create widget + set  intial size
+	QWidget *myWidget = new QWidget();
+	myWidget->setGeometry(0, 0, 1370, 700);
 
-    //buttons and other stylings
-    accessories(myWidget);
+	ZobristH ZKey;
+	//calculate all zobrist numbers to later use with transpostion table
+	ZKey.zobristFill();
+	//create bitboards to get master zobrist key with
 
-    //create board
-    chessBoard(myWidget, rect);
+	//buttons and other stylings
+	accessories(myWidget);
 
-    //show the board
-    myWidget->show();
+	//create board
+	chessBoard(myWidget, rect);
 
-    return a.exec();
+	//show the board
+	myWidget->show();
+
+	return a.exec();
+	   
 }

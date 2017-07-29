@@ -4,8 +4,7 @@
 #include <stack>
 #include <thread>
 #include "move.h"
-
-
+//#include "hashentry.h"
 
 class ZobristH;
 class BitBoards;

@@ -1360,3 +1360,4 @@ bool Pieces::blackPawn(){
     }
     return false;
 }
+
