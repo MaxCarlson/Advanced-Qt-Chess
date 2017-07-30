@@ -282,7 +282,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 //generate psuedo legal moves
     gen_moves.generatePsMoves(false, currentDepth, history);
-    //add killers scores to moves
+
+    //add killers scores to moves if there are any
     gen_moves.reorderMoves(killerMoves, currentDepth);
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
@@ -340,13 +341,13 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
                     int sPos = newMove.y * 8 + newMove.x, ePos = newMove.y1 * 8 + newMove.x1;
                     //add score to historys
-                    history[sPos][ePos].val += depth * depth;
+                    history.h[isWhite][sPos][ePos] += depth * depth;
 
                     //don't want historys to overflow if search is really big
-                    if(history[sPos][ePos].val > SORT_KILL){
+                    if(history.h[isWhite][sPos][ePos] > SORT_KILL){
                         for(int i = 0; i < 64; i++){
                             for(int i = 0; i < 64; i++){
-                                history[sPos][ePos].val /= 2;
+                                history.h[isWhite][sPos][ePos] /= 2;
                             }
                         }
                     }

@@ -22,12 +22,12 @@ public:
 
     //array of move objects by ply then number of moves
     Move moveAr[256];
-    Historys history[64][64];
+    Historys history;
 
     bool isWhite;
     int moveCount = 0;
 
-    void generatePsMoves(bool capturesOnly, int ply, Historys *hist);
+    void generatePsMoves(bool capturesOnly, int ply, Historys hist);
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(BitBoards *BBBoard, bool wOrB);

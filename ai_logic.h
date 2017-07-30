@@ -12,7 +12,8 @@ class evaluateBB;
 class HashEntry;
 
 struct Historys{
-    int val = 0;
+    //color, piece loc from, piece loc to
+    int h[2][64][64] = {{{0}}};
 };
 
 class Ai_Logic
@@ -43,8 +44,7 @@ private:
     Move killerMoves[24][2];
 
     //in form of x, y, x1, y1 ~~ gives value to greater than beta not captures/promotions based on number of times seen
-    //int *historys[64] = {{0},{0}};
-    Historys history[64][64];
+    Historys history;
 
 
 //transposition table functions

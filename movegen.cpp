@@ -38,10 +38,10 @@ MoveGen::MoveGen()
 
 }
 
-void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys *hist)
+void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys hist)
 {
     //store historys so we can score quiet moves
-    Historys *pHist = history;
+    history = hist;
     //counts total moves generated
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
@@ -628,8 +628,9 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
     moveAr[moveCount].flag = flag;
 
     int sPos = y * 8 + x, ePos = y1 * 8 + x;
-    //need history heristics for quiet moves!!!!!!!
-    moveAr[moveCount].score = history[sPos][ePos].val;
+
+    //history heristics for quiet moves, color, from pos, to pos
+    moveAr[moveCount].score = history.h[isWhite][sPos][ePos];
 
     //scoring capture moves
     if(captured != '0'){
@@ -675,7 +676,7 @@ bool MoveGen::blind(Move move, int pieceVal, int captureVal)
     U64 eLoc = 1LL << elocation;
 
     //captures from pawns don't lose material
-    if(piece == WPAWN || piece == BPAWN) return true;
+    if(piece == 'P' || piece == 'p') return true;
 
     //capture lower takes higher
     if(captureVal >= pieceVal - 50) return true;
