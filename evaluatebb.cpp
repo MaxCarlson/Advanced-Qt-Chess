@@ -64,7 +64,7 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
     int hash = (int)(zobrist->zobristKey % 5021983);
     HashEntry entry = transpositionEval[hash];
     MoveGen gen_moves;
-    gen_moves.grab_boards(BBBoard);
+    gen_moves.grab_boards(BBBoard, isWhite);
 
     //if we get a hash-table hit, return the evaluation
     if(entry.zobrist == zobrist->zobristKey){
@@ -514,27 +514,19 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen gen_moves)
         epawns = gen_moves.BBWhitePawns;
         side = 1;
     }
-/*
-    BBBoard->drawBB(pawn);
-    pawn = pawn << 8;
-    BBBoard->drawBB(pawn);
-    pawn = pawn >> 8;
-    BBBoard->drawBB(pawn);
-*/
 
     int file = location % 8;
     int rank = location / 8;
-    gen_moves.drawBB(FileMasks8[7]);
-    gen_moves.drawBB(RankMasks8[7]);
-    int flips[8] = {7, 6, 5, 4, 3, 2, 1, 0};
 
     U64 doubledPassMask = FileMasks8[file]; //mask for finding doubled or passed pawns
 
     U64 left = 0LL;
-    if(file > 0) left = FileMasks8[file-1]; //masks are accoring to whites
+    if(file > 0) left = FileMasks8[file-1]; //masks are accoring to whites perspective
 
     U64 right = 0LL;
     if(file < 7) right = FileMasks8[file+1]; //files to the left and right of pawn
+
+    U64 supports = right | left, tmpSup = 0LL; //mask for area behind pawn and to the left an right, used to see if weak + mask for holding and values
 
     opawns &= ~ pawn; //remove this pawn from his friendly pawn BB so as not to count himself in doubling
 
@@ -545,51 +537,32 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen gen_moves)
             doubledPassMask &= ~RankMasks8[i];
             left &= ~RankMasks8[i];
             right &= ~RankMasks8[i];
+            tmpSup |= RankMasks8[i];
         }
     } else {
         for(int i = 0; i < rank+1; i++) {
             doubledPassMask &= ~RankMasks8[i];
             left &= ~RankMasks8[i];
             right &= ~RankMasks8[i];
+            tmpSup |= RankMasks8[i];
         }
     }
+
+
     //if there is an enemy pawn ahead of this pawn
     if(doubledPassMask & epawns) flagIsOpposed = 1;
 
     //if there is an enemy pawn on the right or left ahead of this pawn
     if(right & epawns || left & epawns) flagIsPassed = 0;
 
+    opawns |= pawn; // restore real our pawn board
 
-//another loop going backwards looking if the pawn is supported by friendly pawns
-    tpawn = pawn;
+    tmpSup &= ~ RankMasks8[rank]; //remove our rank from supports
+    supports &= tmpSup; // get BB of area whether support pawns could be
 
-    while(tpawn != 0LL){
-        if(isWhite){
-            tpawn = tpawn << 8; //south one
+    //if there are pawns behing this pawn and to the left or the right pawn is not weak
+    if(supports & opawns) flagIsWeak = 0;
 
-            if(gen_moves.soWeOne(tpawn) & opawns &~ gen_moves.FileHBB){
-                flagIsWeak = 0;
-                break;
-            }
-
-            if(gen_moves.soEaOne(tpawn) & opawns & ~gen_moves.FileABB){
-                flagIsWeak = 0;
-                break;
-            }
-        } else {
-            tpawn = tpawn >> 8; //north one
-
-            if(gen_moves.noWeOne(tpawn) & opawns &~ gen_moves.FileHBB){
-                flagIsWeak = 0;
-                break;
-            }
-
-            if(gen_moves.noEaOne(tpawn) & opawns & ~gen_moves.FileABB){
-                flagIsWeak = 0;
-                break;
-            }
-        }
-    }
 
     //evaluate passed pawns, scoring them higher if they are protected or
     //if their advance is supported by friendly pawns

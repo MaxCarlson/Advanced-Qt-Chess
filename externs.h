@@ -60,4 +60,19 @@ enum esqare {
     A8=56, B8, C8, D8, E8, F8, G8, H8
 };
 
+enum epieces {
+    WPAWN = 'P', BPAWN= 'p',
+    WKNIGHT = 'N', BKNGIHT = 'n',
+    WBISHOP = 'B', BBISHOP = 'b',
+    WQUEEN = 'Q', BQUEEN = 'q',
+    WKING = 'K', BKING = 'k'
+};
+
+#define SORT_KING 400000000
+#define SORT_HASH 200000000
+#define SORT_CAPT 100000000
+#define SORT_PROM  90000000
+#define SORT_KILL  80000000
+
+
 #endif // EXTERNS_H

@@ -232,7 +232,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
 
     MoveGen gen_moves;
-    gen_moves.grab_boards(BBBoard); //grab bitboards from BBBoard object and stor to var
+    gen_moves.grab_boards(BBBoard, isWhite); //grab bitboards from BBBoard object and stor to var
 
     //are we in check?
     U64 king, eking;
@@ -240,7 +240,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     else { king = BBBoard->BBBlackKing; eking = BBBoard->BBWhiteKing; }
 
     FlagInCheck = gen_moves.isAttacked(king, isWhite);
-
+/*
 //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
         int static_eval = eval->evalBoard(isWhite, BBBoard, zobrist);
@@ -249,7 +249,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             return static_eval - eval_margin;
         }
     }
-
+*/
 
 //Null move heuristics, disabled if in check
     if(allowNull && depth > depthR && currentDepth > 1 && !FlagInCheck){ // ??
@@ -261,7 +261,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
             return score;
         }
     }
-
+/*
 //razoring
     if(!FlagInCheck && allowNull && depth <= 3){
         int threshold = alpha - 300 - (depth - 1) * 60;
@@ -278,10 +278,10 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth <= 3 && !FlagInCheck && abs(alpha) < 9000 && eval->evalBoard(isWhite, BBBoard, zobrist) + fmargin[depth] <= alpha){
         f_prune = 1;
     }
-
+*/
 
 //generate psuedo legal moves
-    gen_moves.generatePsMoves(isWhite, false, currentDepth);
+    gen_moves.generatePsMoves(false, currentDepth);
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
@@ -359,136 +359,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     return alpha;
 }
 
-std::string Ai_Logic::sortMoves(std::string moves, HashEntry entry, int currentDepth, bool isWhite, BitBoards *BBBoards, ZobristH *zobrist)
-{
-    //sort moves into most valuable victim least valuable attacker order
-    //with non captures following all captures
-    moves = mostVVLVA(moves, isWhite, BBBoards);
-
-    //call killer moves + add killers to front of moves if there are any
-    moves = killerHe(currentDepth, moves);
-    //moves = killerTest(currentDepth, moves);
-
-    //perfrom look up from transpositon table
-    if(entry.move.length() == 4 && entry.zobrist == zobrist->zobristKey){
-        std::string m;
-        //if entry is a beta match, add beta cutoff move to front of moves
-        if(entry.flag == 2){
-            m = entry.move;
-            //moves = m + moves;
-        //if entry is an exact alpha match add move to front
-        }else if(entry.flag == 3){
-            m = entry.move;
-            //moves = m + moves;
-        }
-
-        //validation that move is legit. Mainly used because of Lazy SMP possibly corrupting hashed moves
-        for(int i = 0; i < moves.length(); i += 4){
-            std::string t;
-            t += moves[i];
-            t += moves[i+1];
-            t += moves[i+2];
-            t += moves[i+3];
-            if(t == m){
-                moves = m + moves;
-                break;
-            }
-        }
-
-    }
-
-    return moves;
-}
-
-std::string Ai_Logic::killerHe(int depth, std::string moves)
-{
-    std::string cutoffs, tempMove, tempMove1;
-    int size = killerHArr[depth].size();
-
-    //if no killer moves, return the same list of moves taken
-    if(size == 0){
-        return moves;
-    }
-
-    //loop through killer moves at given depth and test if they're legal
-    //(done by testing if they're in move list that's already been legally generated)
-    for(int i = 0; i < size ; ++i){
-        //grab first killer move for given depth
-        tempMove = killerHArr[depth].top();
-        for(int j = 0; j < moves.size(); j+=4){
-            tempMove1 = moves[j];
-            tempMove1 += moves[j+1];
-            tempMove1 += moves[j+2];
-            tempMove1 += moves[j+3];
-            //if killer move matches a move in the moveset for current turn, put it at the front of the list
-            if(tempMove == tempMove1){
-                cutoffs += tempMove;
-                break;
-            }
-        }
-        //remove killer move from depth stack once it's been tested to see if legal or not
-        killerHArr[depth].pop();
-    }
-
-    //return moves with killer moves in the front
-    cutoffs += moves;
-    return cutoffs;
-
-}
-
-std::string Ai_Logic::killerTest(int depth, std::string moves)
-{
-    std::string cutoffs, tempMove, tempMove1;
-    //if no killer moves, return the same list of moves taken
-    int size = 0;
-    if(killers[0][depth].length() >= 4){
-        size ++;
-    }
-    if(killers[1][depth].length() >= 4){
-        size ++;
-    }
-    if(killers[2][depth].length() >= 4){
-        size ++;
-    }
-    if(size == 0){
-        return moves;
-    }
-
-    //loop through killer moves at given depth and test if they're legal
-    //(done by testing if they're in move list that's already been legally generated)
-    for(int i = 0; i < size ; ++i){
-        //grab first killer move for given depth
-        tempMove = killers[i][depth];
-        for(int j = 0; j < moves.size(); j+=4){
-            tempMove1 = moves[j];
-            tempMove1 += moves[j+1];
-            tempMove1 += moves[j+2];
-            tempMove1 += moves[j+3];
-            //if killer move matches a move in the moveset for current turn, put it at the front of the list
-            if(tempMove == tempMove1){
-                cutoffs += tempMove;
-                break;
-            }
-        }
-    }
-    cutoffs += moves;
-    return cutoffs;
-}
-
-void Ai_Logic::addToKillers(int depth, std::string move)
-{
-    std::string temp, temp1;
-    //if move is not identical to other moves in killer at depth
-    if(killers[0][depth] != move && killers[1][depth] != move && killers[2][depth] != move){
-        //shift killer moves
-        temp = killers[0][depth];
-        killers[0][depth] = move;
-        temp1 = killers[1][depth];
-        killers[1][depth] = temp;
-        killers[2][depth] = temp1;
-    }
-}
-
 int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
 {
     //update key color
@@ -536,8 +406,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     //generate only captures with true capture gen var
     MoveGen gen_moves;
-    gen_moves.grab_boards(BBBoard);
-    gen_moves.generatePsMoves(isWhite, true, currentDepth);
+    gen_moves.grab_boards(BBBoard, isWhite);
+    gen_moves.generatePsMoves(true, currentDepth);
 
     int score;
     std::string hashMove, tempMove;
@@ -607,6 +477,55 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //addTTQuiet(hashMove, currentDepth, alpha, hashFlag, zobrist);
     return alpha;
 }
+
+void Ai_Logic::addKiller(Move move, int ply)
+{
+    if(move.captured == '0'){ //if move isn't a capture save it as a killer
+        //make sure killer is different
+        if((move.x != killerMoves[ply][0].x && move.y != killerMoves[ply][0].y)
+        || (move.x1 != killerMoves[ply][0].x1 && move.y1 != killerMoves[ply][0].y1)){
+            //save primary killer to secondary slot
+            killerMoves[ply][1] = killerMoves[ply][0];
+        }
+        //save primary killer
+        killerMoves[ply][0] = move;
+    }
+}
+
+void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag, ZobristH *zobrist)
+{
+    //get hash of current zobrist key
+    int hash = (int)(zobrist->zobristKey % 15485843);
+    //if the depth of the current move is greater than the one it's replacing or if it's older than
+    if(depth >= transpositionT[hash].depth || transpositionT[hash].ancient < turns - 5){
+        //add position to the table
+        transpositionT[hash].zobrist = zobrist->zobristKey;
+        transpositionT[hash].depth = depth;
+        transpositionT[hash].eval = (int)eval;
+        transpositionT[hash].flag = flag;
+        transpositionT[hash].move = bestmove;
+        transpositionT[hash].ancient = turns;
+
+    }
+
+}
+
+void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag, ZobristH *zobrist)
+{
+    //get hash of current zobrist key
+    int hash = (int)(zobrist->zobristKey % 338207);
+
+    if(quietDepth <= transpositionTQuiet[hash].depth){
+        //add position to the table
+        transpositionTQuiet[hash].zobrist = zobrist->zobristKey;
+        transpositionTQuiet[hash].depth = quietDepth;
+        transpositionTQuiet[hash].eval = (int)eval;
+        transpositionTQuiet[hash].move = bestmove;
+        transpositionTQuiet[hash].flag = flag;
+
+    }
+}
+
 /*
 bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, MoveGen *BBBoard)
 {
@@ -684,325 +603,4 @@ bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha,
     return false;
 
 }
-
-bool Ai_Logic::badCapture(std::string move, bool isWhite, BitBoards *BBBoard)
-{
-    int x, y, x1, y1, xyI, xyE;
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    x = move[0]-0; y = move[1];
-    xyI = y*8+x;
-    pieceMaskI += 1LL << xyI;
-
-    //pawns don't lose value in caputres
-    if(pieceMaskI & BBBoard->BBBlackPawns || pieceMaskI & BBBoard->BBWhitePawns) return false;
-
-    x1 = move[2]-0; y1 = move[3]-0;
-    xyE = y1*8+x1;
-    pieceMaskE += 1LL << xyE;
-
-    int piece, cap;
-
-    if(pieceMaskI & BBBoard->BBWhiteKnights || pieceMaskI & BBBoard->BBBlackKnights) piece = 320;
-    if(pieceMaskI & BBBoard->BBWhiteBishops || pieceMaskI & BBBoard->BBBlackBishops) piece = 330;
-    if(pieceMaskI & BBBoard->BBWhiteRooks || pieceMaskI & BBBoard->BBBlackRooks) piece = 500;
-    if(pieceMaskI & BBBoard->BBWhiteQueens || pieceMaskI & BBBoard->BBBlackQueens) piece = 900;
-    if(pieceMaskI & BBBoard->BBWhiteKing || pieceMaskI & BBBoard->BBBlackKing) piece = 20000;
-
-    if(pieceMaskE & BBBoard->BBWhitePawns || pieceMaskE & BBBoard->BBBlackPawns) cap = 100;
-    if(pieceMaskE & BBBoard->BBWhiteKnights || pieceMaskE & BBBoard->BBBlackKnights) cap = 320;
-    if(pieceMaskE & BBBoard->BBWhiteBishops || pieceMaskE & BBBoard->BBBlackBishops) cap = 330;
-    if(pieceMaskE & BBBoard->BBWhiteRooks || pieceMaskE & BBBoard->BBBlackRooks) cap = 500;
-    if(pieceMaskE & BBBoard->BBWhiteQueens || pieceMaskE & BBBoard->BBBlackQueens) cap = 900;
-
-    //captures lower takes higher
-    if(cap >= piece - 50) return false;
-
-    //find squares pawns are defending doesn't include pinned pawns
-    U64 pawnDefends;
-    if(isWhite){
-        pawnDefends = BBBoard->BBBlackPawns;
-        pawnDefends |= BBBoard->noEaOne(pawnDefends);
-        pawnDefends |= BBBoard->noWeOne(pawnDefends);
-        pawnDefends &= ~ BBBoard->BBBlackPawns;
-    } else{
-        pawnDefends = BBBoard->BBWhitePawns;
-        pawnDefends |= BBBoard->soEaOne(pawnDefends);
-        pawnDefends |= BBBoard->soWeOne(pawnDefends);
-        pawnDefends &= ~ BBBoard->BBWhitePawns;
-    }
-
-
-    if(pieceMaskE & pawnDefends && cap + 200 < piece) return true;
-
-
-
-return false;
-}
 */
-std::string Ai_Logic::mostVVLVA(std::string captures, bool isWhite, BitBoards *BBBoard)
-{
-    //arrays holding different captures 0 position for pawn captures, 1 = knight, 2 = bishops, 3 = rook, 4 = queen captures
-    std::string pawnPromotions;
-    std::string pawnCaps[5];
-    std::string knightCaps[5];
-    std::string bishopCaps[5];
-    std::string rookCaps[5];
-    std::string queenCaps[5];
-    std::string kingCaps[5];
-
-    U64 epawns, eknights, ebishops, erooks, equeens, pawns, knights, bishops, rooks, queens, king;
-    //set enemy bitboards and friendly piece bitboards
-    if(isWhite){
-        //enemies
-        epawns = BBBoard->BBBlackPawns;
-        eknights = BBBoard->BBBlackKnights;
-        ebishops = BBBoard->BBBlackBishops;
-        erooks = BBBoard->BBBlackRooks;
-        equeens = BBBoard->BBBlackQueens;
-        //friendlys
-        pawns = BBBoard->BBWhitePawns;
-        knights = BBBoard->BBWhiteKnights;
-        bishops = BBBoard->BBWhiteBishops;
-        rooks = BBBoard->BBWhiteRooks;
-        queens = BBBoard->BBWhiteQueens;
-        king = BBBoard->BBWhiteKing;
-    } else {
-        epawns = BBBoard->BBWhitePawns;
-        eknights = BBBoard->BBWhiteKnights;
-        ebishops = BBBoard->BBWhiteBishops;
-        erooks = BBBoard->BBWhiteRooks;
-        equeens = BBBoard->BBWhiteQueens;
-
-        pawns = BBBoard->BBBlackPawns;
-        knights = BBBoard->BBBlackKnights;
-        bishops = BBBoard->BBBlackBishops;
-        rooks = BBBoard->BBBlackRooks;
-        queens = BBBoard->BBBlackQueens;
-        king = BBBoard->BBBlackKing;
-    }
-
-
-    int x, y, x1, y1, xyI, xyE;
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    std::string tempMove;
-
-    //string for holding all non captures, to be added last to moves
-    std::string nonCaptures;
-
-    for(int i = 0; i < captures.length(); i+=4)
-    {
-        pieceMaskI = 0LL, pieceMaskE = 0LL;
-        tempMove = "";
-        //convert move into a single string
-        tempMove += captures[i];
-        tempMove += captures[i+1];
-        tempMove += captures[i+2];
-        tempMove += captures[i+3];
-        x = tempMove[0]-0; y = tempMove[1];
-        xyI = y*8+x;
-        pieceMaskI += 1LL << xyI;
-        //normal moves
-        if(tempMove[3] != 'Q'){
-            //find number representing board end position
-            x1 = tempMove[2]-0; y1 = tempMove[3]-0;
-
-        //pawn promotions
-        } else {
-            //forward non capture
-            if(tempMove[2] == 'F'){
-                x1 = x;
-            //capture
-            } else {
-                x1 = tempMove[2]-0;
-            }
-            if(isWhite){
-                y1 = 0;
-            } else {
-                y1 = 7;
-            }
-            pawnPromotions += tempMove;
-        }
-        xyE = y1*8+x1;
-        //create mask of move end position
-        pieceMaskE += 1LL << xyE;
-
-        //if the initial piece is our x piece check which piece he captures (if any) and add move to appropriate array otherwise add it to non captures
-        if(pieceMaskI & pawns){
-            if(pieceMaskE & epawns){
-                pawnCaps[0]+= tempMove;                
-                continue;
-            } else if(pieceMaskE & eknights){
-                pawnCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                pawnCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                pawnCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                pawnCaps[4]+= tempMove;
-                continue;
-            }
-        } else if (pieceMaskI & knights){
-            if(pieceMaskE & epawns){
-                knightCaps[0]+= tempMove;
-                continue;
-            } else if(pieceMaskE & eknights){
-                knightCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                knightCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                knightCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                knightCaps[4]+= tempMove;
-                continue;
-            }
-        } else if (pieceMaskI & bishops){
-            if(pieceMaskE & epawns){
-                bishopCaps[0]+= tempMove;
-                continue;
-            } else if(pieceMaskE & eknights){
-                bishopCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                bishopCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                bishopCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                bishopCaps[4]+= tempMove;
-                continue;
-            }
-        } else if (pieceMaskI & rooks){
-            if(pieceMaskE & epawns){
-                rookCaps[0]+= tempMove;
-                continue;
-            } else if(pieceMaskE & eknights){
-                rookCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                rookCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                rookCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                rookCaps[4]+= tempMove;
-                continue;
-            }
-        } else if (pieceMaskI & queens){
-            if(pieceMaskE & epawns){
-                queenCaps[0]+= tempMove;
-                continue;
-            } else if(pieceMaskE & eknights){
-                queenCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                queenCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                queenCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                queenCaps[4]+= tempMove;
-                continue;
-            }
-        } else if (pieceMaskI & king){
-            if(pieceMaskE & epawns){
-                kingCaps[0]+= tempMove;
-                continue;
-            } else if(pieceMaskE & eknights){
-                kingCaps[1]+= tempMove;
-                continue;
-            } else if(pieceMaskE & ebishops){
-                kingCaps[2]+= tempMove;
-                continue;
-            } else if(pieceMaskE & erooks){
-                kingCaps[3]+= tempMove;
-                continue;
-            } else if(pieceMaskE & equeens){
-                kingCaps[4]+= tempMove;
-                continue;
-            }
-
-        //add non capture to string so they can be added last
-        }
-        nonCaptures += tempMove;
-
-    }
-
-    //add all captures in order of least valuable attacker most valuable victim
-    std::string orderedCaptures;
-
-    //ordered as most valuable victim, least valuable attacker ~~ Probably more effeciant order possible
-    orderedCaptures += pawnPromotions;
-
-    for(int i = 4; i > -1; --i){
-        orderedCaptures += pawnCaps[i];
-        orderedCaptures += knightCaps[i];
-        orderedCaptures += bishopCaps[i];
-        orderedCaptures += rookCaps[i];
-        orderedCaptures += queenCaps[i];
-        orderedCaptures += kingCaps[i];
-    }
-
-    orderedCaptures += nonCaptures;
-
-
- return orderedCaptures;
-
-}
-
-bool Ai_Logic::isCapture(std::string move, bool isWhite, BitBoards *BBBoard)
-{
-    U64 pieceMaskE = 0LL, enemies;
-    int x1 = move[2]-0, y1 = move[3]-0;
-    int xyE = y1*8+x1;
-    pieceMaskE += 1LL << xyE;
-
-    if(isWhite){ enemies = BBBoard->BBBlackPieces;}
-    else {enemies = BBBoard->BBWhitePieces;}
-
-    if(enemies & pieceMaskE) return true;
-
-    return false;
-}
-
-void Ai_Logic::addMoveTT(std::string bestmove, int depth, long eval, int flag, ZobristH *zobrist)
-{
-    //get hash of current zobrist key
-    int hash = (int)(zobrist->zobristKey % 15485843);
-    //if the depth of the current move is greater than the one it's replacing or if it's older than
-    if(depth >= transpositionT[hash].depth || transpositionT[hash].ancient < turns - 5){
-        //add position to the table
-        transpositionT[hash].zobrist = zobrist->zobristKey;
-        transpositionT[hash].depth = depth;
-        transpositionT[hash].eval = (int)eval;
-        transpositionT[hash].flag = flag;
-        transpositionT[hash].move = bestmove;
-        transpositionT[hash].ancient = turns;
-
-    }
-
-}
-
-void Ai_Logic::addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag, ZobristH *zobrist)
-{
-    //get hash of current zobrist key
-    int hash = (int)(zobrist->zobristKey % 338207);
-
-    if(quietDepth <= transpositionTQuiet[hash].depth){
-        //add position to the table
-        transpositionTQuiet[hash].zobrist = zobrist->zobristKey;
-        transpositionTQuiet[hash].depth = quietDepth;
-        transpositionTQuiet[hash].eval = (int)eval;
-        transpositionTQuiet[hash].move = bestmove;
-        transpositionTQuiet[hash].flag = flag;
-
-    }
-}
