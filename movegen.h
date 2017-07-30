@@ -7,12 +7,13 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #include <iostream>
 #include <string>
 
+#include "ai_logic.h"
 #include "move.h"
 
 class Pieces;
 class BitBoards;
 class ZobristH;
-
+class Historys;
 
 class MoveGen
 {
@@ -21,11 +22,12 @@ public:
 
     //array of move objects by ply then number of moves
     Move moveAr[256];
+    Historys history[64][64];
 
     bool isWhite;
     int moveCount = 0;
 
-    void generatePsMoves(bool capturesOnly, int ply);
+    void generatePsMoves(bool capturesOnly, int ply, Historys *hist);
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(BitBoards *BBBoard, bool wOrB);
@@ -34,7 +36,7 @@ public:
 
     Move movegen_sort(int ply);
 
-    void reorderMoves();
+    void reorderMoves(Move killers[24][2], int ply);
 
     //void unmakeMove(std::string moveKey, ZobristH *zobrist);
     //std::string makeMove(Move move, ZobristH *zobrist);

@@ -281,7 +281,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 */
 
 //generate psuedo legal moves
-    gen_moves.generatePsMoves(false, currentDepth);
+    gen_moves.generatePsMoves(false, currentDepth, history);
+    //add killers scores to moves
+    gen_moves.reorderMoves(killerMoves, currentDepth);
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
@@ -332,10 +334,25 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
                 //add beta to transpositon table with beta flag
                 addMoveTT(tempMove, depth, beta, 2, zobrist);
 
-                //push killer move to top of stack for given depth
-                //killerHArr[depth].push(tempMove);
+                if(newMove.captured == '0' && newMove.flag != 'Q'){
+                    //add move to killers
+                    addKiller(newMove, currentDepth);
 
-                //addToKillers(currentDepth, tempMove);
+                    int sPos = newMove.y * 8 + newMove.x, ePos = newMove.y1 * 8 + newMove.x1;
+                    //add score to historys
+                    history[sPos][ePos].val += depth * depth;
+
+                    //don't want historys to overflow if search is really big
+                    if(history[sPos][ePos].val > SORT_KILL){
+                        for(int i = 0; i < 64; i++){
+                            for(int i = 0; i < 64; i++){
+                                history[sPos][ePos].val /= 2;
+                            }
+                        }
+                    }
+                }
+
+
                 return beta;
             }
             //new best move
@@ -407,7 +424,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //generate only captures with true capture gen var
     MoveGen gen_moves;
     gen_moves.grab_boards(BBBoard, isWhite);
-    gen_moves.generatePsMoves(true, currentDepth);
+    gen_moves.generatePsMoves(true, currentDepth, history);
+    gen_moves.reorderMoves(killerMoves, currentDepth);
 
     int score;
     std::string hashMove, tempMove;
@@ -456,17 +474,31 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
         BBBoard->unmakeMove(newMove, zobrist, isWhite);
 
-        if(score >= beta){
-            //add beta to transpositon table with beta flag
-            //addTTQuiet(tempMove, currentDepth, beta, 2, zobrist);
-
-            //push killer move to top of stack for given depth
-            //killerHArr[currentDepth].push(tempMove);
-            //addToKillers(currentDepth, tempMove);
-            return beta;
-        }
-
         if(score > alpha){
+
+            if(score >= beta){
+                if(newMove.captured == '0' && newMove.flag != 'Q'){
+                    //add move to killers
+                    addKiller(newMove, currentDepth);
+/*
+                    int sPos = newMove.y * 8 + newMove.x, ePos = newMove.y1 * 8 + newMove.x1;
+                    //add score to historys
+                    history[sPos][ePos].val += depth * depth;
+
+                    //don't want historys to overflow if search is really big
+                    if(history[sPos][ePos].val > SORT_KILL){
+                        for(int i = 0; i < 64; i++){
+                            for(int i = 0; i < 64; i++){
+                                historys[sPos][ePos] /= 2;
+                            }
+                        }
+                    }
+                    */
+                }
+
+                return beta;
+            }
+
            alpha = score;
            //if we've gained a new alpha set hash Flag to exact
            hashFlag = 3;

@@ -38,8 +38,11 @@ MoveGen::MoveGen()
 
 }
 
-void MoveGen::generatePsMoves(bool capturesOnly, int ply)
+void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys *hist)
 {
+    //store historys so we can score quiet moves
+    Historys *pHist = history;
+    //counts total moves generated
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
 
@@ -624,7 +627,9 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
     moveAr[moveCount].captured = captured;
     moveAr[moveCount].flag = flag;
 
+    int sPos = y * 8 + x, ePos = y1 * 8 + x;
     //need history heristics for quiet moves!!!!!!!
+    moveAr[moveCount].score = history[sPos][ePos].val;
 
     //scoring capture moves
     if(captured != '0'){
@@ -712,7 +717,7 @@ bool MoveGen::blind(Move move, int pieceVal, int captureVal)
 
 Move MoveGen::movegen_sort(int ply)
 {
-    int best = -999999;
+    int best = -9999999;
     int high;
     //find best scoring move
     for(int i = 0; i < moveCount; i++){
@@ -727,9 +732,26 @@ Move MoveGen::movegen_sort(int ply)
     return moveAr[high];
 }
 
-void MoveGen::reorderMoves()
+void MoveGen::reorderMoves(Move killers[24][2], int ply)
 {
-
+    for(int i = 0; i < moveCount; i++){
+        if(moveAr[i].x == killers[ply][1].x
+        && moveAr[i].y == killers[ply][1].y
+        && moveAr[i].x1 == killers[ply][1].x1
+        && moveAr[i].y1 == killers[ply][1].y1
+        && moveAr[i].piece == killers[ply][1].piece
+        && moveAr[i].score < SORT_KILL - 1){
+            moveAr[i].score = SORT_KILL - 1;
+        }
+        if(moveAr[i].x == killers[ply][0].x
+        && moveAr[i].y == killers[ply][0].y
+        && moveAr[i].x1 == killers[ply][0].x1
+        && moveAr[i].y1 == killers[ply][0].y1
+        && moveAr[i].piece == killers[ply][0].piece
+        && moveAr[i].score < SORT_KILL){
+            moveAr[i].score = SORT_KILL;
+        }
+    }
 }
 
 char MoveGen::whichPieceCaptured(U64 landing)
