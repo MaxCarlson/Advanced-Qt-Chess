@@ -1,11 +1,4 @@
 ﻿  ai_logic.cpp
-ai_logic.cpp(197): warning C4100: 'allowNull': unreferenced formal parameter
-ai_logic.cpp(427): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-  movegen.cpp
-movegen.cpp(630): warning C4100: 'ply': unreferenced formal parameter
-movegen.cpp(673): warning C4100: 'ply': unreferenced formal parameter
-  tile.cpp
-tile.cpp(32): warning C4100: 'event': unreferenced formal parameter
-  Generating Code...
+ai_logic.cpp(406): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   Advanced-Qt-Chess.vcxproj -> C:\Users\C-60\Desktop\QtPrograms\Advanced-Qt-Chess\debug\Advanced-Qt-Chess.exe
   Advanced-Qt-Chess.vcxproj -> debug\Advanced-Qt-Chess.pdb (Full PDB)

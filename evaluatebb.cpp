@@ -2,6 +2,16 @@
 #include "externs.h"
 #include "movegen.h"
 
+const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
+{
+    0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
+};
+const U64 FileMasks8[8] =/*from fileA to FileH*/
+{
+    0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
+    0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
+};
+
 
 const U64 full  = 0xffffffffffffffffULL;
 
@@ -13,7 +23,9 @@ const int rook_adj[9] =   {  15,  12,   9,  6,  3,  0, -3, -6, -9};
 const int rookOpenFile = 10;
 const int rookHalfOpenFile = 5;
 
+//posative value
 const int BISHOP_PAIR = 30;
+//used as negatives to incourage bishop pair
 const int KNIGHT_PAIR = 8;
 const int ROOK_PAIR = 16;
 
@@ -67,8 +79,6 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
         }
 
     }
-
-
 
 //reset values
     int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
@@ -511,44 +521,44 @@ int evaluateBB::pawnEval(bool isWhite, int location, MoveGen gen_moves)
     pawn = pawn >> 8;
     BBBoard->drawBB(pawn);
 */
-    //loop through and find out if pawn is doubled, passed, or opposed
-    U64 tpawn = pawn;
-    while(tpawn != 0LL){
-        if(isWhite){
-            tpawn = tpawn >> 8; //move "pawn" one step north
-            flagIsPassed = 0;
-            //if pawn is blocked by our pawn
-            if(tpawn & opawns){
-                result -= 20; //doubled penalty
 
-            } else if (tpawn & epawns) {
-                flagIsOpposed = 1; //if pawn is opposed
-            }
+    int file = location % 8;
+    int rank = location / 8;
+    gen_moves.drawBB(FileMasks8[7]);
+    gen_moves.drawBB(RankMasks8[7]);
+    int flips[8] = {7, 6, 5, 4, 3, 2, 1, 0};
 
-            //if there is an enemy pawn to the north east or north west, pawn is no longer passed
-            //Not file A/H used to ensure wrapping doesn't occur
-            if((gen_moves.noWeOne(tpawn) & epawns & ~ gen_moves.FileHBB) || (gen_moves.noEaOne(tpawn) & epawns & ~gen_moves.FileABB)){
-                flagIsPassed = 0;
-            }
+    U64 doubledPassMask = FileMasks8[file]; //mask for finding doubled or passed pawns
 
-        } else {
-            tpawn = tpawn << 8; //one step south
-            flagIsPassed = 0;
-            //if pawn is blocked by our pawn
-            if(tpawn & opawns){
-                result -= 20; //doubled penalty
+    U64 left = 0LL;
+    if(file > 0) left = FileMasks8[file-1]; //masks are accoring to whites
 
-            } else if (tpawn & epawns) {
-                flagIsOpposed = 1; //if pawn is opposed
-            }
+    U64 right = 0LL;
+    if(file < 7) right = FileMasks8[file+1]; //files to the left and right of pawn
 
-            //if there is an enemy pawn to the south east or south west, pawn is no longer passed
-            if((gen_moves.soWeOne(tpawn) & epawns & ~ gen_moves.FileHBB) || (gen_moves.soEaOne(tpawn) & epawns) & ~gen_moves.FileABB){
-                flagIsPassed = 0;
-            }
+    opawns &= ~ pawn; //remove this pawn from his friendly pawn BB so as not to count himself in doubling
 
+    if(doubledPassMask & opawns) result -= 10; //real value for doubled pawns is -twenty, because this method counts them twice it's set at half real
+
+    if(isWhite){
+        for(int i = 7; i > rank-1; i--) {
+            doubledPassMask &= ~RankMasks8[i];
+            left &= ~RankMasks8[i];
+            right &= ~RankMasks8[i];
+        }
+    } else {
+        for(int i = 0; i < rank+1; i++) {
+            doubledPassMask &= ~RankMasks8[i];
+            left &= ~RankMasks8[i];
+            right &= ~RankMasks8[i];
         }
     }
+    //if there is an enemy pawn ahead of this pawn
+    if(doubledPassMask & epawns) flagIsOpposed = 1;
+
+    //if there is an enemy pawn on the right or left ahead of this pawn
+    if(right & epawns || left & epawns) flagIsPassed = 0;
+
 
 //another loop going backwards looking if the pawn is supported by friendly pawns
     tpawn = pawn;

@@ -3,9 +3,9 @@
 #include "Pieces.h"
 
 const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
-    {
-        0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
-    };
+{
+    0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
+};
 const U64 FileMasks8[8] =/*from fileA to FileH*/
 {
     0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
@@ -129,26 +129,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
 
             PAWN_MOVES &= ~i;
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
-        }
-
-        //Pawn promotions moving forward one
-            PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
-            i = PAWN_MOVES &~ (PAWN_MOVES-1);
-
-            while(i != 0){
-                int index = trailingZeros(i);
-                x = index%8;
-                y = 1;
-                x1 = x;
-                y1 = 0;
-
-                movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
-                moveCount ++;
-
-                PAWN_MOVES &= ~i;
-                i= PAWN_MOVES & ~(PAWN_MOVES-1);
-            }
-
+        }        
     }
 
     //capture right
@@ -196,7 +177,24 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
+//Pawn promotions
+    //moving forward one
+    PAWN_MOVES = northOne(wpawns) & EmptyTiles & rank8;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
+    while(i != 0){
+        int index = trailingZeros(i);
+        x = index%8;
+        y = 1;
+        x1 = x;
+        y1 = 0;
+
+        movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
+        moveCount ++;
+
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+    }
 
 //pawn capture promotions
     //capture right
@@ -241,7 +239,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         moveCount ++;
 
         PAWN_MOVES &= ~i;
-        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+        i = PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
 }
@@ -293,24 +291,6 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
 
         }
-        //forward promotions
-            PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
-            i = PAWN_MOVES &~ (PAWN_MOVES-1);
-
-            while(i != 0){
-                int index = trailingZeros(i);
-                x = index % 8;
-                y = 6;
-                x1 = x;
-                y1 = 7;
-
-                movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
-                moveCount ++;
-
-                PAWN_MOVES &= ~i;
-                i= PAWN_MOVES & ~(PAWN_MOVES-1);
-            }
-
     }
 
     //capture right
@@ -358,8 +338,26 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
     }
 
+//promotions
+    //forward promotions
+    PAWN_MOVES = southOne(bpawns) & EmptyTiles & rank1;
+    i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
-    //capture promotions
+    while(i != 0){
+        int index = trailingZeros(i);
+        x = index % 8;
+        y = 6;
+        x1 = x;
+        y1 = 7;
+
+        movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
+        moveCount ++;
+
+        PAWN_MOVES &= ~i;
+        i= PAWN_MOVES & ~(PAWN_MOVES-1);
+    }
+
+//capture promotions
     //capture right
     PAWN_MOVES = soEaOne(bpawns) & BBWhitePieces & ~whiteking & rank1;
     i = PAWN_MOVES &~ (PAWN_MOVES-1);

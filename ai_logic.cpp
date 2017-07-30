@@ -188,7 +188,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //create unqiue hash from zobrist key
     int hash = (int)(zobrist->zobristKey % 15485843);
     HashEntry entry = transpositionT[hash];
-/*
+
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobrist->zobristKey){
@@ -212,7 +212,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-*/
+
     //if the time limmit has been exceeded set stop search flag
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -240,7 +240,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     else { king = BBBoard->BBBlackKing; eking = BBBoard->BBWhiteKing; }
 
     FlagInCheck = gen_moves.isAttacked(king, isWhite);
-/*
+
 //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
         int static_eval = eval->evalBoard(isWhite, BBBoard, zobrist);
@@ -278,7 +278,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(depth <= 3 && !FlagInCheck && abs(alpha) < 9000 && eval->evalBoard(isWhite, BBBoard, zobrist) + fmargin[depth] <= alpha){
         f_prune = 1;
     }
-*/
+
 
 //generate psuedo legal moves
     gen_moves.generatePsMoves(isWhite, false, currentDepth);
@@ -286,7 +286,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
 //search through psuedo legal moves checking against king safety
-    std::string tempMove, moveToUnmake, hashMove;
+    std::string tempMove, hashMove;
     for(int i = 0; i < movesNum; ++i){
         positionCount ++;
         //change board accoriding to i possible move
@@ -539,9 +539,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     gen_moves.grab_boards(BBBoard);
     gen_moves.generatePsMoves(isWhite, true, currentDepth);
 
-
     int score;
-    std::string unmake, hashMove, tempMove;
+    std::string hashMove, tempMove;
     //set hash flag equal to alpha Flag
     int hashFlag = 1, moveNum = gen_moves.moveCount;
 
