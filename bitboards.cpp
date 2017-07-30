@@ -6,20 +6,6 @@
 #include "move.h"
 #include "externs.h"
 
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
-#else
-#define DEBUG_CLIENTBLOCK
-#endif // _DEBUG
-
-#ifdef _DEBUG
-#define new DEBUG_CLIENTBLOCK
-#endif
-
 BitBoards::BitBoards()
 {
 
@@ -106,10 +92,9 @@ void BitBoards::constructBoards()
 }
 
 //normal move stuff
-std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
+void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
 {
     std::string savedMove;
-    bool wOrB;
     int xyI, xyE;
     //inital spot piece mask and end spot mask
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
@@ -121,9 +106,6 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
 
-    if(BBWhitePieces & pieceMaskI) wOrB = true;
-    else wOrB = false;
-
     //store coordiantes for undoing move
     //final order is x, y, x1, y1, piece moved, piece captured (0 if none)
     savedMove += move.x;
@@ -131,17 +113,13 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
     savedMove += move.x1;
     savedMove += move.y1;
 
-    if(BBWhiteQueens & BBBlackKnights){
-        drawBBA();
-    }
-
-
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
 
     //white pieces
-    if(wOrB == true){
-        if(move.piece == 'P'){
+    if(isWhite == true){
+        switch(move.piece){
+        case 'P':
             //remove piece from starting loc
             BBWhitePawns &= ~pieceMaskI;
             //remove piece from color BB
@@ -167,7 +145,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
-        } else if (move.piece == 'R'){
+            break;
+
+        case 'R':
             //remove piece, test/save capture
             BBWhiteRooks &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
@@ -179,8 +159,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'N'){
+        case 'N':
             BBWhiteKnights &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -191,8 +172,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'B'){
+        case 'B':
             BBWhiteBishops &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -203,8 +185,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'Q'){
+        case 'Q':
             BBWhiteQueens &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -215,11 +198,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
-            if(move.captured == 'P'){
-                drawBBA();
-            }
+            break;
 
-        } else if (move.piece == 'K'){
+        case 'K':
             BBWhiteKing &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -230,11 +211,12 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
-
+            break;
         }
     //black pieces
     } else {
-        if(move.piece == 'p'){
+        switch(move.piece){
+        case 'p':
             BBBlackPawns &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -255,8 +237,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'r'){
+        case 'r':
             BBBlackRooks &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -267,8 +250,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'n'){
+        case 'n':
             BBBlackKnights &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -279,8 +263,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'b'){
+        case 'b':
             BBBlackBishops &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -291,8 +276,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'q'){
+        case 'q':
             BBBlackQueens &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -303,8 +289,9 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
 
-        } else if (move.piece == 'k'){
+        case 'k':
             BBBlackKing &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
@@ -315,6 +302,7 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            break;
         }
     }
 
@@ -322,77 +310,45 @@ std::string BitBoards::makeMove(Move move, ZobristH *zobrist)
     if(move.captured != '0') removeCapturedPiece(move.captured, pieceMaskE);
 
 
-    if(wOrB == true){
-        savedMove += 'w';
-    } else {
-        savedMove += 'b';
-    }
-
     //correct empty tiles to opposite of full tiles
     EmptyTiles &= ~pieceMaskE;
     EmptyTiles |= pieceMaskI;
     //EmptyTiles &= ~FullTiles
     //drawBBA();
 
-    if(BBWhiteQueens & BBBlackKnights){
-        drawBBA();
-    }
 
-
-    if(EmptyTiles & BBWhitePieces || EmptyTiles & BBBlackPieces){
+    if((EmptyTiles & BBWhitePieces) | (EmptyTiles & BBBlackPieces)){
         drawBBA();
     }
 
     //Update zobrist hash
-    zobrist->UpdateKey(xyI, xyE, savedMove);
+    zobrist->UpdateKey(xyI, xyE, move, isWhite);
 
     //change zobrist color after a move
     zobrist->UpdateColor();
 
-    return savedMove;
-
 
 }
 
-void BitBoards::unmakeMove(std::string moveKey, ZobristH *zobrist)
+void BitBoards::unmakeMove(Move moveKey, ZobristH *zobrist, bool isWhite)
 {
 
-    if(EmptyTiles & FullTiles){
-
-        drawBBA();
-    }
-
     //parse string move and change to ints
-    int x = moveKey[0] - 0;
-    int y = moveKey[1] - 0;
-    int x1 = moveKey[2] - 0;
-    int y1 = moveKey[3] - 0;
+    int x = moveKey.x;
+    int y = moveKey.y;
+    int x1 = moveKey.x1;
+    int y1 = moveKey.y1;
     int xyI = y*8+x, xyE = y1*8+x1;
     //inital spot piece mask and end spot mask
     U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
     pieceMaskI += 1LL<< xyI;
     pieceMaskE += 1LL << xyE;
 
-    //store piece moved and captured and promotion if was one
-    char wOrB, promotion = 'X';
-
-    //for normal moves
-    char pieceMoved = moveKey[4], pieceCaptured = moveKey[5];
-
-    if(moveKey[6] != 'O'){
-        wOrB = moveKey[6];
-    //for promotions
-    } else {
-        promotion = moveKey[6];
-        wOrB = moveKey[7];
-    }
-
-
-    if(wOrB == 'w'){
-        switch(pieceMoved){
+    if(isWhite){
+        switch(moveKey.piece){
             case 'P':
             //if move not a promotion
-            if(promotion == 'X'){
+            if(moveKey.flag == '0'){
                 //remove piece from where it landed
                 BBWhitePawns &= ~pieceMaskE;
             //promotion unmake
@@ -441,10 +397,10 @@ void BitBoards::unmakeMove(std::string moveKey, ZobristH *zobrist)
             BBWhitePieces |= pieceMaskI;
             break;
         }
-    } else if(wOrB == 'b'){
-        switch(pieceMoved){
+    } else {
+        switch(moveKey.piece){
             case 'p':
-            if(promotion == 'X'){
+            if(moveKey.flag == '0'){
                 //remove piece from where it landed
                 BBBlackPawns &= ~pieceMaskE;
             //promotion unmake
@@ -499,47 +455,39 @@ void BitBoards::unmakeMove(std::string moveKey, ZobristH *zobrist)
     //correct full tiles and run unmake capture function
     //if a piece has been captured ///Might have errors in calling unmake
     //even when a piece hasn't been captured
-    if(wOrB == 'w'){
-        if(pieceCaptured == '0' || pieceCaptured == 0){
+    if(isWhite){
+        if(moveKey.captured == '0'){
             FullTiles &= ~pieceMaskE;
             FullTiles |= pieceMaskI;
         } else{
-            undoCapture(pieceMaskE, pieceCaptured, 'b');
+            undoCapture(pieceMaskE, moveKey.captured, !isWhite);
             FullTiles |= pieceMaskI;
         }
     } else {
-        if(pieceCaptured == '0' || pieceCaptured == 0){
+        if(moveKey.captured == '0'){
             FullTiles &= ~pieceMaskE;
             FullTiles |= pieceMaskI;
         } else{
-            undoCapture(pieceMaskE, pieceCaptured, 'w');
+            undoCapture(pieceMaskE, moveKey.captured, !isWhite);
             FullTiles |= pieceMaskI;
         }
     }
-
 
     //correct empty tiles to opposite of full tiles
     EmptyTiles = ~FullTiles;
 
     //update zobrist hash
-    zobrist->UpdateKey(xyI, xyE, moveKey);
+    zobrist->UpdateKey(xyI, xyE, moveKey, isWhite);
 
     //change cobrist color after a move
     zobrist->UpdateColor();
 
-    bool t;
-    if(wOrB == 'w'){
-        t = true;
-    } else {
-        t = false;
-    }
-
 }
 
-void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
+void BitBoards::undoCapture(U64 location, char piece, bool isNotWhite)
 {
 
-    if(whiteOrBlack == 'w'){
+    if(isNotWhite){
         switch(piece){
             case 'P':
                 //restore piece to both piece board and color board
@@ -568,7 +516,7 @@ void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
 
         }
-    } else if (whiteOrBlack == 'b') {
+    } else {
         switch(piece){
             case 'p':
                 //restore piece to both piece board and color board
@@ -596,10 +544,8 @@ void BitBoards::undoCapture(U64 location, char piece, char whiteOrBlack)
                 drawBBA();
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
         }
-    } else {
-
-        std::cout << "UNDO CAPTURE ERROR" << std::endl;
     }
+
 }
 
 void BitBoards::drawBB(U64 board)

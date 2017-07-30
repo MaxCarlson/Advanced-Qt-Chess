@@ -8,6 +8,7 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 
 class BitBoards;
 class MoveGen;
+class Move;
 
 class ZobristH
 {
@@ -30,7 +31,7 @@ public:
     U64 getZobristHash(BitBoards *BBBoard);
 
     //Update zobrist key by XOR ing rand numbers in zArray
-    void UpdateKey(int start, int end, std::string moveKey);
+    void UpdateKey(int start, int end, Move moveKey, bool isWhite);
     void UpdateColor();
     void UpdateNull();
 

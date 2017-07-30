@@ -121,7 +121,7 @@ void Tile::aiTurn(){
     Ai_Logic newMove;
 
     //generate best move (number represents max search depth)
-    Move bestMove = newMove.iterativeDeep(6);
+    Move bestMove = newMove.iterativeDeep(4);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;
@@ -132,16 +132,14 @@ void Tile::aiTurn(){
     tempx2 = bestMove.x1;
     tempy2 = bestMove.y1;
 
-    //if not pawn promotion
-    if(bestMove.flag == '0'){
 
+    if(bestMove.flag == '0'){ //if normal move
         //swap piece to its desitnation and make prior spot blank
         boardArr[tempy2][tempx2] = boardArr[tempy][tempx];
         boardArr[tempy][tempx] = " ";
 
-    //pawn promotions
-    } else {
-        //swap piece to its desitnation and make prior spot blank
+    } else if (bestMove.flag == 'Q') { //pawn promotions
+
         if(turns % 2 == 0){
             boardArr[tempy2][tempx2] = "Q";
         } else {

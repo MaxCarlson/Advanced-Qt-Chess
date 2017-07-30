@@ -78,35 +78,15 @@ void ZobristH::UpdateNull()
     zobristKey ^= zNullMove;
 }
 
-void ZobristH::UpdateKey(int start, int end, std::string moveKey)
+void ZobristH::UpdateKey(int start, int end, Move moveKey, bool isWhite)
 {
     //gather piece, capture, and w or b info from movekey
     //normal move
-    char piece = moveKey[4];
-    char captured = moveKey[5];
-    char wB, promotion = 'X';
-    if(moveKey[6] != 'O'){
-        wB = moveKey[6];
-    } else {
-        promotion = moveKey[6];
-        wB = moveKey[7];
-    }
-
+    char piece = moveKey.piece;
+    char captured = moveKey.captured;
 
     //if a piece was captured XOR that location with randomkey at array location end
-    if(captured == 'P' || captured == 'R' || captured == 'N' || captured == 'B' || captured == 'Q'){
-        if(captured == 'P'){
-            zobristKey ^= zArray[0][0][end];
-        } else if(captured == 'R'){
-            zobristKey ^= zArray[0][1][end];
-        } else if(captured == 'N'){
-            zobristKey ^= zArray[0][2][end];
-        } else if(captured == 'B'){
-            zobristKey ^= zArray[0][3][end];
-        } else if(captured == 'Q'){
-            zobristKey ^= zArray[0][4][end];
-        }
-    } else if (captured == 'p' || captured == 'r' || captured == 'n' || captured == 'b' || captured == 'q'){
+    if (isWhite && captured != '0'){
         if(captured == 'p'){
             zobristKey ^= zArray[1][0][end];
         } else if(captured == 'r'){
@@ -118,15 +98,26 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
         } else if(captured == 'q'){
             zobristKey ^= zArray[1][4][end];
         }
-
+    } else if (!isWhite && captured != '0') {
+        if(captured == 'P'){
+            zobristKey ^= zArray[0][0][end];
+        } else if(captured == 'R'){
+            zobristKey ^= zArray[0][1][end];
+        } else if(captured == 'N'){
+            zobristKey ^= zArray[0][2][end];
+        } else if(captured == 'B'){
+            zobristKey ^= zArray[0][3][end];
+        } else if(captured == 'Q'){
+            zobristKey ^= zArray[0][4][end];
+        }
     }
 
     //XOR zobristKey with zArray number at piece start end then end location
     //if piece is white..
-    if(wB == 'w') {
+    if(isWhite) {
         if(piece == 'P'){
             //if normal pawn move
-            if(promotion == 'X'){
+            if(moveKey.flag == '0'){
                 zobristKey ^= zArray[0][0][start];
                 zobristKey ^= zArray[0][0][end];
              //if pawn promotion
@@ -152,10 +143,10 @@ void ZobristH::UpdateKey(int start, int end, std::string moveKey)
             zobristKey ^= zArray[0][5][end];
         }
     //black
-    } else if (wB == 'b'){
+    } else {
 
         if(piece == 'p'){
-            if(promotion == 'X'){
+            if(moveKey.flag == '0'){
                 zobristKey ^= zArray[1][0][start];
                 zobristKey ^= zArray[1][0][end];
             } else {

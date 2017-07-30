@@ -70,10 +70,6 @@ private:
     //number representing amount to reduce search with Null-Moves
     int depthR = 2;
 
-    //PVS TEST
-    int PVS(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
-    int zwSearch(int depth, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval);
-
 };
 
 #endif // AI_LOGIC_H

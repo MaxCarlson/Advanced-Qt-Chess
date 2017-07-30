@@ -24,6 +24,7 @@ std::string boardArr [8][8]= {
     {"P", "P", "P", "P", "P", "P", "P", "P"},
     {"R", "N", "B", "Q", "K", "B", "N", "R"},
               };
+//TEST BOARDS
 /*
 std::string boardArr [8][8]= {
 { "r", " " , "b", "q", "k", "b", "n", "r"},
@@ -37,7 +38,7 @@ std::string boardArr [8][8]= {
 };
 */
 /*
-//TEST BOARD
+
 std::string boardArr [8][8]= {
     {"r", " ", " ", " ", "k", " ", " ", "r"},
     {"p", "p", "P", " ", " ", " ", "p", " ",},

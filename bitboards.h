@@ -20,8 +20,8 @@ public:
     //builds boards through reading an array
     void constructBoards();
 
-    std::string makeMove(Move move, ZobristH *zobrist);
-    void unmakeMove(std::string moveKey, ZobristH *zobrist);
+    void makeMove(Move move, ZobristH *zobrist, bool isWhite);
+    void unmakeMove(Move moveKey, ZobristH *zobrist, bool isWhite);
 
     //helper funtction to draw out bitboards like chess boards
     void drawBB(U64 board);
@@ -102,7 +102,7 @@ private:
     void removeCapturedPiece(char captured, U64 location);
 
     //rolls back a capture on move unmake
-    void undoCapture(U64 location, char piece, char whiteOrBlack);
+    void undoCapture(U64 location, char piece, bool isNotWhite);
 };
 
 #endif // BITBOARDS_H

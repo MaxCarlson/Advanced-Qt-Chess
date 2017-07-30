@@ -2,20 +2,6 @@
 //#include "bitboards.h"
 #include "Pieces.h"
 
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
-#else
-#define DEBUG_CLIENTBLOCK
-#endif // _DEBUG
-
-#ifdef _DEBUG
-#define new DEBUG_CLIENTBLOCK
-#endif
-
 const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
     {
         0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
@@ -47,7 +33,6 @@ MoveGen::MoveGen()
 
 void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
 {
-
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
 
@@ -61,7 +46,6 @@ void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
         rooks = BBWhiteRooks;
         queens = BBWhiteQueens;
         king = BBWhiteKing;
-
         eking = BBBlackKing;
         //generate pawn moves
         possibleWP(pawns, eking, capturesOnly, ply);
@@ -76,10 +60,9 @@ void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
         rooks = BBBlackRooks;
         queens = BBBlackQueens;
         king = BBBlackKing;
-
         eking = BBWhiteKing;
-        possibleBP(pawns, eking, capturesOnly, ply);
 
+        possibleBP(pawns, eking, capturesOnly, ply);
     }
 
     //if we don't want to only generate captures
@@ -98,8 +81,7 @@ void MoveGen::generatePsMoves(bool isWhite, bool capturesOnly, int ply)
         else if(queens & piece) possibleQ(isWhite, i, friends, enemys, eking, capsOnly, ply);
         else if(king & piece) possibleK(isWhite, i, friends, enemys, capsOnly, ply);
     }
-	
-
+    return;
 }
 
 
@@ -156,9 +138,9 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
             while(i != 0){
                 int index = trailingZeros(i);
                 x = index%8;
-                y = index/8+1;
+                y = 1;
                 x1 = x;
-                y1 = 7;
+                y1 = 0;
 
                 movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
                 moveCount ++;
@@ -224,9 +206,9 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
     while(i != 0){
         int index = trailingZeros(i);
         x = index%8-1;
-        y = 7;
+        y = 1;
         x1 =index%8;
-        y1 = 7;
+        y1 = 0;
 
         U64 landing = 0LL;
         landing += 1LL << index;
@@ -247,9 +229,9 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
     while(i != 0){
         int index = trailingZeros(i);
         x = index%8+1;
-        y = 7;
+        y = 1;
         x1 =index%8;
-        y1 = 7;
+        y1 = 0;
 
         U64 landing = 0LL;
         landing += 1LL << index;
@@ -270,12 +252,14 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
     char captured;
     int x, y, x1, y1;
     bool isWhite = false;
+    U64 PAWN_MOVES, i;
 
-    //forward one
-    U64 PAWN_MOVES = southOne(bpawns) & EmptyTiles;
-    U64 i = PAWN_MOVES &~ (PAWN_MOVES-1);
 
     if(!capturesOnly){
+        //forward one
+        PAWN_MOVES = southOne(bpawns) & EmptyTiles;
+        i = PAWN_MOVES &~ (PAWN_MOVES-1);
+
         while(i != 0){
             int index = trailingZeros(i);
             x = index%8;
@@ -315,10 +299,10 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
 
             while(i != 0){
                 int index = trailingZeros(i);
-                x = index%8;
-                y = 0;
+                x = index % 8;
+                y = 6;
                 x1 = x;
-                y1 = 0;
+                y1 = 7;
 
                 movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
                 moveCount ++;
@@ -387,9 +371,9 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         captured = whichPieceCaptured(isWhite, landing);
 
         x = index%8-1;
-        y = 0;
+        y = 6;
         x1 = index%8;
-        y1 = 0;
+        y1 = 7;
 
         movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
         moveCount ++;
@@ -411,9 +395,9 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
 
 
         x = index%8+1;
-        y = 0;
+        y = 6;
         x1 =index%8;
-        y1 = 0;
+        y1 = 7;
 
         movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
         moveCount ++;
@@ -664,7 +648,7 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
     }
 
     //pawn promotions
-    if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += 800;
+    if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += 775;
 
     return;
 }
@@ -673,11 +657,14 @@ Move MoveGen::movegen_sort(int ply)
 {
     int best = -999999;
     int high;
+    //find best scoring move
     for(int i = 0; i < moveCount; i++){
         if(moveAr[i].score > best && !moveAr[i].tried){
             high = i;
         }
     }
+    //mark best scoring move tried since we're about to try it
+    //~~~ change later if we don't always try move on return
     moveAr[high].tried = true;
 
     return moveAr[high];
@@ -895,8 +882,6 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
         //capture left
         attacks |= noWeOne(pawns);
     }
-    drawBBA();
-    drawBB(attacks);
 
     if(attacks & pieceLoc) return true;
 
@@ -917,8 +902,6 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
         attacks &= ~FILE_AB & ~friends;
     }
 
-    drawBB(attacks);
-
     if(attacks & knights) return true;
 
     //diagonal of bishops and queens attack check
@@ -926,16 +909,12 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
 
     attacks = DAndAntiDMoves(location) & BQ;
 
-    drawBB(attacks);
-
     if(attacks & BQ) return true;
 
     //horizontal of rooks and queens attack check
     U64 BR = bishops | queens;
 
     attacks = horizVert(location) & BR;
-
-    drawBB(attacks);
 
     if(attacks & BR) return true;
 
@@ -949,492 +928,11 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool isWhite)
     attacks |= westOne(pieceLoc);
     attacks |= noWeOne(pieceLoc);
 
-    drawBB(attacks);
-
     if(attacks & king) return true;
 
 return false;
 }
-/*
-//normal move stuff
-std::string MoveGen::makeMove(Move move, ZobristH *zobrist)
-{
-    std::string savedMove;
-    bool wOrB;
-    int xyI, xyE;
-    //inital spot piece mask and end spot mask
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    //for normal moves
 
-    xyI = move.y * 8 + move.x;
-    xyE = move.y1 * 8 + move.x1;
-
-    pieceMaskI += 1LL<< xyI;
-    pieceMaskE += 1LL << xyE;
-    if(BBWhitePieces & pieceMaskI) wOrB = true;
-    else wOrB = false;
-
-    //store coordiantes for undoing move
-    //final order is x, y, x1, y1, piece moved, piece captured (0 if none)
-    savedMove += move.x;
-    savedMove += move.y;
-    savedMove += move.x1;
-    savedMove += move.y1;
-
-    //find BB that contains correct piece, remove piece from it's starting pos
-    //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
-
-    //white pieces
-    if(wOrB == true){
-        if(BBWhitePawns & pieceMaskI){
-            //remove piece from starting loc
-            BBWhitePawns &= ~pieceMaskI;
-            //remove piece from color BB
-            BBWhitePieces &= ~pieceMaskI;
-            //remove piece from full tiles
-            FullTiles &= ~pieceMaskI;
-            //adds piece to move to be returned in order to undo move
-            savedMove += "P";
-            //removes piece from capture location if capture and returns piece char
-            savedMove += move.captured;
-
-            if(move.flag != 'Q'){
-                //add piece to landing spot
-                BBWhitePawns |= pieceMaskE;
-
-            //if it's a pawn promotion
-            } else {
-                //add queen to landing spot
-                BBWhiteQueens |= pieceMaskE;
-                //add promotion data to capture string
-                savedMove += "O";
-            }
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-        } else if (BBWhiteRooks & pieceMaskI){
-            //remove piece, test/save capture
-            BBWhiteRooks &= ~pieceMaskI;
-            BBWhitePieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "R";
-            savedMove += move.captured;
-            //add piece
-            BBWhiteRooks |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBWhiteKnights & pieceMaskI){
-            BBWhiteKnights &= ~pieceMaskI;
-            BBWhitePieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "N";
-            savedMove += move.captured;
-            //add piece
-            BBWhiteKnights |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBWhiteBishops & pieceMaskI){
-            BBWhiteBishops &= ~pieceMaskI;
-            BBWhitePieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "B";
-            savedMove += move.captured;
-            //add piece
-            BBWhiteBishops |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBWhiteQueens & pieceMaskI){
-            BBWhiteQueens &= ~pieceMaskI;
-            BBWhitePieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "Q";
-            savedMove += move.captured;
-            //add piece
-            BBWhiteQueens |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-            if(move.captured == 'P'){
-                drawBBA();
-            }
-
-        } else if (BBWhiteKing & pieceMaskI){
-            BBWhiteKing &= ~pieceMaskI;
-            BBWhitePieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "K";
-            savedMove += move.captured;
-            //add piece
-            BBWhiteKing |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBWhitePieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        }
-    //black pieces
-    } else {
-        if(BBBlackPawns & pieceMaskI){
-            BBBlackPawns &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "p";
-            savedMove += move.captured;
-
-            if(move.flag != 'Q'){
-                //add piece to landing spot
-                BBBlackPawns |= pieceMaskE;
-
-            //if it's a pawn promotion
-            } else {
-                //add queen to landing spot
-                BBBlackQueens |= pieceMaskE;
-                //add promotion data to capture string
-                savedMove += "O";
-            }
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBBlackRooks & pieceMaskI){
-            BBBlackRooks &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "r";
-            savedMove += move.captured;
-            //add piece
-            BBBlackRooks |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBBlackKnights & pieceMaskI){
-            BBBlackKnights &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "n";
-            savedMove += move.captured;
-            //add piece
-            BBBlackKnights |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBBlackBishops & pieceMaskI){
-            BBBlackBishops &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "b";
-            savedMove += move.captured;
-            //add piece
-            BBBlackBishops |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBBlackQueens & pieceMaskI){
-            BBBlackQueens &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "q";
-            savedMove += move.captured;
-            //add piece
-            BBBlackQueens |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-
-        } else if (BBBlackKing & pieceMaskI){
-            BBBlackKing &= ~pieceMaskI;
-            BBBlackPieces &= ~pieceMaskI;
-            FullTiles &= ~pieceMaskI;
-            savedMove += "k";
-            savedMove += move.captured;
-            //add piece
-            BBBlackKing |= pieceMaskE;
-            //add to color pieces then full tiles
-            BBBlackPieces |= pieceMaskE;
-            FullTiles |= pieceMaskE;
-        }
-    }
-
-
-    if(wOrB == true){
-        savedMove += 'w';
-    } else {
-        savedMove += 'b';
-    }
-
-    //correct empty tiles to opposite of full tiles
-    EmptyTiles &= ~pieceMaskE;
-    EmptyTiles |= pieceMaskI;
-    //EmptyTiles &= ~FullTiles
-    //drawBBA();
-
-    //Update zobrist hash
-    zobrist->UpdateKey(xyI, xyE, savedMove);
-
-    //change zobrist color after a move
-    zobrist->UpdateColor();
-
-    return savedMove;
-
-
-}
-
-void MoveGen::unmakeMove(std::string moveKey, ZobristH *zobrist)
-{
-
-    if(EmptyTiles & FullTiles){
-
-        drawBBA();
-    }
-
-    //parse string move and change to ints
-    int x = moveKey[0] - 0;
-    int y = moveKey[1] - 0;
-    int x1 = moveKey[2] - 0;
-    int y1 = moveKey[3] - 0;
-    int xyI = y*8+x, xyE = y1*8+x1;
-    //inital spot piece mask and end spot mask
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    pieceMaskI += 1LL<< xyI;
-    pieceMaskE += 1LL << xyE;
-
-    //store piece moved and captured and promotion if was one
-    char wOrB, promotion = 'X';
-
-    //for normal moves
-    char pieceMoved = moveKey[4], pieceCaptured = moveKey[5];
-
-    if(moveKey[6] != 'O'){
-        wOrB = moveKey[6];
-    //for promotions
-    } else {
-        promotion = moveKey[6];
-        wOrB = moveKey[7];
-    }
-
-
-    if(wOrB == 'w'){
-        switch(pieceMoved){
-            case 'P':
-            //if move not a promotion
-            if(promotion == 'X'){
-                //remove piece from where it landed
-                BBWhitePawns &= ~pieceMaskE;
-            //promotion unmake
-            } else {
-                BBWhiteQueens &= ~pieceMaskE;
-            }
-            //put it back where it started
-            BBWhitePawns |= pieceMaskI;
-            //change color boards same way
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-
-            case 'R':
-            BBWhiteRooks &= ~pieceMaskE;
-            BBWhiteRooks |= pieceMaskI;
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-
-            case 'N':
-            BBWhiteKnights &= ~pieceMaskE;
-            BBWhiteKnights |= pieceMaskI;
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-
-            case 'B':
-            BBWhiteBishops &= ~pieceMaskE;
-            BBWhiteBishops |= pieceMaskI;
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-
-            case 'Q':
-            BBWhiteQueens &= ~pieceMaskE;
-            BBWhiteQueens |= pieceMaskI;
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-
-            case 'K':
-            BBWhiteKing &= ~pieceMaskE;
-            BBWhiteKing |= pieceMaskI;
-            BBWhitePieces &= ~pieceMaskE;
-            BBWhitePieces |= pieceMaskI;
-            break;
-        }
-    } else if(wOrB == 'b'){
-        switch(pieceMoved){
-            case 'p':
-            if(promotion == 'X'){
-                //remove piece from where it landed
-                BBBlackPawns &= ~pieceMaskE;
-            //promotion unmake
-            } else {
-                BBBlackQueens &= ~pieceMaskE;
-            }
-            //put it back where it started
-            BBBlackPawns |= pieceMaskI;
-            //change color boards same way
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-            case 'r':
-            BBBlackRooks &= ~pieceMaskE;
-            BBBlackRooks |= pieceMaskI;
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-            case 'n':
-            BBBlackKnights &= ~pieceMaskE;
-            BBBlackKnights |= pieceMaskI;
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-            case 'b':
-            BBBlackBishops &= ~pieceMaskE;
-            BBBlackBishops |= pieceMaskI;
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-            case 'q':
-            BBBlackQueens &= ~pieceMaskE;
-            BBBlackQueens |= pieceMaskI;
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-            case 'k':
-            BBBlackKing &= ~pieceMaskE;
-            BBBlackKing |= pieceMaskI;
-            BBBlackPieces &= ~pieceMaskE;
-            BBBlackPieces |= pieceMaskI;
-            break;
-
-        }
-    }
-
-    //correct full tiles and run unmake capture function
-    //if a piece has been captured ///Might have errors in calling unmake
-    //even when a piece hasn't been captured
-    if(wOrB == 'w'){
-        if(pieceCaptured == '0' || pieceCaptured == 0){
-            FullTiles &= ~pieceMaskE;
-            FullTiles |= pieceMaskI;
-        } else{
-            undoCapture(pieceMaskE, pieceCaptured, 'b');
-            FullTiles |= pieceMaskI;
-        }
-    } else {
-        if(pieceCaptured == '0' || pieceCaptured == 0){
-            FullTiles &= ~pieceMaskE;
-            FullTiles |= pieceMaskI;
-        } else{
-            undoCapture(pieceMaskE, pieceCaptured, 'w');
-            FullTiles |= pieceMaskI;
-        }
-    }
-
-
-    //correct empty tiles to opposite of full tiles
-    EmptyTiles = ~FullTiles;
-
-    //update zobrist hash
-    zobrist->UpdateKey(xyI, xyE, moveKey);
-
-    //change cobrist color after a move
-    zobrist->UpdateColor();
-
-    bool t;
-    if(wOrB == 'w'){
-        t = true;
-    } else {
-        t = false;
-    }
-
-}
-
-void MoveGen::undoCapture(U64 location, char piece, char whiteOrBlack)
-{
-
-    if(whiteOrBlack == 'w'){
-        switch(piece){
-            case 'P':
-                //restore piece to both piece board and color board
-                //no need to change FullTiles as captured piece was already there
-                BBWhitePawns |= location;
-                BBWhitePieces |= location;
-                break;
-            case 'R':
-                BBWhiteRooks |= location;
-                BBWhitePieces |= location;
-                break;
-            case 'N':
-                BBWhiteKnights |= location;
-                BBWhitePieces |= location;
-                break;
-            case 'B':
-                BBWhiteBishops |= location;
-                BBWhitePieces |= location;
-                break;
-            case 'Q':
-                BBWhiteQueens |= location;
-                BBWhitePieces |= location;
-                break;
-            default:
-
-                std::cout << "UNDO CAPTURE ERROR" << std::endl;
-
-        }
-    } else if (whiteOrBlack == 'b') {
-        switch(piece){
-            case 'p':
-                //restore piece to both piece board and color board
-                //no need to change FullTiles as captured piece was already there
-                BBBlackPawns |= location;
-                BBBlackPieces |= location;
-                break;
-            case 'r':
-                BBBlackRooks |= location;
-                BBBlackPieces |= location;
-                break;
-            case 'n':
-                BBBlackKnights |= location;
-                BBBlackPieces |= location;
-                break;
-            case 'b':
-                BBBlackBishops |= location;
-                BBBlackPieces |= location;
-                break;
-            case 'q':
-                BBBlackQueens |= location;
-                BBBlackPieces |= location;
-                break;
-            default:
-                drawBBA();
-                std::cout << "UNDO CAPTURE ERROR" << std::endl;
-        }
-    } else {
-
-        std::cout << "UNDO CAPTURE ERROR" << std::endl;
-    }
-}
-*/
 void MoveGen::drawBBA()
 {
     char flips[8] = {'8', '7', '6', '5', '4', '3', '2', '1'};
