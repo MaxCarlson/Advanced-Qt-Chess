@@ -40,6 +40,7 @@ class SliderAttacks {
     return ((occupancy * m.magic) >> (kSquares - m.shift)) + m.offset;
   }
 
+
   Magic rook_magics_[kSquares];
   Magic bishop_magics_[kSquares];
   std::vector<U64> rook_attack_table_;

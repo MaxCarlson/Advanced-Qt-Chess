@@ -8,7 +8,6 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #include <string>
 
 #include "move.h"
-#include "slider_attacks.h"
 class BitBoards;
 class Historys;
 class HashEntry;
@@ -106,8 +105,6 @@ public:
         void drawBBA();
         void drawBB(U64 board);
 private:
-
-        SliderAttacks slider_attacks;
 
         //assigns a score to moves and adds them to the move array
         void movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag);

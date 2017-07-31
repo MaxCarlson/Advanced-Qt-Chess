@@ -711,7 +711,9 @@ void evaluateBB::evalBishop(bool isWhite, int location, MoveGen gen_moves)
         side = 1;
     }
 
-    U64 moves = gen_moves.DAndAntiDMoves(location) & ~friends & ~eking;
+    //U64 moves = gen_moves.DAndAntiDMoves(location) & ~friends & ~eking;
+    U64 moves = slider_attacks.BishopAttacks(gen_moves.FullTiles, location);
+    moves &= ~friends & ~ eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){
@@ -770,7 +772,8 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen gen_moves)
 //open and half open file detection add bonus to mobility score of side
     if(currentFile & opawns){
         ownBlockingPawns = true;
-    } else if (currentFile & epawns){
+    }
+    if (currentFile & epawns){
         oppBlockingPawns = true;
     }
 
@@ -785,7 +788,8 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen gen_moves)
     }
 
 //mobility and king attack gen/detection
-    U64 moves = gen_moves.horizVert(location) & ~friends & ~eking;
+    U64 moves = slider_attacks.RookAttacks(gen_moves.FullTiles, location);
+    moves &= ~friends & ~ eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){
@@ -829,7 +833,8 @@ void evaluateBB::evalQueen(bool isWhite, int location, MoveGen gen_moves)
     }
 
 //similar to move gen, increment mobility and king attacks
-    U64 moves = (gen_moves.DAndAntiDMoves(location) | gen_moves.horizVert(location)) & ~friends & ~eking;
+    U64 moves = slider_attacks.QueenAttacks(gen_moves.FullTiles, location);
+    moves &= ~friends & ~ eking;
 
     U64 j = moves & ~ (moves-1);
     while(j != 0){

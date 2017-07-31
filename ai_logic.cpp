@@ -33,9 +33,6 @@ Ai_Logic::Ai_Logic()
 
 Move Ai_Logic::iterativeDeep(int depth)
 {
-
-    slider_attacks.Initialize();
-
     //master bitboard for turn
     BitBoards *newBoard = new BitBoards;
     newBoard->constructBoards();

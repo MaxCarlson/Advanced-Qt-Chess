@@ -166,7 +166,9 @@ int main(int argc, char *argv[])
 	ZobristH ZKey;
 	//calculate all zobrist numbers to later use with transpostion table
 	ZKey.zobristFill();
-	//create bitboards to get master zobrist key with
+
+    //Fill slider arrays and magic index arrays
+    slider_attacks.Initialize();
 
 	//buttons and other stylings
 	accessories(myWidget);

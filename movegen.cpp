@@ -2,6 +2,7 @@
 #include "Pieces.h"
 #include "hashentry.h"
 #include "bitboards.h"
+#include "slider_attacks.h"
 
 
 static const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
@@ -457,10 +458,10 @@ void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking,
     if(isWhite) piece = 'B';
     else piece = 'b';
 
+
     U64 moves = slider_attacks.BishopAttacks(FullTiles, location);
     moves &= ~friends & capturesOnly & ~oppositeking;
 
-    //U64 moves =  DAndAntiDMoves(location) & ~friends & ~oppositeking & capturesOnly;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -492,13 +493,9 @@ void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking,
     if(isWhite) piece = 'R';
     else piece = 'r';
 
-    drawBBA();
-    drawBB(BBBlackRooks);
-    drawBB(FullTiles);
     U64 moves = slider_attacks.RookAttacks(FullTiles, location);
     moves &= ~friends & capturesOnly & ~oppositeking;
-    //U64 moves = horizVert(location);
-    //moves &= ~friends & capturesOnly &~oppositeking;
+
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -531,14 +528,10 @@ void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking,
     if(isWhite) piece = 'Q';
     else piece = 'q';
 
-    const U64 f = FullTiles;
-
     //grab moves from magic bitboards
     U64 moves = slider_attacks.QueenAttacks(FullTiles, location);
     //and against friends and a full board if normal move gen, or enemy board if captures only
     moves &= ~friends & capturesOnly & ~oppositeking;
-    //U64 moves = horizVert(location) | DAndAntiDMoves(location);
-    //moves &= ~friends & capturesOnly & ~oppositeking;
 
     U64 j = moves & ~ (moves-1);
 
