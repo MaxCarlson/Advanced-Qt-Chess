@@ -43,6 +43,9 @@ HashEntry transpositionEval[5021983];
 //pawn config hash table
 HashEntry transpositionPawn[400000];
 
+//user for magic sliders
+SliderAttacks slider_attacks;
+
 //color piece arrays
 
 std::string blackPieces[7] = {"p", "q", "k", "b", "n", "r", " "};
@@ -154,7 +157,6 @@ void chessBoard(QWidget *baseWidget, Tile *rect[8][8]){
 int main(int argc, char *argv[])
 {
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	
 
 	QApplication a(argc, argv);
 	//create widget + set  intial size

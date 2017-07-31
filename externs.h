@@ -13,6 +13,8 @@ class HashEntry;
 class ZobristH;
 class BitBoards;
 
+extern SliderAttacks slider_attacks;
+
 //chess board represented
 extern std::string boardArr[8][8];
 

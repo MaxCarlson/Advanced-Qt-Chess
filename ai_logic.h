@@ -20,8 +20,6 @@ public:
     //iterative deepening
     Move iterativeDeep(int depth);
 
-    //user for magic sliders
-    SliderAttacks slider_attacks;
 
 private:
     //minmax with alpha beta, the main component of our search

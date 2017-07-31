@@ -41,14 +41,11 @@ MoveGen::MoveGen()
 
 }
 
-void MoveGen::generatePsMoves(bool capturesOnly, SliderAttacks &magics)
+void MoveGen::generatePsMoves(bool capturesOnly)
 {
     //counts total moves generated
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
-
-    //initialize slider magic generation
-    //slider_attacks.Initialize();
 
     if(isWhite){
         friends = BBWhitePieces;
@@ -90,9 +87,9 @@ void MoveGen::generatePsMoves(bool capturesOnly, SliderAttacks &magics)
         piece = 0LL;
         piece += 1LL << i;
         if(knights & piece) possibleN(i, friends, enemys, eking, capsOnly);
-        else if(bishops & piece) possibleB(i, friends, enemys, eking, capsOnly, magics);
-        else if(rooks & piece) possibleR(i, friends, enemys, eking, capsOnly, magics);
-        else if(queens & piece) possibleQ(i, friends, enemys, eking, capsOnly, magics);
+        else if(bishops & piece) possibleB(i, friends, enemys, eking, capsOnly);
+        else if(rooks & piece) possibleR(i, friends, enemys, eking, capsOnly);
+        else if(queens & piece) possibleQ(i, friends, enemys, eking, capsOnly);
         else if(king & piece) possibleK(i, friends, enemys, capsOnly);
     }
     return;
@@ -454,7 +451,7 @@ void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking,
     }
 }
 
-void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
+void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'B';
@@ -489,12 +486,15 @@ void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking,
     }
 }
 
-void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
+void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'R';
     else piece = 'r';
 
+    drawBBA();
+    drawBB(BBBlackRooks);
+    drawBB(FullTiles);
     U64 moves = slider_attacks.RookAttacks(FullTiles, location);
     moves &= ~friends & capturesOnly & ~oppositeking;
     //U64 moves = horizVert(location);
@@ -525,11 +525,13 @@ void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking,
 
 }
 
-void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
+void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'Q';
     else piece = 'q';
+
+    const U64 f = FullTiles;
 
     //grab moves from magic bitboards
     U64 moves = slider_attacks.QueenAttacks(FullTiles, location);

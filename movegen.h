@@ -26,7 +26,7 @@ public:
     bool isWhite;
     int moveCount = 0;
 
-    void generatePsMoves(bool capturesOnly, SliderAttacks &magics);
+    void generatePsMoves(bool capturesOnly);
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(BitBoards *BBBoard, bool wOrB);
@@ -121,9 +121,9 @@ private:
         void possibleWP(U64 wpawns, U64 blackking, bool capturesOnly);
         void possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly);
         void possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
-        void possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
-        void possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
-        void possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
+        void possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
+        void possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
+        void possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
         void possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly);
 
 

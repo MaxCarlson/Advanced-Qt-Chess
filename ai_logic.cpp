@@ -15,7 +15,7 @@
 
 #include "hashentry.h"
 
-//holds historys and killers
+//holds historys and killers + eventually nodes searched + other data
 searchDriver sd;
 
 Move pVArr[29];
@@ -33,7 +33,9 @@ Ai_Logic::Ai_Logic()
 
 Move Ai_Logic::iterativeDeep(int depth)
 {
+
     slider_attacks.Initialize();
+
     //master bitboard for turn
     BitBoards *newBoard = new BitBoards;
     newBoard->constructBoards();
@@ -223,7 +225,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 */
 
 //generate psuedo legal moves
-    gen_moves.generatePsMoves(false, slider_attacks);
+    gen_moves.generatePsMoves(false);
 
     //add killers scores to moves if there are any
     gen_moves.reorderMoves(currentDepth, entry);
@@ -369,7 +371,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     //generate only captures with true capture gen var
     MoveGen gen_moves;
     gen_moves.grab_boards(BBBoard, isWhite);
-    gen_moves.generatePsMoves(true, slider_attacks);
+    gen_moves.generatePsMoves(true);
     gen_moves.reorderMoves(currentDepth, entry);
 
     int score;
