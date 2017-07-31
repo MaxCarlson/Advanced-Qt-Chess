@@ -7,10 +7,11 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "zobristh.h"
-#include "bitboards.h"
-#include "hashentry.h"
-
+#include "move.h"
+#include "slider_attacks.h"
+class HashEntry;
+class ZobristH;
+class BitBoards;
 
 //chess board represented
 extern std::string boardArr[8][8];
@@ -45,8 +46,8 @@ extern U64 zNullMove;
 
 //array for storing objects containing zorbist key for position as well as depth and eval
 extern HashEntry transpositionT[15485843];
-extern HashEntry transpositionTQuiet[338207];
 extern HashEntry transpositionEval[5021983];
+extern HashEntry transpositionPawn[400000];
 
 //use later once bugs have been ironed out
 enum esqare {
@@ -100,6 +101,13 @@ typedef long long S64;
 #define SORT_CAPT 100000000
 #define SORT_PROM  90000000
 #define SORT_KILL  80000000
+
+struct searchDriver{
+    //color, piece loc from, piece loc to
+    int history[2][64][64] = {{{0}}};
+    Move killers[24][2];
+};
+extern searchDriver sd;
 
 
 #endif // EXTERNS_H

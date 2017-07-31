@@ -1,4 +1,4 @@
-﻿  ai_logic.cpp
-ai_logic.cpp(406): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+﻿  evaluatebb.cpp
+evaluatebb.cpp(481): warning C4101: 'm': unreferenced local variable
   Advanced-Qt-Chess.vcxproj -> C:\Users\C-60\Desktop\QtPrograms\Advanced-Qt-Chess\debug\Advanced-Qt-Chess.exe
   Advanced-Qt-Chess.vcxproj -> debug\Advanced-Qt-Chess.pdb (Full PDB)

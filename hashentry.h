@@ -1,10 +1,9 @@
 #ifndef HASHENTRY_H
 #define HASHENTRY_H
 #include <string>
-#pragma once;
 typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #define C64(constantU64) constantU64##ULL
-
+#include "move.h"
 
 
 class HashEntry
@@ -17,8 +16,7 @@ public:
     int depth;
     //move rating
     int eval;
-    //move string
-    std::string move;
+    Move move;
     //flag denoting what the hash represents, i.e. alpha 1, beta 2, exact evaluation (between alpha beta) 3
     int flag;
     //how old move is maybe make a bool so move can be replaced

@@ -28,29 +28,46 @@ SOURCES += \
     tile.cpp \
     Pieces.cpp \
     ai_logic.cpp \
-    evaluate.cpp \
     evaluatebb.cpp \
-    zobristh.cpp \
     hashentry.cpp \
     movegen.cpp \
-    move.cpp
+    move.cpp \
+    slider_attacks.cpp \
+    bitboards.cpp \
+    zobristh.cpp
 
 
 HEADERS += \
     tile.h \
     externs.h \
-    Pieces.h \
     ai_logic.h \
-    evaluate.h \
     evaluatebb.h \
     zobristh.h \
     hashentry.h \
     movegen.h \
-    move.h
+    move.h \
+    common.h \
+    slider_attacks.h \
+    bitboards.h \
+    externs.h \
+    Pieces.h \
+    zobristh.h
 
 
 FORMS +=
 
 RESOURCES += \
     Images.qrc
+
+DISTFILES += \
+    Magics/bishop_attack_table.magic \
+    Magics/bishop_magics.magic \
+    Magics/bishop_masks.magic \
+    Magics/bishop_offsets.magic \
+    Magics/bishop_shifts.magic \
+    Magics/rook_attack_table.magic \
+    Magics/rook_magics.magic \
+    Magics/rook_masks.magic \
+    Magics/rook_offsets.magic \
+    Magics/rook_shifts.magic
 

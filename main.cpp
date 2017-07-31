@@ -8,21 +8,7 @@
 #include <externs.h>
 #include <hashentry.h>
 #include <iostream>
-
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
-#else
-#define DEBUG_CLIENTBLOCK
-#endif // _DEBUG
-
-#ifdef _DEBUG
-#define new DEBUG_CLIENTBLOCK
-#endif
-
+#include "zobristh.h"
 
 
 //#include <vld.h> //memory leak detection in visual studio
@@ -52,11 +38,10 @@ U64 zNullMove;
 
 //transposition table array
 HashEntry transpositionT[15485843];
-//transpositon table for quiescence search
-HashEntry transpositionTQuiet[338207];
 //TTable of evals
 HashEntry transpositionEval[5021983];
-
+//pawn config hash table
+HashEntry transpositionPawn[400000];
 
 //color piece arrays
 

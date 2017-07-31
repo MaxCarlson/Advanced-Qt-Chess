@@ -41,6 +41,7 @@ private:
     //gets rudimentry value of piece + square table value
     int getPieceValue(int location, MoveGen gen_moves);
 
+
     //generate zone around king ///Up for debate as to how large zone should be, currently encompasses 8 tiles directly around king
     //currently includes blocking pieces in zone
     void generateKingZones(bool isWhite, MoveGen gen_moves);
@@ -50,6 +51,7 @@ private:
 
 
 //piece evaluation for mobility, attacking king squares, etc
+    int getPawnScore(MoveGen gen_moves);
     int pawnEval(bool isWhite, int location, MoveGen gen_moves);
         int isPawnSupported(bool isWhite, MoveGen gen_moves, U64 pawn, U64 pawns);
 

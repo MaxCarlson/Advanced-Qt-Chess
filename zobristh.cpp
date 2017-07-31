@@ -2,23 +2,12 @@
 #include "externs.h"
 #include "movegen.h"
 
+#include "bitboards.h"
+
 #include <cmath>
 #include <random>
 #include <iostream>
 
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
-#else
-#define DEBUG_CLIENTBLOCK
-#endif // _DEBUG
-
-#ifdef _DEBUG
-#define new DEBUG_CLIENTBLOCK
-#endif
 
 //random 64 bit number generation
 std::random_device rd;

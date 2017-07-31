@@ -7,13 +7,12 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 #include <iostream>
 #include <string>
 
-#include "ai_logic.h"
 #include "move.h"
-
-class Pieces;
+#include "slider_attacks.h"
 class BitBoards;
-class ZobristH;
 class Historys;
+class HashEntry;
+
 
 class MoveGen
 {
@@ -22,12 +21,12 @@ public:
 
     //array of move objects by ply then number of moves
     Move moveAr[256];
-    Historys history;
+    //Historys history;
 
     bool isWhite;
     int moveCount = 0;
 
-    void generatePsMoves(bool capturesOnly, int ply, Historys hist);
+    void generatePsMoves(bool capturesOnly, SliderAttacks &magics);
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(BitBoards *BBBoard, bool wOrB);
@@ -36,7 +35,7 @@ public:
 
     Move movegen_sort(int ply);
 
-    void reorderMoves(Move killers[24][2], int ply);
+    void reorderMoves(int ply, HashEntry entry);
 
     //void unmakeMove(std::string moveKey, ZobristH *zobrist);
     //std::string makeMove(Move move, ZobristH *zobrist);
@@ -108,8 +107,10 @@ public:
         void drawBB(U64 board);
 private:
 
+        SliderAttacks slider_attacks;
+
         //assigns a score to moves and adds them to the move array
-        void movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag, int ply);
+        void movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag);
         bool blind(Move move, int pieceVal, int captureVal);
 
         char whichPieceCaptured(U64 landing);
@@ -117,13 +118,13 @@ private:
 
         //psuedo legal move gen
 
-        void possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply);
-        void possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply);
-        void possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
-        void possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
-        void possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
-        void possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply);
-        void possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly, int ply);
+        void possibleWP(U64 wpawns, U64 blackking, bool capturesOnly);
+        void possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly);
+        void possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
+        void possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
+        void possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
+        void possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks);
+        void possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly);
 
 
         //void undoCapture(U64 location, char piece, char whiteOrBlack);

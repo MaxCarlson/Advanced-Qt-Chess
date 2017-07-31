@@ -2,22 +2,9 @@
 #include <QDebug>
 #include "Pieces.h"
 #include "externs.h"
-#include "bitboards.h"
 #include "ai_logic.h"
-
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-#define DEBUG_CLIENTBLOCK new( _CLIENT_BLOCK, __FILE__, __LINE__)
-#else
-#define DEBUG_CLIENTBLOCK
-#endif // _DEBUG
-
-#ifdef _DEBUG
-#define new DEBUG_CLIENTBLOCK
-#endif
+//#include "bitboards.h"
+class BitBoards;
 
 Pieces *isValid = new Pieces();
 
@@ -115,13 +102,13 @@ void Tile::moveChecking(Tile *temp, int countC){
     
 }
 
-
 void Tile::aiTurn(){
+
 
     Ai_Logic newMove;
 
     //generate best move (number represents max search depth)
-    Move bestMove = newMove.iterativeDeep(6);
+    Move bestMove = newMove.iterativeDeep(5);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;

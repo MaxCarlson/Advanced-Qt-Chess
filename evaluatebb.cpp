@@ -1,6 +1,10 @@
 #include "evaluatebb.h"
 #include "externs.h"
 #include "movegen.h"
+#include "bitboards.h"
+#include "hashentry.h"
+#include "zobristh.h"
+
 
 const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
 {
@@ -103,6 +107,7 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
     for(int i = 0; i < 64; i++){
         totalEvaualtion += getPieceValue(i, gen_moves);
     }
+    totalEvaualtion += getPawnScore(gen_moves);
 
 
 //adjusting meterial value of pieces bonus for bishop, small penalty for others
@@ -394,15 +399,13 @@ int passed_pawn_pcsq[2][64] = { {
 int evaluateBB::getPieceValue(int location, MoveGen gen_moves)
 {
     //create an empty board then shift a 1 over to the current i location
-    U64 pieceLocation = 0LL;
-    pieceLocation += 1LL << location;
+    U64 pieceLocation = 1LL << location;
 
     //white pieces
     if(gen_moves.BBWhitePieces & pieceLocation){
         if(pieceLocation & gen_moves.BBWhitePawns){
-
             pawnCount[0] ++;
-            return 100 + pawnEval(true, location, gen_moves);
+            return 100; //eval pawns sepperatly
 
         } else if(pieceLocation & gen_moves.BBWhiteRooks){
             rookCount[0] ++;
@@ -436,7 +439,7 @@ int evaluateBB::getPieceValue(int location, MoveGen gen_moves)
     } else if (gen_moves.BBBlackPieces & pieceLocation) {
         if(pieceLocation & gen_moves.BBBlackPawns ){
             pawnCount[1] ++;
-            return -100 - pawnEval(false, location, gen_moves);
+            return -100;
 
         } else if(pieceLocation & gen_moves.BBBlackRooks){
             rookCount[1] ++;
@@ -493,6 +496,34 @@ void evaluateBB::generateKingZones(bool isWhite, MoveGen gen_moves)
         bKingZ = king;
     }
 
+}
+
+int evaluateBB::getPawnScore(MoveGen gen_moves)
+{
+    //get zobrist/bitboard of current pawn positions
+    U64 pt = gen_moves.BBWhitePawns | gen_moves.BBBlackPawns;
+    int hash = (int)(pt % 400000);
+    //probe pawn hash table
+    if(transpositionPawn[hash].zobrist == pt){
+        return transpositionPawn[hash].eval;
+    }
+
+    int score = 0;
+    U64 pieceLocation;
+    for(int i = 0; i < 64; i++){
+        pieceLocation = 1LL << i;
+        if(pieceLocation & gen_moves.BBWhitePawns){
+            score += pawnEval(true, i, gen_moves);
+        } else if (pieceLocation & gen_moves.BBBlackPawns){
+            score -= pawnEval(false, i, gen_moves);
+        }
+    }
+
+    //store entry to pawn hash table
+    transpositionPawn[hash].eval = score;
+    transpositionPawn[hash].zobrist = pt;
+
+    return score;
 }
 
 int evaluateBB::pawnEval(bool isWhite, int location, MoveGen gen_moves)

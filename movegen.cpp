@@ -1,25 +1,27 @@
 #include "movegen.h"
-//#include "bitboards.h"
 #include "Pieces.h"
+#include "hashentry.h"
+#include "bitboards.h"
 
-const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
+
+static const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
 {
     0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
 };
-const U64 FileMasks8[8] =/*from fileA to FileH*/
+static const U64 FileMasks8[8] =/*from fileA to FileH*/
 {
     0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
     0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
 };
 
-const U64 DiagonalMasks8[15] =/*from top left to bottom right*/
+static const U64 DiagonalMasks8[15] =/*from top left to bottom right*/
 {
 0x1L, 0x102L, 0x10204L, 0x1020408L, 0x102040810L, 0x10204081020L, 0x1020408102040L,
 0x102040810204080L, 0x204081020408000L, 0x408102040800000L, 0x810204080000000L,
 0x1020408000000000L, 0x2040800000000000L, 0x4080000000000000L, 0x8000000000000000L
 };
 
-const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
+static const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
 {
 0x80L, 0x8040L, 0x804020L, 0x80402010L, 0x8040201008L, 0x804020100804L, 0x80402010080402L,
 0x8040201008040201L, 0x4020100804020100L, 0x2010080402010000L, 0x1008040201000000L,
@@ -31,20 +33,22 @@ const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
 * as normal piece values, except for a king.     *
 *************************************************/
 
-const int SORT_VALUE[7] = {0, 100, 325, 335, 500, 975, 0};
+static const int SORT_VALUE[7] = {0, 100, 325, 335, 500, 975, 0};
+
 
 MoveGen::MoveGen()
 {
 
 }
 
-void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys hist)
+void MoveGen::generatePsMoves(bool capturesOnly, SliderAttacks &magics)
 {
-    //store historys so we can score quiet moves
-    history = hist;
     //counts total moves generated
     moveCount = 0;
     U64 friends, enemys, pawns, knights, rooks, bishops, queens, king, eking;
+
+    //initialize slider magic generation
+    //slider_attacks.Initialize();
 
     if(isWhite){
         friends = BBWhitePieces;
@@ -58,7 +62,7 @@ void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys hist)
         king = BBWhiteKing;
         eking = BBBlackKing;
         //generate pawn moves
-        possibleWP(pawns, eking, capturesOnly, ply);
+        possibleWP(pawns, eking, capturesOnly);
 
     } else {
         friends = BBBlackPieces;
@@ -72,7 +76,7 @@ void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys hist)
         king = BBBlackKing;
         eking = BBWhiteKing;
 
-        possibleBP(pawns, eking, capturesOnly, ply);
+        possibleBP(pawns, eking, capturesOnly);
     }
 
     //if we don't want to only generate captures
@@ -85,17 +89,17 @@ void MoveGen::generatePsMoves(bool capturesOnly, int ply, Historys hist)
     for(int i = 0; i < 64; i++){
         piece = 0LL;
         piece += 1LL << i;
-        if(knights & piece) possibleN(i, friends, enemys, eking, capsOnly, ply);
-        else if(bishops & piece) possibleB(i, friends, enemys, eking, capsOnly, ply);
-        else if(rooks & piece) possibleR(i, friends, enemys, eking, capsOnly, ply);
-        else if(queens & piece) possibleQ(i, friends, enemys, eking, capsOnly, ply);
-        else if(king & piece) possibleK(i, friends, enemys, capsOnly, ply);
+        if(knights & piece) possibleN(i, friends, enemys, eking, capsOnly);
+        else if(bishops & piece) possibleB(i, friends, enemys, eking, capsOnly, magics);
+        else if(rooks & piece) possibleR(i, friends, enemys, eking, capsOnly, magics);
+        else if(queens & piece) possibleQ(i, friends, enemys, eking, capsOnly, magics);
+        else if(king & piece) possibleK(i, friends, enemys, capsOnly);
     }
     return;
 }
 
 //pawn moves
-void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
+void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly)
 {
     char piece = 'P';
     char captured;
@@ -114,8 +118,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
             x1 = index%8;
             y1 = index/8;
 
-            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
-            moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0');
 
             PAWN_MOVES &= ~i;
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -133,8 +136,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
             x1 = index%8;
             y1 = index/8;
 
-            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
-            moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0');
 
             PAWN_MOVES &= ~i;
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -156,8 +158,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         landing += 1LL << index;
         captured = whichPieceCaptured(landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -179,8 +180,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         landing += 1LL << index;
         captured = whichPieceCaptured(landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -198,8 +198,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         x1 = x;
         y1 = 0;
 
-        movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, '0', 'Q');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -221,8 +220,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         landing += 1LL << index;
         captured = whichPieceCaptured(landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -244,8 +242,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
         landing += 1LL << index;
         captured = whichPieceCaptured(landing);
 
-        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q');
 
         PAWN_MOVES &= ~i;
         i = PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -253,7 +250,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly, int ply)
 
 }
 
-void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
+void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly)
 {
     char piece = 'p';
     char captured;
@@ -274,8 +271,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
             x1 = index%8;
             y1 = index/8;
 
-            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
-            moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0');
 
             PAWN_MOVES &= ~i;
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -293,8 +289,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
             x1 = index%8;
             y1 = index/8;
 
-            movegen_push(x, y, x1, y1, piece, '0', '0', ply);
-            moveCount ++;
+            movegen_push(x, y, x1, y1, piece, '0', '0');
 
             PAWN_MOVES &= ~i;
             i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -317,8 +312,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         x1 = index%8;
         y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -340,8 +334,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         x1 = index%8;
         y1 = index/8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -359,8 +352,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         x1 = x;
         y1 = 7;
 
-        movegen_push(x, y, x1, y1, piece, '0', 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, '0', 'Q');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -382,8 +374,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         x1 = index%8;
         y1 = 7;
 
-        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -406,8 +397,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
         x1 =index%8;
         y1 = 7;
 
-        movegen_push(x, y, x1, y1, piece, captured, 'Q', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, 'Q');
 
         PAWN_MOVES &= ~i;
         i= PAWN_MOVES & ~(PAWN_MOVES-1);
@@ -416,7 +406,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly, int ply)
 }
 
 //other piece moves
-void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
+void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'N';
@@ -457,21 +447,23 @@ void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking,
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         moves &= ~j;
         j = moves & ~(moves-1);
     }
 }
 
-void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
+void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
 {
     char piece;
     if(isWhite) piece = 'B';
     else piece = 'b';
 
-    U64 moves =  DAndAntiDMoves(location) & ~friends & ~oppositeking & capturesOnly;
+    U64 moves = slider_attacks.BishopAttacks(FullTiles, location);
+    moves &= ~friends & capturesOnly & ~oppositeking;
+
+    //U64 moves =  DAndAntiDMoves(location) & ~friends & ~oppositeking & capturesOnly;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -490,21 +482,23 @@ void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking,
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         moves &= ~j;
         j = moves & ~(moves-1);
     }
 }
 
-void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
+void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
 {
     char piece;
     if(isWhite) piece = 'R';
     else piece = 'r';
 
-    U64 moves = horizVert(location) & ~friends & ~oppositeking & capturesOnly;
+    U64 moves = slider_attacks.RookAttacks(FullTiles, location);
+    moves &= ~friends & capturesOnly & ~oppositeking;
+    //U64 moves = horizVert(location);
+    //moves &= ~friends & capturesOnly &~oppositeking;
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -523,8 +517,7 @@ void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking,
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         moves &= ~j;
         j = moves & ~(moves-1);
@@ -532,13 +525,19 @@ void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking,
 
 }
 
-void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, int ply)
+void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly, SliderAttacks &slider_attacks)
 {
     char piece;
     if(isWhite) piece = 'Q';
     else piece = 'q';
 
-    U64 moves = (DAndAntiDMoves(location) | horizVert(location)) & ~friends & ~oppositeking & capturesOnly;
+    //grab moves from magic bitboards
+    U64 moves = slider_attacks.QueenAttacks(FullTiles, location);
+    //and against friends and a full board if normal move gen, or enemy board if captures only
+    moves &= ~friends & capturesOnly & ~oppositeking;
+    //U64 moves = horizVert(location) | DAndAntiDMoves(location);
+    //moves &= ~friends & capturesOnly & ~oppositeking;
+
     U64 j = moves & ~ (moves-1);
 
     char captured;
@@ -558,8 +557,7 @@ void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking,
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         moves &= ~j;
         j = moves & ~(moves-1);
@@ -567,7 +565,7 @@ void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking,
 
 }
 
-void MoveGen::possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly, int ply)
+void MoveGen::possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly)
 {
     U64 moves;
     char piece;
@@ -607,8 +605,7 @@ void MoveGen::possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly,
         x1 = index % 8;
         y1 = index / 8;
 
-        movegen_push(x, y, x1, y1, piece, captured, '0', ply);
-        moveCount ++;
+        movegen_push(x, y, x1, y1, piece, captured, '0');
 
         moves &= ~j;
         j = moves &~ (moves-1);
@@ -616,7 +613,7 @@ void MoveGen::possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly,
 
 }
 
-void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag, int ply)
+void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag)
 {
     //store move data to move object array
     moveAr[moveCount].x = x;
@@ -626,11 +623,12 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
     moveAr[moveCount].piece = piece;
     moveAr[moveCount].captured = captured;
     moveAr[moveCount].flag = flag;
+    moveAr[moveCount].score = 0;
 
     int sPos = y * 8 + x, ePos = y1 * 8 + x;
 
     //history heristics for quiet moves, color, from pos, to pos
-    moveAr[moveCount].score = history.h[isWhite][sPos][ePos];
+    moveAr[moveCount].score = sd.history[isWhite][sPos][ePos];
 
     //scoring capture moves
     if(captured != '0'){
@@ -655,15 +653,12 @@ void MoveGen::movegen_push(int x, int y, int x1, int y1, char piece, char captur
         if(blind(t, SORT_VALUE[pNum], SORT_VALUE[cNum])) moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + from;
         else moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + from;
 
-    //temp quiet scoring
-    } else {
-        moveAr[moveCount].score = 0;
     }
 
     //pawn promotions
     if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += 775;
 
-    return;
+    moveCount ++;
 }
 
 bool MoveGen::blind(Move move, int pieceVal, int captureVal)
@@ -733,26 +728,35 @@ Move MoveGen::movegen_sort(int ply)
     return moveAr[high];
 }
 
-void MoveGen::reorderMoves(Move killers[24][2], int ply)
+void MoveGen::reorderMoves(int ply, HashEntry entry)
 {
+
     for(int i = 0; i < moveCount; i++){
-        if(moveAr[i].x == killers[ply][1].x
-        && moveAr[i].y == killers[ply][1].y
-        && moveAr[i].x1 == killers[ply][1].x1
-        && moveAr[i].y1 == killers[ply][1].y1
-        && moveAr[i].piece == killers[ply][1].piece
+        if(moveAr[i].x == sd.killers[ply][1].x
+        && moveAr[i].y == sd.killers[ply][1].y
+        && moveAr[i].x1 == sd.killers[ply][1].x1
+        && moveAr[i].y1 == sd.killers[ply][1].y1
+        && moveAr[i].piece == sd.killers[ply][1].piece
         && moveAr[i].score < SORT_KILL - 1){
             moveAr[i].score = SORT_KILL - 1;
         }
-        if(moveAr[i].x == killers[ply][0].x
-        && moveAr[i].y == killers[ply][0].y
-        && moveAr[i].x1 == killers[ply][0].x1
-        && moveAr[i].y1 == killers[ply][0].y1
-        && moveAr[i].piece == killers[ply][0].piece
+        if(moveAr[i].x == sd.killers[ply][0].x
+        && moveAr[i].y == sd.killers[ply][0].y
+        && moveAr[i].x1 == sd.killers[ply][0].x1
+        && moveAr[i].y1 == sd.killers[ply][0].y1
+        && moveAr[i].piece == sd.killers[ply][0].piece
         && moveAr[i].score < SORT_KILL){
             moveAr[i].score = SORT_KILL;
-        }
+        }       
+
     }
+/*
+    if(entry.move.flag != 0x58 && entry.move.flag != 88 && entry.move.flag != 'X'){
+        moveAr[moveCount] = entry.move;
+        moveAr[moveCount].score = SORT_HASH;
+        moveCount ++;
+    }
+*/
 }
 
 char MoveGen::whichPieceCaptured(U64 landing)

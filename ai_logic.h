@@ -5,16 +5,12 @@
 #include <thread>
 #include "move.h"
 //#include "hashentry.h"
-
+#include "slider_attacks.h"
 class ZobristH;
 class BitBoards;
 class evaluateBB;
 class HashEntry;
-
-struct Historys{
-    //color, piece loc from, piece loc to
-    int h[2][64][64] = {{{0}}};
-};
+class Move;
 
 class Ai_Logic
 {
@@ -23,6 +19,9 @@ public:
 
     //iterative deepening
     Move iterativeDeep(int depth);
+
+    //user for magic sliders
+    SliderAttacks slider_attacks;
 
 private:
     //minmax with alpha beta, the main component of our search
@@ -41,22 +40,13 @@ private:
 //heuristics
 
     void addKiller(Move move, int ply);
-    Move killerMoves[24][2];
-
-    //in form of x, y, x1, y1 ~~ gives value to greater than beta not captures/promotions based on number of times seen
-    Historys history;
-
+    void ageHistorys();
 
 //transposition table functions
     //add best move to TT
-    void addMoveTT(std::string bestmove, int depth, long eval, int flag, ZobristH *zobrist);
-    //add to quiescience TT
-    void addTTQuiet(std::string bestmove, int quietDepth, long eval, int flag, ZobristH *zobrist);
+    void addMoveTT(Move move, int depth, long eval, int flag, ZobristH *zobrist);
 
 //object variables
-
-    //princiapl variation array
-    Move pVArr[29];
 
     //counts number of piece postitions tried
     int positionCount = 0;
@@ -70,3 +60,4 @@ private:
 };
 
 #endif // AI_LOGIC_H
+

@@ -1,7 +1,6 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "externs.h"
 
 class Move
 {
@@ -12,7 +11,7 @@ public:
     int y;
     int x1;
     int y1;
-    U8 p; //later to replace piece
+    //U8 p; //later to replace piece
     char piece;
     char captured;
     int score;

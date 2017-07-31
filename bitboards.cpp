@@ -3,8 +3,10 @@
 #include <random>
 #include <iostream>
 #include <cstdio>
-#include "move.h"
 #include "externs.h"
+#include "zobristh.h"
+//#include "move.h"
+class Move;
 
 BitBoards::BitBoards()
 {
@@ -511,6 +513,10 @@ void BitBoards::undoCapture(U64 location, char piece, bool isNotWhite)
                 BBWhiteQueens |= location;
                 BBWhitePieces |= location;
                 break;
+            case 'K':
+                BBWhiteKing |= location;
+                BBWhitePieces |= location;
+                std::cout << "WKING CAPTURES" << std::endl;
             default:
 
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
@@ -540,6 +546,10 @@ void BitBoards::undoCapture(U64 location, char piece, bool isNotWhite)
                 BBBlackQueens |= location;
                 BBBlackPieces |= location;
                 break;
+            case 'k':
+                BBBlackKing |= location;
+                BBBlackPieces |= location;
+                std::cout << "BKING CAPTURES" << std::endl;
             default:
                 drawBBA();
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
