@@ -16,7 +16,7 @@ public:
     evaluateBB();
 
     //forms total evaluation for baord state
-    int evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist);
+    int evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH *zobrist);
 
     //returns mate or stalemate score
     int returnMateScore(bool isWhite, MoveGen gen_moves, int depth);
@@ -39,7 +39,7 @@ private:
     int endGMobility[2];
 
     //gets rudimentry value of piece + square table value
-    int getPieceValue(int location, MoveGen gen_moves);
+    int getPieceValue(int location, const MoveGen& gen_moves);
 
 
     //generate zone around king ///Up for debate as to how large zone should be, currently encompasses 8 tiles directly around king
@@ -51,19 +51,20 @@ private:
 
 
 //piece evaluation for mobility, attacking king squares, etc
-    int getPawnScore(MoveGen gen_moves);
-    int pawnEval(bool isWhite, int location, MoveGen gen_moves);
+    int getPawnScore(const MoveGen& gen_moves);
+    int pawnEval(bool isWhite, int location, const MoveGen& gen_moves);
         int isPawnSupported(bool isWhite, MoveGen gen_moves, U64 pawn, U64 pawns);
 
-    void evalKnight(bool isWhite, int location, MoveGen gen_moves);
+    void evalKnight(bool isWhite, int location, const MoveGen& gen_moves);
 
-    void evalBishop(bool isWhite, int location, MoveGen gen_moves);
+    void evalBishop(bool isWhite, int location, const MoveGen& gen_moves);
 
-    void evalRook(bool isWhite, int location, MoveGen gen_moves);
+    void evalRook(bool isWhite, int location, const MoveGen& gen_moves);
 
-    void evalQueen(bool isWhite, int location, MoveGen gen_moves);
+    void evalQueen(bool isWhite, int location, const MoveGen& gen_moves);
 
     void saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, int hash);
+
 
 
 };

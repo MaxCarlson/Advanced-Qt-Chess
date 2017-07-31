@@ -28,7 +28,7 @@ public:
 
     //get zorbist key by XOR ing all pieces random numbers with Zkey
     //U64 getZobristHash(BitBoards *BBBoard);
-    U64 getZobristHash(BitBoards *BBBoard);
+    U64 getZobristHash(BitBoards BBBoard);
 
     //Update zobrist key by XOR ing rand numbers in zArray
     void UpdateKey(int start, int end, Move moveKey, bool isWhite);
@@ -40,7 +40,7 @@ public:
     void testDistibution();
 
     //used for checking if keys match when generated from scratch ~~ without changing master key
-    U64 debugKey(bool isWhite, BitBoards *BBBoard);
+    U64 debugKey(bool isWhite, BitBoards BBBoard);
 
 };
 

@@ -28,13 +28,13 @@ public:
     void generatePsMoves(bool capturesOnly);
     void clearMove(int ply, int numMoves);
     void constructBoards();
-    void grab_boards(BitBoards *BBBoard, bool wOrB);
+    void grab_boards(const BitBoards &BBBoard, bool wOrB);
 
     bool isAttacked(U64 pieceLoc, bool wOrB);
 
     Move movegen_sort(int ply);
 
-    void reorderMoves(int ply, HashEntry entry);
+    void reorderMoves(int ply, const HashEntry &entry);
 
     //void unmakeMove(std::string moveKey, ZobristH *zobrist);
     //std::string makeMove(Move move, ZobristH *zobrist);
@@ -89,8 +89,6 @@ public:
         const U64 KING_SPAN=460039L;
 
         int trailingZeros(U64 i);
-        U64 horizVert(int s);
-        U64 DAndAntiDMoves(int s);
         U64 ReverseBits(U64 input);
         U64 noWeOne(U64 b);
         U64 soWeOne(U64 b);
@@ -115,13 +113,13 @@ private:
 
         //psuedo legal move gen
 
-        void possibleWP(U64 wpawns, U64 blackking, bool capturesOnly);
-        void possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly);
-        void possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
-        void possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
-        void possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
-        void possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly);
-        void possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly);
+        void possibleWP(const U64 &wpawns, const U64 &blackking, bool capturesOnly);
+        void possibleBP(const U64 &bpawns, const U64 &whiteking, bool capturesOnly);
+        void possibleN(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleB(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleR(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleQ(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleK(int location, const U64 &friends, const U64 &enemys, const U64 &capturesOnly);
 
 
         //void undoCapture(U64 location, char piece, char whiteOrBlack);

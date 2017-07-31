@@ -34,16 +34,13 @@ Ai_Logic::Ai_Logic()
 Move Ai_Logic::iterativeDeep(int depth)
 {
     //master bitboard for turn
-    BitBoards *newBoard = new BitBoards;
-    newBoard->constructBoards();
+    BitBoards newBoard;
+    newBoard.constructBoards();
 
     //master zobrist object for ai turn
     ZobristH *mZobrist = new ZobristH;    
     mZobrist->getZobristHash(newBoard);
     mZobrist->UpdateColor();
-
-    //master evaluation object - evaluates board position and gives an int value (- for black)
-    evaluateBB *mEval = new evaluateBB;
 
     //iterative deepening start time
     clock_t IDTimeS = clock();
@@ -70,7 +67,7 @@ Move Ai_Logic::iterativeDeep(int depth)
         }
 
         //main search
-        bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist, mEval);
+        bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true, newBoard, mZobrist);
 
    /*
         //aspiration window correction
@@ -98,8 +95,8 @@ Move Ai_Logic::iterativeDeep(int depth)
     std::cout << std::endl;
 
     //make final move on bitboards + draw
-    newBoard->makeMove(bestMove, mZobrist, false);
-    newBoard->drawBBA();
+    newBoard.makeMove(bestMove, mZobrist, false);
+    newBoard.drawBBA();
 
 
     clock_t IDTimeE = clock();
@@ -110,8 +107,6 @@ Move Ai_Logic::iterativeDeep(int depth)
     std::cout << qCount << " non-quiet positions searched."<< std::endl;
 
     delete mZobrist;
-    delete newBoard;
-    delete mEval;
 
     //decrease values after a search
     ageHistorys();
@@ -120,7 +115,7 @@ Move Ai_Logic::iterativeDeep(int depth)
 }
 
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull, BitBoards BBBoard, ZobristH *zobrist)
 {
 
     //iterative deeping timer stuff
@@ -165,7 +160,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     int score;
     if(depth < 1 || searchCutoff){
         //run capture search to max depth of queitSD
-        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
+        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist);
         //score = eval->evalBoard(isWhite, BBBoard, zobrist);
 
         return score;
@@ -177,8 +172,8 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 
     //are we in check?
     U64 king, eking;
-    if(isWhite){ king = BBBoard->BBWhiteKing; eking = BBBoard->BBBlackKing; }
-    else { king = BBBoard->BBBlackKing; eking = BBBoard->BBWhiteKing; }
+    if(isWhite){ king = BBBoard.BBWhiteKing; eking = BBBoard.BBBlackKing; }
+    else { king = BBBoard.BBBlackKing; eking = BBBoard.BBWhiteKing; }
 
     FlagInCheck = gen_moves.isAttacked(king, isWhite);
 /*
@@ -196,7 +191,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     if(allowNull && depth > depthR && currentDepth > 1 && !FlagInCheck){ // ??
         if(depth > 6) depthR = 3;
 
-        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard, zobrist, eval);
+        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1, BBBoard, zobrist);
         //if after getting a free move the score is too good, prune this branch
         if(score >= beta){
             return score;
@@ -206,9 +201,9 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 //razoring
     if(!FlagInCheck && allowNull && depth <= 3){
         int threshold = alpha - 300 - (depth - 1) * 60;
-
-        if(eval->evalBoard(isWhite, BBBoard, zobrist) < threshold){
-            score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist, eval);
+        evaluateBB eval;
+        if(eval.evalBoard(isWhite, BBBoard, zobrist) < threshold){
+            score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit, BBBoard, zobrist);
 
             if(score < threshold) return alpha;
         }
@@ -245,26 +240,26 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         tempMove += newMove.y1;
 
         //make move on BB's store data to string so move can be undone
-        BBBoard->makeMove(newMove, zobrist, isWhite);
+        BBBoard.makeMove(newMove, zobrist, isWhite);
 
         //is move legal? if not skip it
         if(gen_moves.isAttacked(king, isWhite)){
-            BBBoard->unmakeMove(newMove, zobrist, isWhite);
+            BBBoard.unmakeMove(newMove, zobrist, isWhite);
             continue;
         }
         legalMoves ++;
         /*
         //futility pruning ~~ is not a promotion, is not a capture, and does not give check
         if(f_prune && i > 0 && newMove.flag != 'Q' && newMove.captured == '0'){ //&& !gen_moves.isAttacked(eking, !isWhite)){
-            BBBoard->unmakeMove(newMove, zobrist, isWhite);
+            BBBoard.unmakeMove(newMove, zobrist, isWhite);
             continue;
         }*/
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        score = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard, zobrist, eval);
+        score = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true, BBBoard, zobrist);
 
         //undo move on BB's
-        BBBoard->unmakeMove(newMove, zobrist, isWhite);
+        BBBoard.unmakeMove(newMove, zobrist, isWhite);
 
         if(score > alpha){
 
@@ -320,14 +315,14 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     return alpha;
 }
 
-int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, BitBoards BBBoard, ZobristH *zobrist)
 {
     //update key color
     zobrist->UpdateColor();
     //as well as indicate to transposition tables these are null move boards
     //zobrist->UpdateNull();
 
-    int score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist, eval);
+    int score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist);
     //int score = -PVS(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, BBBoard, zobrist, eval);
 
     //zobrist->UpdateNull();
@@ -335,7 +330,7 @@ int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long curre
     return score;
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards *BBBoard, ZobristH *zobrist, evaluateBB *eval)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit, BitBoards BBBoard, ZobristH *zobrist)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -350,8 +345,9 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         searchCutoff = true;
     }
 
+    evaluateBB eval;
     //evaluate board position (if curentDepth is even return -eval)
-    int standingPat = eval->evalBoard(isWhite, BBBoard, zobrist);
+    int standingPat = eval.evalBoard(isWhite, BBBoard, zobrist);
 
     if(quietDepth <= 0 || searchCutoff){
         return standingPat;
@@ -378,8 +374,8 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
 
     U64 king;
-    if(isWhite) king = BBBoard->BBWhiteKing;
-    else king = BBBoard->BBBlackKing;
+    if(isWhite) king = BBBoard.BBWhiteKing;
+    else king = BBBoard.BBBlackKing;
 
     for(int i = 0; i < moveNum; ++i)
     {
@@ -407,16 +403,16 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             continue;
         }
         */
-        BBBoard->makeMove(newMove, zobrist, isWhite);
+        BBBoard.makeMove(newMove, zobrist, isWhite);
         /*
-        if(BBBoard->isAttacked(isWhite, king)){
-            BBBoard->unmakeMove(unmake, zobrist);
+        if(BBBoard.isAttacked(isWhite, king)){
+            BBBoard.unmakeMove(unmake, zobrist);
             continue;
         }
         */
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist, eval);
+        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit, BBBoard, zobrist);
 
-        BBBoard->unmakeMove(newMove, zobrist, isWhite);
+        BBBoard.unmakeMove(newMove, zobrist, isWhite);
 
         if(score > alpha){
 
@@ -509,17 +505,17 @@ bool Ai_Logic::deltaPruning(std::string move, int eval, bool isWhite, int alpha,
     //set enemy bitboards
     if(isWhite){
         //enemies
-        epawns = BBBoard->BBBlackPawns;
-        eknights = BBBoard->BBBlackKnights;
-        ebishops = BBBoard->BBBlackBishops;
-        erooks = BBBoard->BBBlackRooks;
-        equeens = BBBoard->BBBlackQueens;
+        epawns = BBBoard.BBBlackPawns;
+        eknights = BBBoard.BBBlackKnights;
+        ebishops = BBBoard.BBBlackBishops;
+        erooks = BBBoard.BBBlackRooks;
+        equeens = BBBoard.BBBlackQueens;
     } else {
-        epawns = BBBoard->BBWhitePawns;
-        eknights = BBBoard->BBWhiteKnights;
-        ebishops = BBBoard->BBWhiteBishops;
-        erooks = BBBoard->BBWhiteRooks;
-        equeens = BBBoard->BBWhiteQueens;
+        epawns = BBBoard.BBWhitePawns;
+        eknights = BBBoard.BBWhiteKnights;
+        ebishops = BBBoard.BBWhiteBishops;
+        erooks = BBBoard.BBWhiteRooks;
+        equeens = BBBoard.BBWhiteQueens;
     }
 
 

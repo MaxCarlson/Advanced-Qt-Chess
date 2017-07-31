@@ -62,7 +62,7 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
+int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH *zobrist)
 {
     //transposition hash quiet
     int hash = (int)(zobrist->zobristKey % 5021983);
@@ -129,8 +129,8 @@ int evaluateBB::evalBoard(bool isWhite, BitBoards *BBBoard, ZobristH *zobrist)
      *  less than two attackers or if the attacker has no queen.        *
      *******************************************************************/
 
-    if(attCount[0] < 2 || BBBoard->BBWhiteQueens == 0LL) attWeight[0] = 0;
-    if(attCount[1] < 2 || BBBoard->BBBlackQueens == 0LL) attWeight[1] = 0;
+    if(attCount[0] < 2 || BBBoard.BBWhiteQueens == 0LL) attWeight[0] = 0;
+    if(attCount[1] < 2 || BBBoard.BBBlackQueens == 0LL) attWeight[1] = 0;
     totalEvaualtion += SafetyTable[attWeight[0]];
     totalEvaualtion -= SafetyTable[attWeight[1]];
 
@@ -396,7 +396,7 @@ int passed_pawn_pcsq[2][64] = { {
 }
 };
 
-int evaluateBB::getPieceValue(int location, MoveGen gen_moves)
+int evaluateBB::getPieceValue(int location, const MoveGen &gen_moves)
 {
     //create an empty board then shift a 1 over to the current i location
     U64 pieceLocation = 1LL << location;
@@ -498,7 +498,7 @@ void evaluateBB::generateKingZones(bool isWhite, MoveGen gen_moves)
 
 }
 
-int evaluateBB::getPawnScore(MoveGen gen_moves)
+int evaluateBB::getPawnScore(const MoveGen &gen_moves)
 {
     //get zobrist/bitboard of current pawn positions
     U64 pt = gen_moves.BBWhitePawns | gen_moves.BBBlackPawns;
@@ -526,7 +526,7 @@ int evaluateBB::getPawnScore(MoveGen gen_moves)
     return score;
 }
 
-int evaluateBB::pawnEval(bool isWhite, int location, MoveGen gen_moves)
+int evaluateBB::pawnEval(bool isWhite, int location, const MoveGen &gen_moves)
 {
     int side;
     int result = 0;
@@ -633,7 +633,7 @@ int evaluateBB::isPawnSupported(bool isWhite, MoveGen gen_moves, U64 pawn, U64 p
     return 0;
 }
 
-void evaluateBB::evalKnight(bool isWhite, int location, MoveGen gen_moves)
+void evaluateBB::evalKnight(bool isWhite, int location, const MoveGen &gen_moves)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -692,7 +692,7 @@ void evaluateBB::evalKnight(bool isWhite, int location, MoveGen gen_moves)
 
 }
 
-void evaluateBB::evalBishop(bool isWhite, int location, MoveGen gen_moves)
+void evaluateBB::evalBishop(bool isWhite, int location, const MoveGen &gen_moves)
 {
     int kAttks = 0, mob = 0, side;
     gamePhase += 1;
@@ -739,7 +739,7 @@ void evaluateBB::evalBishop(bool isWhite, int location, MoveGen gen_moves)
 
 }
 
-void evaluateBB::evalRook(bool isWhite, int location, MoveGen gen_moves)
+void evaluateBB::evalRook(bool isWhite, int location, const MoveGen &gen_moves)
 {
     bool  ownBlockingPawns = false, oppBlockingPawns = false;
     int kAttks = 0, mob = 0, side;
@@ -813,7 +813,7 @@ void evaluateBB::evalRook(bool isWhite, int location, MoveGen gen_moves)
     }
 }
 
-void evaluateBB::evalQueen(bool isWhite, int location, MoveGen gen_moves)
+void evaluateBB::evalQueen(bool isWhite, int location, const MoveGen &gen_moves)
 {
     gamePhase += 4;
     int kAttks = 0, mob = 0, side;

@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <istream>
+#include <string>
 
 template <typename T>
 void ReadFromFile(const std::string& filename, std::vector<T>* v) {

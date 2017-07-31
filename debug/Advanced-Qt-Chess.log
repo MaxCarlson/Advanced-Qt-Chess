@@ -1,4 +1,4 @@
-﻿  evaluatebb.cpp
-evaluatebb.cpp(481): warning C4101: 'm': unreferenced local variable
+﻿  tile.cpp
+tile.cpp(19): warning C4100: 'event': unreferenced formal parameter
   Advanced-Qt-Chess.vcxproj -> C:\Users\C-60\Desktop\QtPrograms\Advanced-Qt-Chess\debug\Advanced-Qt-Chess.exe
   Advanced-Qt-Chess.vcxproj -> debug\Advanced-Qt-Chess.pdb (Full PDB)

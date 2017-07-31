@@ -15,20 +15,6 @@ static const U64 FileMasks8[8] =/*from fileA to FileH*/
     0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
 };
 
-static const U64 DiagonalMasks8[15] =/*from top left to bottom right*/
-{
-0x1L, 0x102L, 0x10204L, 0x1020408L, 0x102040810L, 0x10204081020L, 0x1020408102040L,
-0x102040810204080L, 0x204081020408000L, 0x408102040800000L, 0x810204080000000L,
-0x1020408000000000L, 0x2040800000000000L, 0x4080000000000000L, 0x8000000000000000L
-};
-
-static const U64 AntiDiagonalMasks8[15] =/*from top right to bottom left*/
-{
-0x80L, 0x8040L, 0x804020L, 0x80402010L, 0x8040201008L, 0x804020100804L, 0x80402010080402L,
-0x8040201008040201L, 0x4020100804020100L, 0x2010080402010000L, 0x1008040201000000L,
-0x804020100000000L, 0x402010000000000L, 0x201000000000000L, 0x100000000000000L
-};
-
 /*************************************************
 * Values used for sorting captures are the same  *
 * as normal piece values, except for a king.     *
@@ -97,7 +83,7 @@ void MoveGen::generatePsMoves(bool capturesOnly)
 }
 
 //pawn moves
-void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly)
+void MoveGen::possibleWP(const U64 &wpawns, const U64 &blackking, bool capturesOnly)
 {
     char piece = 'P';
     char captured;
@@ -248,7 +234,7 @@ void MoveGen::possibleWP(U64 wpawns, U64 blackking, bool capturesOnly)
 
 }
 
-void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly)
+void MoveGen::possibleBP(const U64 &bpawns, const U64 &whiteking, bool capturesOnly)
 {
     char piece = 'p';
     char captured;
@@ -404,7 +390,7 @@ void MoveGen::possibleBP(U64 bpawns, U64 whiteking, bool capturesOnly)
 }
 
 //other piece moves
-void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
+void MoveGen::possibleN(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'N';
@@ -452,7 +438,7 @@ void MoveGen::possibleN(int location, U64 friends, U64 enemys, U64 oppositeking,
     }
 }
 
-void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
+void MoveGen::possibleB(int location,  const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'B';
@@ -487,7 +473,7 @@ void MoveGen::possibleB(int location, U64 friends, U64 enemys, U64 oppositeking,
     }
 }
 
-void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
+void MoveGen::possibleR(int location,  const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'R';
@@ -522,7 +508,7 @@ void MoveGen::possibleR(int location, U64 friends, U64 enemys, U64 oppositeking,
 
 }
 
-void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking, U64 capturesOnly)
+void MoveGen::possibleQ(int location,  const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     char piece;
     if(isWhite) piece = 'Q';
@@ -560,7 +546,7 @@ void MoveGen::possibleQ(int location, U64 friends, U64 enemys, U64 oppositeking,
 
 }
 
-void MoveGen::possibleK(int location, U64 friends, U64 enemys, U64 capturesOnly)
+void MoveGen::possibleK(int location,  const U64 &friends, const U64 &enemys, const U64 &capturesOnly)
 {
     U64 moves;
     char piece;
@@ -723,7 +709,7 @@ Move MoveGen::movegen_sort(int ply)
     return moveAr[high];
 }
 
-void MoveGen::reorderMoves(int ply, HashEntry entry)
+void MoveGen::reorderMoves(int ply, const HashEntry &entry)
 {
 
     for(int i = 0; i < moveCount; i++){
@@ -790,32 +776,6 @@ int MoveGen::trailingZeros(U64 i)
     y = x <<  4; if (y != 0) { n -=  4; x = y; }
     y = x <<  2; if (y != 0) { n -=  2; x = y; }
     return (int) ( n - ((x << 1) >> 63));
-}
-
-U64 MoveGen::horizVert(int s)
-{
-    //convert slider location to 64 bit binary
-    U64 binaryS = 1LL << s;
-
-    //left and right moves
-    U64 possibilitiesHorizontal = (FullTiles - 2 * binaryS) ^ ReverseBits(ReverseBits(FullTiles) - 2 * ReverseBits(binaryS));
-    //moves up and down
-    U64 possibilitiesVertical = ((FullTiles & FileMasks8[s % 8]) - (2 * binaryS)) ^ ReverseBits(ReverseBits(FullTiles & FileMasks8[s % 8]) - (2 * ReverseBits(binaryS)));
-
-    //NOTE need to & against friendlys. Incomplete mask of moves
-    return (possibilitiesHorizontal & RankMasks8[s / 8]) | (possibilitiesVertical & FileMasks8[s % 8]);
-
-}
-
-U64 MoveGen::DAndAntiDMoves(int s)
-{
-    U64 binaryS = 1LL << s;
-
-    U64 possibilitiesDiagonal = ((FullTiles & DiagonalMasks8[(s / 8) + (s % 8)]) - (2 * binaryS)) ^ ReverseBits(ReverseBits(FullTiles & DiagonalMasks8[(s / 8) + (s % 8)]) - (2 * ReverseBits(binaryS)));
-
-    U64 possibilitiesAntiDiagonal = ((FullTiles & AntiDiagonalMasks8[(s / 8) + 7 - (s % 8)]) - (2 * binaryS)) ^ ReverseBits(ReverseBits(FullTiles & AntiDiagonalMasks8[(s / 8) + 7 - (s % 8)]) - (2 * ReverseBits(binaryS)));
-
-    return (possibilitiesDiagonal & DiagonalMasks8[(s / 8) + (s % 8)]) | (possibilitiesAntiDiagonal & AntiDiagonalMasks8[(s / 8) + 7 - (s % 8)]);
 }
 
 U64 MoveGen::ReverseBits(U64 input)
@@ -908,27 +868,27 @@ void MoveGen::constructBoards()
 
 }
 
-void MoveGen::grab_boards(BitBoards *BBBoard, bool wOrB)
+void MoveGen::grab_boards(const BitBoards &BBBoard, bool wOrB)
 {
     isWhite = wOrB;
-    FullTiles = BBBoard->FullTiles;
-    EmptyTiles = BBBoard->EmptyTiles;
+    FullTiles = BBBoard.FullTiles;
+    EmptyTiles = BBBoard.EmptyTiles;
 
-    BBWhitePieces = BBBoard->BBWhitePieces;
-    BBWhitePawns = BBBoard->BBWhitePawns;
-    BBWhiteKnights = BBBoard->BBWhiteKnights;
-    BBWhiteBishops = BBBoard->BBWhiteBishops;
-    BBWhiteRooks = BBBoard->BBWhiteRooks;
-    BBWhiteQueens = BBBoard->BBWhiteQueens;
-    BBWhiteKing = BBBoard->BBWhiteKing;
+    BBWhitePieces = BBBoard.BBWhitePieces;
+    BBWhitePawns = BBBoard.BBWhitePawns;
+    BBWhiteKnights = BBBoard.BBWhiteKnights;
+    BBWhiteBishops = BBBoard.BBWhiteBishops;
+    BBWhiteRooks = BBBoard.BBWhiteRooks;
+    BBWhiteQueens = BBBoard.BBWhiteQueens;
+    BBWhiteKing = BBBoard.BBWhiteKing;
 
-    BBBlackPieces = BBBoard->BBBlackPieces;
-    BBBlackPawns = BBBoard->BBBlackPawns;
-    BBBlackKnights = BBBoard->BBBlackKnights;
-    BBBlackBishops = BBBoard->BBBlackBishops;
-    BBBlackRooks = BBBoard->BBBlackRooks;
-    BBBlackQueens = BBBoard->BBBlackQueens;
-    BBBlackKing = BBBoard->BBBlackKing;
+    BBBlackPieces = BBBoard.BBBlackPieces;
+    BBBlackPawns = BBBoard.BBBlackPawns;
+    BBBlackKnights = BBBoard.BBBlackKnights;
+    BBBlackBishops = BBBoard.BBBlackBishops;
+    BBBlackRooks = BBBoard.BBBlackRooks;
+    BBBlackQueens = BBBoard.BBBlackQueens;
+    BBBlackKing = BBBoard.BBBlackKing;
 }
 
 bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
@@ -992,14 +952,14 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
     //diagonal of bishops and queens attack check
     U64 BQ = bishops | queens;
 
-    attacks = DAndAntiDMoves(location) & BQ;
+    attacks = slider_attacks.BishopAttacks(FullTiles, location) & BQ;
 
     if(attacks & BQ) return true;
 
     //horizontal of rooks and queens attack check
     U64 BR = bishops | queens;
 
-    attacks = horizVert(location) & BR;
+    attacks = slider_attacks.RookAttacks(FullTiles, location) & BR;
 
     if(attacks & BR) return true;
 

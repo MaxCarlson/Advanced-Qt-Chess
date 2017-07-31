@@ -150,6 +150,7 @@
     <ClCompile Include="evaluatebb.cpp" />
     <ClCompile Include="hashentry.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="slider_attacks.cpp" />
     <ClCompile Include="tile.cpp" />
     <ClCompile Include="zobristh.cpp" />
   </ItemGroup>
@@ -513,8 +514,10 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common.h" />
     <ClInclude Include="move.h" />
     <ClInclude Include="movegen.h" />
+    <ClInclude Include="slider_attacks.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

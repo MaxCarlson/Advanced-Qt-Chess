@@ -5,10 +5,14 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Advanced-Qt-Chess", "Advanced-Qt-Chess.vcxproj", "{1DB2CC36-12B9-30C0-A8B4-7B63D829D1CB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FC1553DB-5788-4160-977E-0471E097FAB7}"
+	ProjectSection(SolutionItems) = preProject
+		common.h = common.h
+		slider_attacks.cpp = slider_attacks.cpp
+		slider_attacks.h = slider_attacks.h
+	EndProjectSection
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64

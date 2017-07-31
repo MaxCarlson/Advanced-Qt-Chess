@@ -164,7 +164,7 @@ void ZobristH::UpdateKey(int start, int end, Move moveKey, bool isWhite)
 
 }
 
-U64 ZobristH::getZobristHash(BitBoards *BBBoard)
+U64 ZobristH::getZobristHash(BitBoards BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
@@ -176,56 +176,56 @@ U64 ZobristH::getZobristHash(BitBoards *BBBoard)
         */
         //white and black pawns
         //if there is a white pawn on i square
-        if(((BBBoard->BBWhitePawns >> square) & 1) == 1)
+        if(((BBBoard.BBWhitePawns >> square) & 1) == 1)
         {
             //XOR the zkey with the U64 in the white pawns square
             //that was generated from rand64
             returnZKey ^= zArray[0][0][square];
         }
-        else if(((BBBoard->BBBlackPawns >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackPawns >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][0][square];
         }
         //white pieces
-        else if(((BBBoard->BBWhiteRooks >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][1][square];
         }
-        else if(((BBBoard->BBWhiteKnights >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][2][square];
         }
-        else if(((BBBoard->BBWhiteBishops >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][3][square];
         }
-        else if(((BBBoard->BBWhiteQueens >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][4][square];
         }
-        else if(((BBBoard->BBWhiteKing >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][5][square];
         }
 
         //black pieces
-        else if(((BBBoard->BBBlackRooks >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][1][square];
         }
-        else if(((BBBoard->BBBlackKnights >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][2][square];
         }
-        else if(((BBBoard->BBBlackBishops >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][3][square];
         }
-        else if(((BBBoard->BBBlackQueens >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][4][square];
         }
-        else if(((BBBoard->BBBlackKing >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][5][square];
         }
@@ -257,62 +257,62 @@ void ZobristH::testDistibution()
 
 }
 
-U64 ZobristH::debugKey(bool isWhite, BitBoards *BBBoard)
+U64 ZobristH::debugKey(bool isWhite, BitBoards BBBoard)
 {
     U64 returnZKey = 0LL;
     for (int square = 0; square < 64; square++){
 
         //if there is a white pawn on i square
-        if(((BBBoard->BBWhitePawns >> square) & 1) == 1)
+        if(((BBBoard.BBWhitePawns >> square) & 1) == 1)
         {
             //XOR the zkey with the U64 in the white pawns square
             //that was generated from rand64
             returnZKey ^= zArray[0][0][square];
         }
-        else if(((BBBoard->BBBlackPawns >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackPawns >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][0][square];
         }
         //white pieces
-        else if(((BBBoard->BBWhiteRooks >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][1][square];
         }
-        else if(((BBBoard->BBWhiteKnights >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][2][square];
         }
-        else if(((BBBoard->BBWhiteBishops >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][3][square];
         }
-        else if(((BBBoard->BBWhiteQueens >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][4][square];
         }
-        else if(((BBBoard->BBWhiteKing >> square) & 1) == 1)
+        else if(((BBBoard.BBWhiteKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[0][5][square];
         }
 
         //black pieces
-        else if(((BBBoard->BBBlackRooks >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackRooks >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][1][square];
         }
-        else if(((BBBoard->BBBlackKnights >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackKnights >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][2][square];
         }
-        else if(((BBBoard->BBBlackBishops >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackBishops >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][3][square];
         }
-        else if(((BBBoard->BBBlackQueens >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackQueens >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][4][square];
         }
-        else if(((BBBoard->BBBlackKing >> square) & 1) == 1)
+        else if(((BBBoard.BBBlackKing >> square) & 1) == 1)
         {
             returnZKey ^= zArray[1][5][square];
         }

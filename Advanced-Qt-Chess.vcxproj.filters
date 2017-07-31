@@ -67,6 +67,9 @@
     <ClCompile Include="movegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="slider_attacks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="debug\qrc_Images.cpp">
@@ -149,6 +152,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="movegen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="slider_attacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
