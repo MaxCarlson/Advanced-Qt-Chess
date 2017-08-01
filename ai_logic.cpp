@@ -132,7 +132,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     //create unqiue hash from zobrist key
     int hash = (int)(zobrist.zobristKey % 15485843);
     HashEntry entry = transpositionT[hash];
-/*
+
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobrist.zobristKey){
@@ -156,7 +156,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-*/
+
     //if the time limmit has been exceeded set stop search flag
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -168,7 +168,6 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit);
         return score;
     }
-
 
     MoveGen gen_moves;
     //grab bitboards from newBoard object and store color and board to var

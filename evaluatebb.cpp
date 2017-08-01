@@ -62,13 +62,13 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH zobristE)
+int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH& zobristE)
 {
     //transposition hash quiet
     int hash = (int)(zobristE.zobristKey % 5021983);
     HashEntry entry = transpositionEval[hash];
     evalMoveGen.grab_boards(BBBoard, isWhite);
-/*
+
     //if we get a hash-table hit, return the evaluation
     if(entry.zobrist == zobristE.zobristKey){
         if(isWhite){
@@ -82,7 +82,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH zobri
         }
 
     }
-*/
+
 //reset values
     int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
     gamePhase = 0;
