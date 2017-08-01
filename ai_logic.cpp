@@ -143,10 +143,11 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     flagInCheck = gen_moves.isAttacked(king, isWhite);
     U8 moveNum = gen_moves.moveCount;
 
-    if(flagInCheck) depth ++;
+    if(flagInCheck) ++depth;
 
     Move bestMove;
     for(U8 i = 0; i < moveNum; ++i){
+        //find best move generated
         Move newMove = gen_moves.movegen_sort(ply);
         newBoard.makeMove(newMove, zobrist, isWhite);
 
@@ -160,7 +161,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
 
         //introducing PV search at root
         if(best == -INF){
-            //full window search ~~ need to add a pv_variable to indicate pv search
+            //full window PV search
             score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
 
         } else {
@@ -193,9 +194,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
         }
 
     }
-
     addMoveTT(bestMove, depth, score, 3);
-
     return alpha;
 }
 
@@ -207,7 +206,11 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     clock_t time = clock();
     long elapsedTime = time - currentTime;
     bool FlagInCheck = false;
+    bool raisedAlpha = false;
+    //U8 newDepth; //use with futility + other pruning later
     int queitSD = 7, f_prune = 0;
+    //int  mateValue = INF - ply; // used for mate distance pruning
+
 
     //create unqiue hash from zobrist key
     int hash = (int)(zobrist.zobristKey % 15485843);
@@ -271,7 +274,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 */
 
 //Null move heuristics, disabled if in check
-    if(allowNull && depth > depthR && ply > 1 && !FlagInCheck){ // ??
+    if(allowNull && !is_pv && depth > depthR && ply > 1 && !FlagInCheck){ // ??
         if(depth > 6) depthR = 3;
 
         score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, ply+1, is_pv);
@@ -281,8 +284,8 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
     }
 
-//razoring
-    if(!FlagInCheck && allowNull && depth <= 3){
+//razoring if not is close to leaf and has a low score drop directly into quiescence
+    if(!is_pv && !FlagInCheck && allowNull && depth <= 3){
         int threshold = alpha - 300 - (depth - 1) * 60;
         evaluateBB eval;
         if(eval.evalBoard(isWhite, newBoard, zobrist) < threshold){
@@ -294,7 +297,9 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 /*
 //do we want to futility prune?
     int fmargin[4] = { 0, 200, 300, 500 };
-    if(depth <= 3 && !FlagInCheck && abs(alpha) < 9000 && eval->evalBoard(isWhite, newBoard, zobrist) + fmargin[depth] <= alpha){
+    if(depth <= 3 && !is_pv
+    && !FlagInCheck && abs(alpha) < 9000
+    && eval->evalBoard(isWhite, newBoard, zobrist) + fmargin[depth] <= alpha){
         f_prune = 1;
     }
 */
@@ -307,8 +312,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
-//search through psuedo legal moves checking against king safety
-    Move hashMove;
+    Move hashMove; //move to store alpha in and pass to TTable
     for(U8 i = 0; i < movesNum; ++i){
         //grab best scoring move
         Move newMove = gen_moves.movegen_sort(ply);
@@ -330,17 +334,24 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
             continue;
         }*/
 
-        //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        score = -alphaBeta(depth-1, -beta, -alpha,  !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, is_pv);
+        if(!raisedAlpha){
+            //we're in princiapl variation search or full window search depending on root
+            score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, is_pv);
+        } else {
+            //zero window search
+            score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, NO_PV);
+            //if our zero window search failed, do a full window search
+            if(score > alpha){
+                //PV search after failed zero window
+                score = -alphaBeta(depth-1, -beta, -alpha,  !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
+            }
+        }
+
 
         //undo move on BB's
         newBoard.unmakeMove(newMove, zobrist, isWhite);
 
         if(score > alpha){            
-
-            if(depth > 6){
-                std::cout << "here" << std::endl;
-            }
 
             //if move causes a beta cutoff stop searching current branch
             if(score >= beta){
@@ -348,7 +359,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
                 //add beta to transpositon table with beta flag
                 addMoveTT(newMove, depth, beta, 2);
 
-                //if(newMove.captured == '0' && newMove.flag != 'Q'){
+                if(newMove.captured == '0' && newMove.flag != 'Q'){
                     //add move to killers
                     addKiller(newMove, ply); //not working either!!!!!!!!!
 
@@ -364,9 +375,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
                         }
                     }
 
-                //}
-
-
+                }
                 return beta;
             }
             //new best move
@@ -377,12 +386,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
             hashMove = newMove;
         }
     }
-/*
-    //return mate/stalemate score if there are no more moves ~~ greater depth less score
-    if(legalMoves == 0){
-       return eval->returnMateScore(isWhite, newBoard, depth);
-    }
-*/
+
     //add alpha eval to hash table don't save a real move
     addMoveTT(hashMove, depth, alpha, hashFlag);
 
