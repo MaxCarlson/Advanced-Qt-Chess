@@ -50,6 +50,10 @@ typedef unsigned long long U64;
 typedef long long S64;
 #endif
 
+#define TT_ALPHA 1
+#define TT_BETA 2
+#define TT_EXACT 3
+
 #define SORT_KING 400000000
 #define SORT_HASH 200000000
 #define SORT_CAPT 100000000

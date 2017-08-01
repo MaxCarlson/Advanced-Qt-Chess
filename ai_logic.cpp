@@ -13,10 +13,11 @@
 #include "zobristh.h"
 #include "hashentry.h"
 
-#define DO_NULL    true
+#define DO_NULL    true //allow null moves or not
 #define NO_NULL    false
-#define IS_PV      true
+#define IS_PV      true //is this search in a principal variation
 #define NO_PV      false
+#define ASP        50  //aspiration windows size
 
 //holds historys and killers + eventually nodes searched + other data
 searchDriver sd;
@@ -31,8 +32,6 @@ MoveGen evalGenMoves;
 //value to determine if time for search has run out
 extern bool searchCutoff;
 bool searchCutoff = false;
-
-const int ASPIRATION = 50;
 
 //master bitboard for turn
 BitBoards newBoard;
@@ -80,18 +79,15 @@ Move Ai_Logic::iterativeDeep(int depth)
         //main search
         //bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, ply +1, true);
         bestScore = searchRoot(distance, alpha, beta, false, currentTime, timeLimmit, ply+1);
-
-   /*
-        //aspiration window correction
-        if (bestScore <= alpha || bestScore >= beta) {
-            alpha = -100000;    // We fell outside the window, so try again with a
-            beta = 100000;      //  full-width window (and the same depth).
+/*
+        if(bestScore <= alpha || bestScore >= beta){
+            alpha = -INF;
+            beta = INF;
             continue;
         }
-        //if we don't fall out of window, set alpha and beta to a window size to narrow search
-        alpha = bestScore - ASPIRATION;
-        beta = bestScore + ASPIRATION;
-   */
+        alpha = bestScore - ASP;
+        beta = bestScore + ASP;
+*/
         //if the search is not cutoff
         if(!searchCutoff){
 
@@ -135,11 +131,11 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     gen_moves.grab_boards(newBoard, isWhite);
     gen_moves.generatePsMoves(false);
 
-    //are we in check?
+    //who's our king?
     U64 king, eking;
     if(isWhite){ king = newBoard.BBWhiteKing; eking = newBoard.BBBlackKing; }
     else { king = newBoard.BBBlackKing; eking = newBoard.BBWhiteKing; }
-
+    //are we in check?
     flagInCheck = gen_moves.isAttacked(king, isWhite);
     U8 moveNum = gen_moves.moveCount;
 
@@ -159,7 +155,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
         positionCount ++;
         legalMoves ++;
 
-        //introducing PV search at root
+        //PV search at root
         if(best == -INF){
             //full window PV search
             score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
@@ -173,6 +169,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
                 score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
             }
         }
+
 
         //undo move on BB's
         newBoard.unmakeMove(newMove, zobrist, isWhite);
@@ -310,7 +307,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     //add killers scores to moves if there are any
     gen_moves.reorderMoves(ply, entry);
 
-    int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
+    int hashFlag = TT_ALPHA, movesNum = gen_moves.moveCount, legalMoves = 0;
 
     Move hashMove; //move to store alpha in and pass to TTable
     for(U8 i = 0; i < movesNum; ++i){
@@ -356,16 +353,12 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
             //if move causes a beta cutoff stop searching current branch
             if(score >= beta){
 
-                //add beta to transpositon table with beta flag
-                addMoveTT(newMove, depth, beta, 2);
-
                 if(newMove.captured == '0' && newMove.flag != 'Q'){
                     //add move to killers
-                    addKiller(newMove, ply); //not working either!!!!!!!!!
+                    addKiller(newMove, ply);
 
                     //add score to historys
-                    sd.history[isWhite][newMove.from][newMove.to] += depth * depth; ///not working!!!!!!!!!!!!!!!
-
+                    sd.history[isWhite][newMove.from][newMove.to] += depth * depth;
                     //don't want historys to overflow if search is really big
                     if(sd.history[isWhite][newMove.from][newMove.to] > SORT_KILL){
                         for(int i = 0; i < 64; i++){
@@ -376,13 +369,16 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
                     }
 
                 }
-                return beta;
+                hashFlag = TT_BETA;
+                //stop search and return beta
+                alpha = beta;
+                break;
             }
             //new best move
             alpha = score;
-
+            raisedAlpha = true;
             //if we've gained a new alpha set hash Flag equal to exact and store best move
-            hashFlag = 3;
+            hashFlag = TT_EXACT;
             hashMove = newMove;
         }
     }
