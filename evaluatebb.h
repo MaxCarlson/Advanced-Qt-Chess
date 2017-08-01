@@ -1,9 +1,6 @@
 #ifndef EVALUATEBB_H
 #define EVALUATEBB_H
-
-
-typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
-#define C64(constantU64) constantU64##ULL
+#include "defines.h"
 
 class ZobristH;
 class BitBoards;

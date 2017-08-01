@@ -1,17 +1,15 @@
 #ifndef MOVE_H
 #define MOVE_H
 
+#include "defines.h"
 
 class Move
 {
 public:
     Move();
 
-    int x;
-    int y;
-    int x1;
-    int y1;
-    //U8 p; //later to replace piece
+    U8 from;
+    U8 to;
     char piece;
     char captured;
     int score;

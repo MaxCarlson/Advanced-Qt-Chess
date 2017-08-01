@@ -21,7 +21,7 @@ public:
     void constructBoards();
 
     void makeMove(Move move, ZobristH &zobrist, bool isWhite);
-    void unmakeMove(Move moveKey, ZobristH &zobrist, bool isWhite);
+    void unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite);
 
     //helper funtction to draw out bitboards like chess boards
     void drawBB(U64 board);

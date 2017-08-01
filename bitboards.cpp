@@ -13,8 +13,6 @@ BitBoards::BitBoards()
 
 }
 
-
-
 void BitBoards::constructBoards()
 {
     FullTiles = 0LL;
@@ -96,10 +94,12 @@ void BitBoards::constructBoards()
 //normal move stuff
 void BitBoards::makeMove(Move move, ZobristH &zobrist, bool isWhite)
 {
-    int xyI, xyE;
+    U8 xyI, xyE;
     //move coordinates, later replace x,y x1,y1 with from/to coordinates to remove math
-    xyI = move.y * 8 + move.x;
-    xyE = move.y1 * 8 + move.x1;
+    //xyI = move.y * 8 + move.x;
+    //xyE = move.y1 * 8 + move.x1;
+    xyI = move.from;
+    xyE = move.to;
 
     //inital spot piece mask and end spot mask
     U64 pieceMaskI = 1LL<< xyI;
@@ -292,19 +292,14 @@ void BitBoards::makeMove(Move move, ZobristH &zobrist, bool isWhite)
 
 }
 
-void BitBoards::unmakeMove(Move moveKey, ZobristH &zobrist, bool isWhite)
+void BitBoards::unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite)
 {
-
-    //parse string move and change to ints
-    int x = moveKey.x;
-    int y = moveKey.y;
-    int x1 = moveKey.x1;
-    int y1 = moveKey.y1;
-    int xyI = y*8+x, xyE = y1*8+x1;
+    //extract from to data
+    U8 xyI = moveKey.from;
+    U8 xyE = moveKey.to;
     //inital spot piece mask and end spot mask
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    pieceMaskI += 1LL<< xyI;
-    pieceMaskE += 1LL << xyE;
+    U64 pieceMaskI = 1LL<< xyI;
+    U64 pieceMaskE = 1LL << xyE;
 
     if(isWhite){
         switch(moveKey.piece){

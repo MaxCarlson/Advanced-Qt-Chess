@@ -108,17 +108,16 @@ void Tile::aiTurn(){
     Ai_Logic newMove;
 
     //generate best move (number represents max search depth)
-    Move bestMove = newMove.iterativeDeep(5);
+    Move bestMove = newMove.iterativeDeep(7);
 
     //create new tile objects to mirror rect tiles of piece and piece landing
     Tile *aiClick;
     Tile *aiClick1;
 
-    tempx = bestMove.x;
-    tempy = bestMove.y;
-    tempx2 = bestMove.x1;
-    tempy2 = bestMove.y1;
-
+    tempx = bestMove.from % 8;
+    tempy = bestMove.from / 8;
+    tempx2 = bestMove.to % 8;
+    tempy2 = bestMove.to / 8;
 
     if(bestMove.flag == '0'){ //if normal move
         //swap piece to its desitnation and make prior spot blank

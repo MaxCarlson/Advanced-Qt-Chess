@@ -11,9 +11,12 @@
 #include "bitboards.h"
 #include "movegen.h"
 #include "zobristh.h"
-//#include "bitboards.cpp"
-
 #include "hashentry.h"
+
+#define DO_NULL    true
+#define NO_NULL    false
+#define IS_PV      true
+#define NO_PV      false
 
 //holds historys and killers + eventually nodes searched + other data
 searchDriver sd;
@@ -54,12 +57,12 @@ Move Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 100009999, currentDepth = 0;
+    int timeLimmit = 100009999, ply = 0;
     long endTime = IDTimeS + timeLimmit;
 
     //best overall move as calced
     Move bestMove;
-    int distance = 1, bestScore, alpha = -1000000, beta = 1000000;
+    int distance = 1, bestScore, alpha = -INF, beta = INF;
     //search has not run out of time
     searchCutoff = false;
 
@@ -75,7 +78,8 @@ Move Ai_Logic::iterativeDeep(int depth)
         }
 
         //main search
-        bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, currentDepth +1, true);
+        //bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, ply +1, true);
+        bestScore = searchRoot(distance, alpha, beta, false, currentTime, timeLimmit, ply+1);
 
    /*
         //aspiration window correction
@@ -119,8 +123,84 @@ Move Ai_Logic::iterativeDeep(int depth)
     return bestMove;
 }
 
+int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply)
+{
+    int flagInCheck;
+    int score = 0;
+    int best = -INF;
+    int legalMoves;
 
-int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth, bool allowNull)
+    MoveGen gen_moves;
+    //grab bitboards from newBoard object and store color and board to var
+    gen_moves.grab_boards(newBoard, isWhite);
+    gen_moves.generatePsMoves(false);
+
+    //are we in check?
+    U64 king, eking;
+    if(isWhite){ king = newBoard.BBWhiteKing; eking = newBoard.BBBlackKing; }
+    else { king = newBoard.BBBlackKing; eking = newBoard.BBWhiteKing; }
+
+    flagInCheck = gen_moves.isAttacked(king, isWhite);
+    U8 moveNum = gen_moves.moveCount;
+
+    if(flagInCheck) depth ++;
+
+    Move bestMove;
+    for(U8 i = 0; i < moveNum; ++i){
+        Move newMove = gen_moves.movegen_sort(ply);
+        newBoard.makeMove(newMove, zobrist, isWhite);
+
+        //is move legal? if not skip it
+        if(gen_moves.isAttacked(king, isWhite)){
+            newBoard.unmakeMove(newMove, zobrist, isWhite);
+            continue;
+        }
+        positionCount ++;
+        legalMoves ++;
+
+        //introducing PV search at root
+        if(best == -INF){
+            //full window search ~~ need to add a pv_variable to indicate pv search
+            score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
+
+        } else {
+            //zero window search
+            score = -alphaBeta(depth-1, -alpha-1, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, NO_PV);
+
+            //if we've gained a new alpha we need to do a full window search
+            if(score > alpha){
+                score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
+            }
+        }
+
+        //undo move on BB's
+        newBoard.unmakeMove(newMove, zobrist, isWhite);
+
+        if(score > best) best = score;
+
+        if(score > alpha){
+            //store the principal variation
+            pVArr[depth] = newMove;
+
+            if(score > beta){
+                addMoveTT(newMove, depth, score, 2);
+
+                return beta;
+            }
+
+            alpha = score;
+            bestMove = newMove;
+        }
+
+    }
+
+    addMoveTT(bestMove, depth, score, 3);
+
+    return alpha;
+}
+
+
+int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply, bool allowNull, bool is_pv)
 {
 
     //iterative deeping timer stuff
@@ -165,7 +245,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     int score;
     if(depth < 1 || searchCutoff){
         //run capture search to max depth of queitSD
-        score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit);
+        score = quiescent(alpha, beta, isWhite, ply, queitSD, currentTime, timeLimmit);
         return score;
     }
 
@@ -191,10 +271,10 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
 */
 
 //Null move heuristics, disabled if in check
-    if(allowNull && depth > depthR && currentDepth > 1 && !FlagInCheck){ // ??
+    if(allowNull && depth > depthR && ply > 1 && !FlagInCheck){ // ??
         if(depth > 6) depthR = 3;
 
-        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, currentDepth+1);
+        score = nullMoves(depth-1-depthR, -beta, -beta+1, !isWhite, currentTime, timeLimmit, ply+1, is_pv);
         //if after getting a free move the score is too good, prune this branch
         if(score >= beta){
             return score;
@@ -206,7 +286,7 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         int threshold = alpha - 300 - (depth - 1) * 60;
         evaluateBB eval;
         if(eval.evalBoard(isWhite, newBoard, zobrist) < threshold){
-            score = quiescent(alpha, beta, isWhite, currentDepth, queitSD, currentTime, timeLimmit);
+            score = quiescent(alpha, beta, isWhite, ply, queitSD, currentTime, timeLimmit);
 
             if(score < threshold) return alpha;
         }
@@ -223,15 +303,15 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     gen_moves.generatePsMoves(false);
 
     //add killers scores to moves if there are any
-    gen_moves.reorderMoves(currentDepth, entry);
+    gen_moves.reorderMoves(ply, entry);
 
     int hashFlag = 1, movesNum = gen_moves.moveCount, legalMoves = 0;
 
 //search through psuedo legal moves checking against king safety
     Move hashMove;
-    for(int i = 0; i < movesNum; ++i){
+    for(U8 i = 0; i < movesNum; ++i){
         //grab best scoring move
-        Move newMove = gen_moves.movegen_sort(currentDepth);
+        Move newMove = gen_moves.movegen_sort(ply);
 
         //make move on BB's store data to string so move can be undone
         newBoard.makeMove(newMove, zobrist, isWhite);
@@ -251,15 +331,16 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
         }*/
 
         //jump to other color and evaluate all moves that don't cause a cutoff if depth is greater than 1
-        score = -alphaBeta(depth-1, -beta, -alpha,  ! isWhite, currentTime, timeLimmit, currentDepth +1, true);
+        score = -alphaBeta(depth-1, -beta, -alpha,  !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, is_pv);
 
         //undo move on BB's
         newBoard.unmakeMove(newMove, zobrist, isWhite);
 
-        if(score > alpha){
+        if(score > alpha){            
 
-            //store the principal variation
-            pVArr[depth] = newMove;
+            if(depth > 6){
+                std::cout << "here" << std::endl;
+            }
 
             //if move causes a beta cutoff stop searching current branch
             if(score >= beta){
@@ -267,24 +348,23 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
                 //add beta to transpositon table with beta flag
                 addMoveTT(newMove, depth, beta, 2);
 
-                if(newMove.captured == '0' && newMove.flag != 'Q'){
+                //if(newMove.captured == '0' && newMove.flag != 'Q'){
                     //add move to killers
-                    //addKiller(newMove, currentDepth);
+                    addKiller(newMove, ply); //not working either!!!!!!!!!
 
-                    int sPos = newMove.y * 8 + newMove.x, ePos = newMove.y1 * 8 + newMove.x1;
                     //add score to historys
-                    sd.history[isWhite][sPos][ePos] += depth * depth;
+                    sd.history[isWhite][newMove.from][newMove.to] += depth * depth; ///not working!!!!!!!!!!!!!!!
 
                     //don't want historys to overflow if search is really big
-                    if(sd.history[isWhite][sPos][ePos] > SORT_KILL){
+                    if(sd.history[isWhite][newMove.from][newMove.to] > SORT_KILL){
                         for(int i = 0; i < 64; i++){
                             for(int i = 0; i < 64; i++){
-                                sd.history[isWhite][sPos][ePos] /= 2;
+                                sd.history[isWhite][newMove.from][newMove.to] /= 2;
                             }
                         }
                     }
 
-                }
+                //}
 
 
                 return beta;
@@ -309,22 +389,22 @@ int Ai_Logic::alphaBeta(int depth, int alpha, int beta, bool isWhite, long curre
     return alpha;
 }
 
-int Ai_Logic::nullMoves(int depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, int currentDepth)
+int Ai_Logic::nullMoves(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply, bool is_pv)
 {
     //update key color
     zobrist.UpdateColor();
     //as well as indicate to transposition tables these are null move boards
     //zobrist.UpdateNull();
 
-    int score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false);
-    //int score = -PVS(depth, alpha, beta, isWhite, currentTime, timeLimmit, currentDepth, false, newBoard, zobrist, eval);
+    int score = -alphaBeta(depth, alpha, beta, isWhite, currentTime, timeLimmit, ply, false, is_pv);
+    //int score = -PVS(depth, alpha, beta, isWhite, currentTime, timeLimmit, ply, false, newBoard, zobrist, eval);
 
     //zobrist.UpdateNull();
     zobrist.UpdateColor();
     return score;
 }
 
-int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int quietDepth, long currentTime, long timeLimmit)
+int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDepth, long currentTime, long timeLimmit)
 {
     //iterative deeping timer stuff
     clock_t time = clock();
@@ -359,7 +439,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
     MoveGen gen_moves;
     gen_moves.grab_boards(newBoard, isWhite);
     gen_moves.generatePsMoves(true);
-    gen_moves.reorderMoves(currentDepth, entry);
+    gen_moves.reorderMoves(ply, entry);
 
     int score;
     //set hash flag equal to alpha Flag
@@ -373,7 +453,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
 
     for(int i = 0; i < moveNum; ++i)
     {        
-        Move newMove = gen_moves.movegen_sort(currentDepth);
+        Move newMove = gen_moves.movegen_sort(ply);
 
         if(gen_moves.isAttacked(king, isWhite)){
             continue;
@@ -397,16 +477,17 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
             continue;
         }
         */
-        score = -quiescent(-beta, -alpha, ! isWhite, currentDepth+1, quietDepth-1, currentTime, timeLimmit);
+        score = -quiescent(-beta, -alpha, ! isWhite, ply+1, quietDepth-1, currentTime, timeLimmit);
 
         newBoard.unmakeMove(newMove, zobrist, isWhite);
 
         if(score > alpha){
 
             if(score >= beta){
+
                 if(newMove.captured == '0' && newMove.flag != 'Q'){
                     //add move to killers
-                    addKiller(newMove, currentDepth);
+                    addKiller(newMove, ply);
 /*
                     int sPos = newMove.y * 8 + newMove.x, ePos = newMove.y1 * 8 + newMove.x1;
                     //add score to historys
@@ -433,7 +514,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int currentDepth, int
         }
     }
     //add alpha eval to hash table
-    //addTTQuiet(hashMove, currentDepth, alpha, hashFlag, zobrist);
+    //addTTQuiet(hashMove, ply, alpha, hashFlag, zobrist);
     return alpha;
 }
 
@@ -441,13 +522,14 @@ void Ai_Logic::addKiller(Move move, int ply)
 {
     if(move.captured == '0'){ //if move isn't a capture save it as a killer
         //make sure killer is different
-        if((move.x != sd.killers[ply][0].x && move.y != sd.killers[ply][0].y)
-        || (move.x1 != sd.killers[ply][0].x1 && move.y1 != sd.killers[ply][0].y1)){
+        if(move.from != sd.killers[ply][0].from
+          && move.to != sd.killers[ply][0].to){
             //save primary killer to secondary slot
             sd.killers[ply][1] = sd.killers[ply][0];
         }
         //save primary killer
         sd.killers[ply][0] = move;
+        sd.killers[ply][0].tried = false;
     }
 }
 

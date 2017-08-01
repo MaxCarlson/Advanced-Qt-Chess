@@ -3,5 +3,4 @@
 Move::Move()
 {
     tried = false;
-    flag = 'X';
 }

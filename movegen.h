@@ -90,7 +90,7 @@ public:
 private:
 
         //assigns a score to moves and adds them to the move array
-        void movegen_push(int x, int y, int x1, int y1, char piece, char captured, char flag);
+        void movegen_push(char piece, char captured, char flag, U8 from, U8 to);
         bool blind(Move move, int pieceVal, int captureVal);
 
         char whichPieceCaptured(U64 landing);
@@ -100,11 +100,11 @@ private:
 
         void possibleWP(const U64 &wpawns, const U64 &blackking, bool capturesOnly);
         void possibleBP(const U64 &bpawns, const U64 &whiteking, bool capturesOnly);
-        void possibleN(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
-        void possibleB(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
-        void possibleR(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
-        void possibleQ(int location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
-        void possibleK(int location, const U64 &friends, const U64 &enemys, const U64 &capturesOnly);
+        void possibleN(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleB(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleR(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleQ(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
+        void possibleK(U8 location, const U64 &friends, const U64 &enemys, const U64 &capturesOnly);
 
 
         //void undoCapture(U64 location, char piece, char whiteOrBlack);

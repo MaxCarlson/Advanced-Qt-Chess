@@ -51,7 +51,8 @@ HEADERS += \
     bitboards.h \
     externs.h \
     Pieces.h \
-    zobristh.h
+    zobristh.h \
+    defines.h
 
 
 FORMS +=

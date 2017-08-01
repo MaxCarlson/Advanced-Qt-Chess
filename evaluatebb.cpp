@@ -103,7 +103,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
 
 
 //loop through all pieces and gather numbers, mobility, king attacks, etc
-    for(int i = 0; i < 64; i++){
+    for(U8 i = 0; i < 64; i++){
         totalEvaualtion += getPieceValue(i);
     }
     totalEvaualtion += getPawnScore();
