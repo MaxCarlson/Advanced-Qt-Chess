@@ -18,13 +18,20 @@
 //holds historys and killers + eventually nodes searched + other data
 searchDriver sd;
 
+//principal variation array
 Move pVArr[29];
+
+//constructed once so as to pass to eval where constructing was slow
+//for quiet search
+MoveGen evalGenMoves;
 
 //value to determine if time for search has run out
 extern bool searchCutoff;
 bool searchCutoff = false;
 
 const int ASPIRATION = 50;
+
+
 
 Ai_Logic::Ai_Logic()
 {

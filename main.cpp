@@ -9,7 +9,7 @@
 #include <hashentry.h>
 #include <iostream>
 #include "zobristh.h"
-
+#include "movegen.h"
 
 //#include <vld.h> //memory leak detection in visual studio
 
@@ -45,6 +45,9 @@ HashEntry transpositionPawn[400000];
 
 //user for magic sliders
 SliderAttacks slider_attacks;
+
+//used for move gen functions/properies in evals
+MoveGen evalMoveGen;
 
 //color piece arrays
 

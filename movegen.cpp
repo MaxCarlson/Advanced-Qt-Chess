@@ -5,6 +5,24 @@
 #include "slider_attacks.h"
 
 
+//totally full bitboard
+const U64 full  = 0xffffffffffffffffULL;
+//files to keep pieces from moving left or right off board
+const U64 notAFile = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
+const U64 notHFile = 0xfefefefefefefefe; // ~0x0101010101010101
+const U64 rank4 = 1095216660480L;
+const U64 rank5=4278190080L;
+const U64 rank6 = rank5 >> 8;
+const U64 rank7 = rank6 >> 8;
+const U64 rank8 = rank7 >> 8;
+//ugh
+const U64 rank3 = rank4 << 8;
+const U64 rank2 = rank3 << 8;
+const U64 rank1 = rank2 << 8;
+
+
+
+
 static const U64 RankMasks8[8] =/*from rank8 to rank1 ?*/
 {
     0xFFL, 0xFF00L, 0xFF0000L, 0xFF000000L, 0xFF00000000L, 0xFF0000000000L, 0xFF000000000000L, 0xFF00000000000000L
@@ -20,7 +38,7 @@ static const U64 FileMasks8[8] =/*from fileA to FileH*/
 * as normal piece values, except for a king.     *
 *************************************************/
 
-static const int SORT_VALUE[7] = {0, 100, 325, 335, 500, 975, 0};
+const int SORT_VALUE[7] = {0, 100, 325, 335, 500, 975, 0};
 
 
 MoveGen::MoveGen()

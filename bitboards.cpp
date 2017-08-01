@@ -96,24 +96,14 @@ void BitBoards::constructBoards()
 //normal move stuff
 void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
 {
-    std::string savedMove;
     int xyI, xyE;
-    //inital spot piece mask and end spot mask
-    U64 pieceMaskI = 0LL, pieceMaskE = 0LL;
-    //for normal moves
-
+    //move coordinates, later replace x,y x1,y1 with from/to coordinates to remove math
     xyI = move.y * 8 + move.x;
     xyE = move.y1 * 8 + move.x1;
 
-    pieceMaskI += 1LL<< xyI;
-    pieceMaskE += 1LL << xyE;
-
-    //store coordiantes for undoing move
-    //final order is x, y, x1, y1, piece moved, piece captured (0 if none)
-    savedMove += move.x;
-    savedMove += move.y;
-    savedMove += move.x1;
-    savedMove += move.y1;
+    //inital spot piece mask and end spot mask
+    U64 pieceMaskI = 1LL<< xyI;
+    U64 pieceMaskE = 1LL << xyE;
 
     //find BB that contains correct piece, remove piece from it's starting pos
     //on piece BB, add piece to string savedMove, if it's a capture add piece to be captured,
@@ -128,10 +118,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhitePieces &= ~pieceMaskI;
             //remove piece from full tiles
             FullTiles &= ~pieceMaskI;
-            //adds piece to move to be returned in order to undo move
-            savedMove += "P";
-            //removes piece from capture location if capture and returns piece char
-            savedMove += move.captured;
 
             if(move.flag != 'Q'){
                 //add piece to landing spot
@@ -141,8 +127,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             } else {
                 //add queen to landing spot
                 BBWhiteQueens |= pieceMaskE;
-                //add promotion data to capture string
-                savedMove += "O";
             }
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
@@ -154,8 +138,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhiteRooks &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "R";
-            savedMove += move.captured;
             //add piece
             BBWhiteRooks |= pieceMaskE;
             //add to color pieces then full tiles
@@ -167,8 +149,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhiteKnights &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "N";
-            savedMove += move.captured;
             //add piece
             BBWhiteKnights |= pieceMaskE;
             //add to color pieces then full tiles
@@ -180,8 +160,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhiteBishops &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "B";
-            savedMove += move.captured;
             //add piece
             BBWhiteBishops |= pieceMaskE;
             //add to color pieces then full tiles
@@ -193,8 +171,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhiteQueens &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "Q";
-            savedMove += move.captured;
             //add piece
             BBWhiteQueens |= pieceMaskE;
             //add to color pieces then full tiles
@@ -206,8 +182,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBWhiteKing &= ~pieceMaskI;
             BBWhitePieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "K";
-            savedMove += move.captured;
             //add piece
             BBWhiteKing |= pieceMaskE;
             //add to color pieces then full tiles
@@ -222,8 +196,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackPawns &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "p";
-            savedMove += move.captured;
 
             if(move.flag != 'Q'){
                 //add piece to landing spot
@@ -233,8 +205,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             } else {
                 //add queen to landing spot
                 BBBlackQueens |= pieceMaskE;
-                //add promotion data to capture string
-                savedMove += "O";
             }
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
@@ -245,8 +215,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackRooks &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "r";
-            savedMove += move.captured;
             //add piece
             BBBlackRooks |= pieceMaskE;
             //add to color pieces then full tiles
@@ -258,8 +226,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackKnights &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "n";
-            savedMove += move.captured;
             //add piece
             BBBlackKnights |= pieceMaskE;
             //add to color pieces then full tiles
@@ -271,8 +237,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackBishops &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "b";
-            savedMove += move.captured;
             //add piece
             BBBlackBishops |= pieceMaskE;
             //add to color pieces then full tiles
@@ -284,8 +248,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackQueens &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "q";
-            savedMove += move.captured;
             //add piece
             BBBlackQueens |= pieceMaskE;
             //add to color pieces then full tiles
@@ -297,8 +259,6 @@ void BitBoards::makeMove(Move move, ZobristH *zobrist, bool isWhite)
             BBBlackKing &= ~pieceMaskI;
             BBBlackPieces &= ~pieceMaskI;
             FullTiles &= ~pieceMaskI;
-            savedMove += "k";
-            savedMove += move.captured;
             //add piece
             BBBlackKing |= pieceMaskE;
             //add to color pieces then full tiles

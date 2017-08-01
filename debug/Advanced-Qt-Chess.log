@@ -1,4 +1,18 @@
-﻿  tile.cpp
+﻿  ai_logic.cpp
+ai_logic.cpp(125): warning C4189: 'f_prune': local variable is initialized but not referenced
+  bitboards.cpp
+  evaluatebb.cpp
+evaluatebb.cpp(482): warning C4101: 'm': unreferenced local variable
+  main.cpp
+  movegen.cpp
+movegen.cpp(91): warning C4189: 'isWhite': local variable is initialized but not referenced
+movegen.cpp(242): warning C4189: 'isWhite': local variable is initialized but not referenced
+movegen.cpp(695): warning C4100: 'ply': unreferenced formal parameter
+movegen.cpp(712): warning C4100: 'entry': unreferenced formal parameter
+  slider_attacks.cpp
+  tile.cpp
 tile.cpp(19): warning C4100: 'event': unreferenced formal parameter
+  zobristh.cpp
+  Generating Code...
   Advanced-Qt-Chess.vcxproj -> C:\Users\C-60\Desktop\QtPrograms\Advanced-Qt-Chess\debug\Advanced-Qt-Chess.exe
   Advanced-Qt-Chess.vcxproj -> debug\Advanced-Qt-Chess.pdb (Full PDB)

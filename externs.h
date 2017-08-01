@@ -12,8 +12,12 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 class HashEntry;
 class ZobristH;
 class BitBoards;
+class MoveGen;
 
+//magics object
 extern SliderAttacks slider_attacks;
+
+extern MoveGen evalMoveGen;
 
 //chess board represented
 extern std::string boardArr[8][8];
