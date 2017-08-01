@@ -62,15 +62,15 @@ evaluateBB::evaluateBB()
 
 }
 
-int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH *zobrist)
+int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH zobristE)
 {
     //transposition hash quiet
-    int hash = (int)(zobrist->zobristKey % 5021983);
+    int hash = (int)(zobristE.zobristKey % 5021983);
     HashEntry entry = transpositionEval[hash];
     evalMoveGen.grab_boards(BBBoard, isWhite);
-
+/*
     //if we get a hash-table hit, return the evaluation
-    if(entry.zobrist == zobrist->zobristKey){
+    if(entry.zobrist == zobristE.zobristKey){
         if(isWhite){
 
             if(!entry.flag) return entry.eval;
@@ -82,7 +82,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH *zobr
         }
 
     }
-
+*/
 //reset values
     int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
     gamePhase = 0;
@@ -154,18 +154,16 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, ZobristH *zobr
     if(!isWhite) totalEvaualtion = -totalEvaualtion;
 
     //save to TT eval table
-    saveTT(isWhite, zobrist, totalEvaualtion, hash);
+    saveTT(isWhite, totalEvaualtion, hash, zobristE);
 
     return totalEvaualtion;
-
-
 }
 
-void evaluateBB::saveTT(bool isWhite, ZobristH *zobrist, int totalEvaualtion, int hash)
+void evaluateBB::saveTT(bool isWhite, int totalEvaualtion, int hash, const ZobristH &zobristE)
 {
     //store eval into eval hash table
     transpositionEval[hash].eval = totalEvaualtion;
-    transpositionEval[hash].zobrist = zobrist->zobristKey;
+    transpositionEval[hash].zobrist = zobristE.zobristKey;
 
     if(isWhite) transpositionEval[hash].flag = 0;
     else transpositionEval[hash].flag = 1;
@@ -499,7 +497,7 @@ void evaluateBB::generateKingZones(bool isWhite)
 
 int evaluateBB::getPawnScore()
 {
-    //get zobrist/bitboard of current pawn positions
+    //get zobristE/bitboard of current pawn positions
     U64 pt = evalMoveGen.BBWhitePawns | evalMoveGen.BBBlackPawns;
     int hash = (int)(pt % 400000);
     //probe pawn hash table
