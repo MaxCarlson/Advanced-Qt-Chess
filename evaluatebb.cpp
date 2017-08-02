@@ -16,6 +16,19 @@ const U64 FileMasks8[8] =/*from fileA to FileH*/
     0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
 };
 
+const int bSQ[64] = {
+    56,57,58,59,60,61,62,63,
+    48,49,50,51,52,53,54,55,
+    40,41,42,43,44,45,46,47,
+    32,33,34,35,36,37,38,39,
+    24,25,26,27,28,29,30,31,
+    16,17,18,19,20,21,22,23,
+    8, 9, 10,11,12,13,14,15,
+    0, 1,  2, 3, 4, 5, 6, 7
+};
+
+U64 wKingSide = FileMasks8[5] | FileMasks8[6] | FileMasks8[7];
+U64 wQueenSide = FileMasks8[2] | FileMasks8[1] | FileMasks8[0];
 
 const U64 full  = 0xffffffffffffffffULL;
 
@@ -62,133 +75,173 @@ evaluateBB::evaluateBB()
 
 }
 
+struct evalVect{
+    int gamePhase;
+    int pieceMaterial[2];
+    int midGMobility[2];
+    int endGMobility[2];
+    int attCount[2];
+    int attWeight[2];
+    int mgTropism[2];
+    int egTropism[2];
+    int kingShield[2];
+    int adjustMaterial[2];
+    int blockages[2];
+    int pawnCount[2];
+    int pawnMaterial[2];
+    int knightCount[2];
+    int bishopCount[2];
+    int rookCount[2];
+    int queenCount[2];
+} ev; //object to hold values incase we want to print
+
 int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH& zobristE)
 {
-    //transposition hash quiet
+    //transposition hash for board evals
     int hash = (int)(zobristE.zobristKey % 5021983);
-    HashEntry entry = transpositionEval[hash];
-    evalMoveGen.grab_boards(BBBoard, isWhite);
-
+    HashEntry entry = transpositionEval[hash];    
     //if we get a hash-table hit, return the evaluation
     if(entry.zobrist == zobristE.zobristKey){
         if(isWhite){
-
-            if(!entry.flag) return entry.eval;
-            else return -entry.eval;
+            //if eval was from blacks POV, return -eval
+            if(entry.flag) return -entry.eval;
+            else return entry.eval; //if eval was from our side, return normally
         } else {
 
-            if(!entry.flag) return - entry.eval;
-            else return entry.eval;
+            if(entry.flag) return entry.eval;
+            else return -entry.eval;
         }
 
     }
 
+    //if we don't get a hash hit, setup boards in global to mimic real boards
+    //and proceed with eval, we still might get a pawn hash-table hit later
+    evalMoveGen.grab_boards(BBBoard, isWhite);
+
 //reset values
-    int totalEvaualtion = 0, midGScore = 0, endGScore = 0;
-    gamePhase = 0;
-    attCount[0] = 0; attCount[1] = 0;
-    attWeight[0] = 0; attWeight[1] = 0;
-    pawnCount[0] = 0; pawnCount[1] = 0;
-    knightCount[0] = 0; knightCount[1] = 0;
-    bishopCount[0] = 0; bishopCount [1] = 0;
-    rookCount[0] = 0; rookCount[1] = 0;
-    midGMobility[0] = 0; midGMobility[1] = 0;
-    endGMobility[0] = 0; endGMobility[1] = 0;
+    int result = 0, midGScore = 0, endGScore = 0;
+    ev.gamePhase = 0;
 
+    for (int color = 0; color < 2; color++){
+        ev.pieceMaterial[color] = 0;
+        ev.midGMobility[color] = 0;
+        ev.endGMobility[color] = 0;
+        ev.attCount[color] = 0;
+        ev.attWeight[color] = 0;
+        ev.mgTropism[color] = 0;
+        ev.egTropism[color] = 0;
+        ev.kingShield[color] = 0;
+        ev.adjustMaterial[color] = 0;
+        ev.blockages[color] = 0;
+        ev.pawnCount[color] = 0;
+        ev.pawnMaterial[color] = 0;
+        ev.knightCount[color] = 0;
+        ev.bishopCount[color] = 0;
+        ev.rookCount[color] = 0;
+        ev.queenCount[color] = 0;
 
+    }
 
 //generate zones around kings
     generateKingZones(true);
     generateKingZones(false);
 
 
-//loop through all pieces and gather numbers, mobility, king attacks, etc
+//loop through all pieces and gather numbers, mobility, king attacks..
+    //and add piece square table + material value too endGScore and midGScore
     for(U8 i = 0; i < 64; i++){
-        totalEvaualtion += getPieceValue(i);
+        getPieceMaterial(i);
     }
-    totalEvaualtion += getPawnScore();
+
+    //need to add end game piece square tables
+    midGScore = ev.pieceMaterial[WHITE] - ev.pieceMaterial[BLACK];
+    endGScore = midGScore;
+
+//gather game phase data based on piece counts of both sides
+    for(int color = 1; color < 2; color++){
+        ev.gamePhase += ev.knightCount[color];
+        ev.gamePhase += ev.bishopCount[color];
+        ev.gamePhase += ev.rookCount[color] * 2;
+        ev.gamePhase += ev.queenCount[color] * 4;
+    }
+
+//evaluate king shield and part of blocking later once finished
+
+    ev.kingShield[WHITE] = wKingShield();
+    ev.kingShield[BLACK] = bKingShield();
+
+    midGScore += (ev.kingShield[WHITE] - ev.kingShield[BLACK]);
 
 
 //adjusting meterial value of pieces bonus for bishop, small penalty for others
-    if(bishopCount[0] > 1) totalEvaualtion += BISHOP_PAIR;
-    if(bishopCount[1] > 1) totalEvaualtion -= BISHOP_PAIR;
-    if(knightCount[0] > 1) totalEvaualtion -= KNIGHT_PAIR;
-    if(knightCount[1] > 1) totalEvaualtion += KNIGHT_PAIR;
-    if(rookCount[0] > 1) totalEvaualtion -= KNIGHT_PAIR;
-    if(rookCount[1] > 1) totalEvaualtion += KNIGHT_PAIR;
+    if(ev.bishopCount[WHITE] > 1) ev.adjustMaterial[WHITE] += BISHOP_PAIR;
+    if(ev.bishopCount[BLACK] > 1) ev.adjustMaterial[BLACK] -= BISHOP_PAIR;
+    if(ev.knightCount[WHITE] > 1) ev.adjustMaterial[WHITE] -= KNIGHT_PAIR;
+    if(ev.knightCount[BLACK] > 1) ev.adjustMaterial[BLACK] += KNIGHT_PAIR;
+    if(ev.rookCount[WHITE] > 1) ev.adjustMaterial[WHITE] -= ROOK_PAIR;
+    if(ev.rookCount[BLACK] > 1) ev.adjustMaterial[BLACK] += ROOK_PAIR;
 
 
-    totalEvaualtion += knight_adj[pawnCount[0]];
-    totalEvaualtion += rook_adj[pawnCount[0]];
-    totalEvaualtion -= knight_adj[pawnCount[1]];
-    totalEvaualtion -= rook_adj[pawnCount[1]];
+    ev.adjustMaterial[WHITE] += knight_adj[ev.pawnCount[WHITE]] * ev.knightCount[WHITE];
+    ev.adjustMaterial[BLACK] -= knight_adj[ev.pawnCount[BLACK]] * ev.knightCount[BLACK];
+    ev.adjustMaterial[WHITE] += rook_adj[ev.pawnCount[WHITE]] * ev.rookCount[WHITE];
+    ev.adjustMaterial[BLACK] -= rook_adj[ev.pawnCount[BLACK]] * ev.rookCount[BLACK];
+
+    //probe pawn hash table for a hit, if we don't get a hit
+    //proceed with pawnEval
+    result += getPawnScore();
+
+    /********************************************************************
+    *  Merge midgame and endgame score. We interpolate between these    *
+    *  two values, using a ev.gamePhase value, based on remaining piece *
+    *  material on both sides. With less pieces, endgame score beco-    *
+    *  mes more influential.                                            *
+    ********************************************************************/
+
+    midGScore +=(ev.midGMobility[WHITE] - ev.midGMobility[BLACK]);
+    endGScore +=(ev.endGMobility[WHITE] - ev.endGMobility[BLACK]);
+    if (ev.gamePhase > 24) ev.gamePhase = 24;
+    int mgWeight = ev.gamePhase;
+    int egWeight = 24 - ev.gamePhase;
+
+    result +=( (midGScore * mgWeight) + (endGScore * egWeight)) / 24;
+
+    //add phase independent scoring
+
+    result += (ev.adjustMaterial[WHITE] - ev.adjustMaterial[BLACK]);
+
 
     /********************************************************************
      *  Merge king attack score. We don't apply this value if there are *
      *  less than two attackers or if the attacker has no queen.        *
      *******************************************************************/
 
-    if(attCount[0] < 2 || BBBoard.BBWhiteQueens == 0LL) attWeight[0] = 0;
-    if(attCount[1] < 2 || BBBoard.BBBlackQueens == 0LL) attWeight[1] = 0;
-    totalEvaualtion += SafetyTable[attWeight[0]];
-    totalEvaualtion -= SafetyTable[attWeight[1]];
+    if(ev.attCount[WHITE] < 2 || BBBoard.BBWhiteQueens == 0LL) ev.attWeight[WHITE] = 0;
+    if(ev.attCount[BLACK] < 2 || BBBoard.BBBlackQueens == 0LL) ev.attWeight[BLACK] = 0;
+    result += SafetyTable[ev.attWeight[WHITE]];
+    result -= SafetyTable[ev.attWeight[BLACK]];
 
+    //NEED low material adjustment scoring here
 
-    /********************************************************************
-    *  Merge midgame and endgame score. We interpolate between these    *
-    *  two values, using a gamePhase value, based on remaining piece    *
-    *  material on both sides. With less pieces, endgame score beco-    *
-    *  mes more influential.                                            *
-    ********************************************************************/
-
-    midGScore +=(midGMobility[0] - midGMobility[1]);
-    endGScore +=(endGMobility[0] - endGMobility[1]);
-    if (gamePhase > 24) gamePhase = 24;
-    int mgWeight = gamePhase;
-    int egWeight = 24 - gamePhase;
-
-    totalEvaualtion +=( (midGScore * mgWeight) + (endGScore * egWeight)) / 24;
-
-
-    //switch for color
-    if(!isWhite) totalEvaualtion = -totalEvaualtion;
+    //switch score for color
+    if(!isWhite) result = -result;
 
     //save to TT eval table
-    saveTT(isWhite, totalEvaualtion, hash, zobristE);
+    saveTT(isWhite, result, hash, zobristE);
 
-    return totalEvaualtion;
+    return result;
 }
 
-void evaluateBB::saveTT(bool isWhite, int totalEvaualtion, int hash, const ZobristH &zobristE)
+void evaluateBB::saveTT(bool isWhite, int result, int hash, const ZobristH &zobristE)
 {
     //store eval into eval hash table
-    transpositionEval[hash].eval = totalEvaualtion;
+    transpositionEval[hash].eval = result;
     transpositionEval[hash].zobrist = zobristE.zobristKey;
 
+    //set flag for TT so we can switch value if we get a TT hit but
+    //the color of the eval was opposite
     if(isWhite) transpositionEval[hash].flag = 0;
     else transpositionEval[hash].flag = 1;
-}
-
-int evaluateBB::returnMateScore(bool isWhite, int depth)
-{
-    U64 king;
-    if(isWhite) king = evalMoveGen.BBWhiteKing;
-    else king = evalMoveGen.BBBlackKing;
-
-    //if we have no moves and we're in checkmate
-    if(evalMoveGen.isAttacked(king, isWhite)){
-        if(isWhite){
-            return 32000 + depth; //increase mate score the faster we find it
-        } else {
-            return -32000 - depth;
-        }
-    }
-    //if it's a stalemate
-    if(isWhite){
-        return 25000 + depth;
-    } else {
-        return -25000 - depth;
-    }
 }
 
 //white piece square lookup tables
@@ -393,7 +446,7 @@ int passed_pawn_pcsq[2][64] = { {
 }
 };
 
-int evaluateBB::getPieceValue(int location)
+void evaluateBB::getPieceMaterial(int location)
 {
     //create an empty board then shift a 1 over to the current i location
     U64 pieceLocation = 1LL << location;
@@ -401,71 +454,71 @@ int evaluateBB::getPieceValue(int location)
     //white pieces
     if(evalMoveGen.BBWhitePieces & pieceLocation){
         if(pieceLocation & evalMoveGen.BBWhitePawns){
-            pawnCount[0] ++;
-            return 100; //eval pawns sepperatly
+            ev.pawnCount[WHITE] ++;
+            ev.pieceMaterial[WHITE] += 100; //eval pawns sepperatly
 
         } else if(pieceLocation & evalMoveGen.BBWhiteRooks){
-            rookCount[0] ++;
+            ev.rookCount[WHITE] ++;
             evalRook(true, location);
-            return 500 + wRooksSqT[location];
+            ev.pieceMaterial[WHITE] += 500 + wRooksSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBWhiteKnights){
-            knightCount[0] ++;
+            ev.knightCount[WHITE] ++;
             evalKnight(true, location);
-            return 320 + wKnightsSqT[location];
+            ev.pieceMaterial[WHITE] += 325 + wKnightsSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBWhiteBishops){
-            bishopCount[0] ++;
+            ev.bishopCount[WHITE] ++;
             evalBishop(true, location);
-            return 330 + wBishopsSqT[location];
+            ev.pieceMaterial[WHITE] += 335 + wBishopsSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBWhiteQueens){
             evalQueen(true, location);
-            return 900 + wQueensSqt[location];
+            ev.queenCount[WHITE] ++;
+            ev.pieceMaterial[WHITE] += 975 + wQueensSqt[location];
 
         } else if(pieceLocation & evalMoveGen.BBWhiteKing){
 
             //If both sides have no queens use king end game board
-            if((evalMoveGen.BBWhiteQueens | evalMoveGen.BBBlackQueens) & full){
-                return 20000 + wKingEndSqT[location];
-            }
+           // if((evalMoveGen.BBWhiteQueens | evalMoveGen.BBBlackQueens) & full){
+            //    ev.pieceMaterial[WHITE] += 20000 + wKingEndSqT[location];
+            //}
             //if end game conditions fail use mid game king board
-            return 20000 + wKingMidSqT[location];
+            ev.pieceMaterial[WHITE] += wKingMidSqT[location]; ///NEEED to add better mid/end psqT stuff
 
         }
     } else if (evalMoveGen.BBBlackPieces & pieceLocation) {
         if(pieceLocation & evalMoveGen.BBBlackPawns ){
-            pawnCount[1] ++;
-            return -100;
+            ev.pawnCount[BLACK] ++;
+            ev.pieceMaterial[BLACK] += 100;
 
         } else if(pieceLocation & evalMoveGen.BBBlackRooks){
-            rookCount[1] ++;
+            ev.rookCount[BLACK] ++;
             evalRook(false, location);
-            return -500 -bRookSqT[location];
+            ev.pieceMaterial[BLACK] += 500 + bRookSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBBlackKnights){
-            knightCount[1] ++;
+            ev.knightCount[BLACK] ++;
             evalKnight(false, location);
-            return -320 -bKnightSqT[location];
+            ev.pieceMaterial[BLACK] += 325 + bKnightSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBBlackBishops){
-            bishopCount[1] ++;
+            ev.bishopCount[BLACK] ++;
             evalBishop(false, location);
-            return -330 -bBishopsSqT[location];
+            ev.pieceMaterial[BLACK] += 335 + bBishopsSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBBlackQueens){
-
             evalQueen(false, location);
-            return -900 -bQueenSqT[location];
+            ev.queenCount[BLACK] ++;
+            ev.pieceMaterial[BLACK] += 975 + bQueenSqT[location];
 
         } else if(pieceLocation & evalMoveGen.BBBlackKing){
-            if((evalMoveGen.BBBlackQueens | evalMoveGen.BBWhiteQueens) & full){
-                return -20000 -bKingEndSqT[location];
-            }
-         return -20000 -bKingMidSqT[location];
+           // if((evalMoveGen.BBBlackQueens | evalMoveGen.BBWhiteQueens) & full){
+            //    ev.pieceMaterial[BLACK] += 20000 + bKingEndSqT[location];
+           // }
+         ev.pieceMaterial[BLACK] += bKingMidSqT[location];
         }
     }
-    return 0;
 }
 
 void evaluateBB::generateKingZones(bool isWhite)
@@ -495,12 +548,75 @@ void evaluateBB::generateKingZones(bool isWhite)
 
 }
 
+int evaluateBB::wKingShield()
+{
+    //gather info on defending pawns
+    int result = 0;
+    U64 king = evalMoveGen.BBWhiteKing;
+    U64 pawns = evalMoveGen.BBWhitePawns;
+    U64 location = 1LL;
+    //king on kingside
+    if(wKingSide & king){
+        if(pawns & (location << F2)) result += 10;
+        else if (pawns & (location << F3)) result += 5;
+
+        if(pawns & (location << G2)) result += 10;
+        else if (pawns & (location << G3)) result += 5;
+
+        if(pawns & (location << H2)) result += 10;
+        else if (pawns & (location << H3)) result += 5;
+    }
+    else if (wQueenSide & king){
+        if(pawns & (location << A2)) result += 10;
+        else if (pawns & (location << A3)) result += 5;
+
+        if(pawns & (location << B2)) result += 10;
+        else if (pawns & (location << B3)) result += 5;
+
+        if(pawns & (location << C2)) result += 10;
+        else if (pawns & (location << C3)) result += 5;
+    }
+    return result;
+}
+
+int evaluateBB::bKingShield()
+{
+    int result = 0;
+    U64 king = evalMoveGen.BBBlackKing;
+    U64 pawns = evalMoveGen.BBBlackPawns;
+    U64 location = 1LL;
+
+    //king on kingside
+    if(wQueenSide & king){
+        if(pawns & (location << F7)) result += 10;
+        else if (pawns & (location << F6)) result += 5;
+
+        if(pawns & (location << G7)) result += 10;
+        else if (pawns & (location << G6)) result += 5;
+
+        if(pawns & (location << H7)) result += 10;
+        else if (pawns & (location << H6)) result += 5;
+    }
+    //queen side
+    else if (wKingSide & king){
+        if(pawns & (location << A7)) result += 10;
+        else if (pawns & (location << A6)) result += 5;
+
+        if(pawns & (location << B7)) result += 10;
+        else if (pawns & (location << B6)) result += 5;
+
+        if(pawns & (location << C7)) result += 10;
+        else if (pawns & (location << C6)) result += 5;
+    }
+    return result;
+}
+
 int evaluateBB::getPawnScore()
 {
     //get zobristE/bitboard of current pawn positions
     U64 pt = evalMoveGen.BBWhitePawns | evalMoveGen.BBBlackPawns;
     int hash = (int)(pt % 400000);
-    //probe pawn hash table
+    //probe pawn hash table using bit-wise OR of white pawns and black pawns as zobrist key
     if(transpositionPawn[hash].zobrist == pt){
         return transpositionPawn[hash].eval;
     }
@@ -633,7 +749,7 @@ int evaluateBB::isPawnSupported(bool isWhite, U64 pawn, U64 pawns)
 void evaluateBB::evalKnight(bool isWhite, int location)
 {
     int kAttks = 0, mob = 0, side;
-    gamePhase += 1;
+    ev.gamePhase += 1;
 
     U64 knight = 0LL, friends, eking, kingZone;
     knight += 1LL << location;
@@ -678,13 +794,13 @@ void evaluateBB::evalKnight(bool isWhite, int location)
     }
 
     //Evaluate mobility. We try to do it in such a way zero represent average mob
-    midGMobility[side] += 4 *(mob-4);
-    endGMobility[side] += 4 *(mob-4);
+    ev.midGMobility[side] += 4 *(mob-4);
+    ev.endGMobility[side] += 4 *(mob-4);
 
     //save data on king attacks
     if(kAttks){
-        attCount[side] ++;
-        attWeight[side] += 2 * kAttks;
+        ev.attCount[side] ++;
+        ev.attWeight[side] += 2 * kAttks;
     }
 
 }
@@ -692,7 +808,7 @@ void evaluateBB::evalKnight(bool isWhite, int location)
 void evaluateBB::evalBishop(bool isWhite, int location)
 {
     int kAttks = 0, mob = 0, side;
-    gamePhase += 1;
+    ev.gamePhase += 1;
 
     U64 bishop = 0LL, friends, eking, kingZone;
     bishop += 1LL << location;
@@ -724,13 +840,13 @@ void evaluateBB::evalBishop(bool isWhite, int location)
     }
 
     //Evaluate mobility. We try to do it in such a way zero represent average mob
-    midGMobility[side] += 3 *(mob-7);
-    endGMobility[side] += 3 *(mob-7);
+    ev.midGMobility[side] += 3 *(mob-7);
+    ev.endGMobility[side] += 3 *(mob-7);
 
     //save data on king attacks
     if(kAttks){
-        attCount[side] ++;
-        attWeight[side] += 2 * kAttks;
+        ev.attCount[side] ++;
+        ev.attWeight[side] += 2 * kAttks;
     }
 
 
@@ -740,7 +856,7 @@ void evaluateBB::evalRook(bool isWhite, int location)
 {
     bool  ownBlockingPawns = false, oppBlockingPawns = false;
     int kAttks = 0, mob = 0, side;
-    gamePhase += 2;
+    ev.gamePhase += 2;
 
     U64 rook = 0LL, friends, eking, kingZone, currentFile, opawns, epawns;
     rook += 1LL << location;
@@ -776,11 +892,11 @@ void evaluateBB::evalRook(bool isWhite, int location)
 
     if(!ownBlockingPawns){
         if(!oppBlockingPawns){
-            midGMobility[side] += rookOpenFile;
-            endGMobility[side] += rookOpenFile;
+            ev.midGMobility[side] += rookOpenFile;
+            ev.endGMobility[side] += rookOpenFile;
         } else {
-            midGMobility[side] += rookHalfOpenFile;
-            endGMobility[side] += rookHalfOpenFile;
+            ev.midGMobility[side] += rookHalfOpenFile;
+            ev.endGMobility[side] += rookHalfOpenFile;
         }
     }
 
@@ -800,19 +916,19 @@ void evaluateBB::evalRook(bool isWhite, int location)
     }
 
     //Evaluate mobility. We try to do it in such a way zero represent average mob
-    midGMobility[side] += 2 *(mob-7);
-    endGMobility[side] += 4 *(mob-7);
+    ev.midGMobility[side] += 2 *(mob-7);
+    ev.endGMobility[side] += 4 *(mob-7);
 
     //save data on king attacks
     if(kAttks){
-        attCount[side] ++;
-        attWeight[side] += 3 * kAttks;
+        ev.attCount[side] ++;
+        ev.attWeight[side] += 3 * kAttks;
     }
 }
 
 void evaluateBB::evalQueen(bool isWhite, int location)
 {
-    gamePhase += 4;
+    ev.gamePhase += 4;
     int kAttks = 0, mob = 0, side;
 
     U64 queen = 0LL, friends, eking, kingZone;
@@ -845,16 +961,71 @@ void evaluateBB::evalQueen(bool isWhite, int location)
     }
 
     //Evaluate mobility. We try to do it in such a way zero represent average mob
-    midGMobility[side] += 1 *(mob-14);
-    endGMobility[side] += 2 *(mob-14);
+    ev.midGMobility[side] += 1 *(mob-14);
+    ev.endGMobility[side] += 2 *(mob-14);
 
     //save data on king attacks
     if(kAttks){
-        attCount[side] ++;
-        attWeight[side] += 4 * kAttks;
+        ev.attCount[side] ++;
+        ev.attWeight[side] += 4 * kAttks;
     }
 
 
+}
+
+void evaluateBB::blockedPieces(int side, const BitBoards &BBBoard)
+{
+    U64 pawn, epawn, knight, bishop, king;
+    U64 empty = BBBoard.EmptyTiles;
+    U64 emptyLoc = 1LL;
+    int oppo;
+    if(side == WHITE){
+        pawn = BBBoard.BBWhitePawns;
+        epawn = BBBoard.BBBlackPawns;
+        knight = BBBoard.BBWhiteKnights;
+        bishop = BBBoard.BBWhiteBishops;
+        king = BBBoard.BBWhiteKing;
+        oppo = 1;
+    } else {
+        pawn = BBBoard.BBBlackPawns;
+        epawn = BBBoard.BBWhitePawns;
+        knight = BBBoard.BBBlackKnights;
+        bishop = BBBoard.BBBlackBishops;
+        king = BBBoard.BBBlackKing;
+        oppo = 0;
+    }
+
+    //central pawn block bishop blocked
+    if(isPiece(bishop, flip(side, C1))
+            && isPiece(pawn, flip(side, D2))
+            && emptyLoc << flip(side, D3))
+        ev.blockages[side] -= 24;
+
+    if(isPiece(bishop, flip(side, F1))
+            && isPiece(pawn, flip(side, E2))
+            && emptyLoc << flip(side, E3))
+        ev.blockages[side] -= 24;
+
+    //blocked knights
+    if(isPiece(knight, flip(side, A8))
+            && isPiece(epawn, flip(oppo, A7))
+            || isPiece(epawn, flip(oppo, C7)))
+        ev.blockages[side] -= 150;
+    //NOT DONE
+}
+
+bool evaluateBB::isPiece(const U64 &piece, U8 sq)
+{
+    //is the piece on the square?
+    U64 loc = 1LL << sq;
+    if(loc & piece) return true;
+    return false;
+}
+
+int evaluateBB::flip(int side, S8 sq)
+{
+    if(side == 0) return sq;
+    return bSQ[sq];
 }
 
 

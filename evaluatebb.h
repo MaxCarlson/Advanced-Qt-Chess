@@ -13,30 +13,14 @@ public:
     evaluateBB();
 
     //forms total evaluation for baord state
-    int evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH &zobristE);
+    int evalBoard(bool isWhite, const BitBoards &BBBoard, const ZobristH &zobristE);
 
     //returns mate or stalemate score
     int returnMateScore(bool isWhite, int depth);
 
 private:
-    //material value representing wheter we call end game/mid game
-    int gamePhase = 0;
-
-    int pawnCount[2];
-    int knightCount[2];
-    int bishopCount[2];
-    int rookCount[2];
-
-    //attack count and weight against king by side, 0 is white attacking black king
-    int attCount[2];
-    int attWeight[2];
-
-    //mid and end game mobility by color, 0 for white
-    int midGMobility[2];
-    int endGMobility[2];
-
     //gets rudimentry value of piece + square table value
-    int getPieceValue(int location);
+    void getPieceMaterial(int location);
 
 
     //generate zone around king ///Up for debate as to how large zone should be, currently encompasses 8 tiles directly around king
@@ -44,6 +28,10 @@ private:
     void generateKingZones(bool isWhite);
         U64 wKingZ;
         U64 bKingZ;
+    //king pawn shield info
+    int wKingShield();
+    int bKingShield();
+
 
 
 
@@ -60,7 +48,12 @@ private:
 
     void evalQueen(bool isWhite, int location);
 
-    void saveTT(bool isWhite, int totalEvaualtion, int hash, const ZobristH &zobrist);
+    //gets blocked pieces data
+    void blockedPieces(int side, const BitBoards &BBBoard);
+        bool isPiece(const U64 &piece, U8 sq);
+        int flip(int side, S8 sq);
+
+    void saveTT(bool isWhite, int result, int hash, const ZobristH &zobrist);
 
 
 

@@ -28,9 +28,6 @@ private:
     //minmax with alpha beta, the main component of our search
     int alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply, bool allowNull, bool is_pv);
 
-    //Null moves function
-    int nullMoves(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply, bool is_pv);
-
     //Quiescent search ~~ search positions farther if there are captures on horizon
     int quiescent(int alpha, int beta, bool isWhite, int ply, int quietDepth, long currentTime, long timeLimmit);
     //if a capture cannot increase alpha, don't bother searching it
