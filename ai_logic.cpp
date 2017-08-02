@@ -323,7 +323,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         //is move legal? if not skip it
         if(gen_moves.isAttacked(king, isWhite)){ ///IS ATTACKED DOESN"T HAVE UP TO DATE BOARDS FROM BITBOARDS OBJ CAUSES EVERY MOVE WHEN IN CHECK TO BE INVALID
             //newBoard.drawBBA();                  ///ALSO, DOESNT CHECK NON-CHECK MOVES AGAINST NEW MOVES ONLY OLD BOARDS AL
-                                                 ///ALSO BISHOPS ARE PUTTING KINGS IN CHECK FROM ROOK MOVES?
+
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             //newBoard.drawBBA();
             //int a = 5;

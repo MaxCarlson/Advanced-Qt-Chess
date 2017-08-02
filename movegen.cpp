@@ -883,7 +883,7 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
     if(attacks & BQ) return true;
 
     //horizontal of rooks and queens attack check
-    U64 BR = bishops | queens;
+    U64 BR = rooks | queens;
 
     attacks = slider_attacks.RookAttacks(FullTiles, location) & BR;
 
