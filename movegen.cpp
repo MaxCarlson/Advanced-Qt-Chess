@@ -530,31 +530,35 @@ void MoveGen::movegen_push(char piece, char captured, char flag, U8 from, U8 to)
     moveAr[moveCount].flag = flag;
     moveAr[moveCount].score = 0;
 
-    //history heristics for quiet moves, color, from pos, to pos
+    /**************************************************************************
+    * Quiet moves are sorted by history score.                                *
+    **************************************************************************/
     moveAr[moveCount].score = sd.history[isWhite][from][to];
 
     //scoring capture moves
     if(captured != '0'){
-        //int pieceValues[5] = {100, 320, 330, 500, 900};
-        //int capturedValues[5] = {100, 320, 330, 500, 900};
-        int pNum, cNum, from;
-        if(piece == 'P' || piece == 'p') {pNum = 1; from = 5;}
-        else if(piece == 'N' || piece == 'n') {pNum = 2; from = 4;}
-        else if(piece == 'B' || piece == 'b') {pNum = 3; from = 3;}
-        else if(piece == 'R' || piece == 'r') {pNum = 4; from = 2;}
-        else if(piece == 'Q' || piece == 'q') {pNum = 5; from = 1;}
-        else if (piece == 'K' || piece == 'k') {pNum = 6; from = 0;} //different value from actual piece value
 
-        if(captured == 'P' || captured == 'p') cNum = 1;
-        else if(captured == 'N' || captured == 'n') cNum = 2;
-        else if(captured == 'B' || captured == 'b') cNum = 3;
-        else if(captured == 'R' || captured == 'r') cNum = 4;
-        else if(captured == 'Q' || captured == 'q') cNum = 5;
+        int pNum, cNum, id;
+        if(piece == 'P' || piece == 'p') {pNum = PAWN; id = 5;} //if pieces capture the same piece, the one with the higher id gets searched first
+        else if(piece == 'N' || piece == 'n') {pNum = KNIGHT; id = 4;}
+        else if(piece == 'B' || piece == 'b') {pNum = BISHOP; id = 3;}
+        else if(piece == 'R' || piece == 'r') {pNum = ROOK; id = 2;}
+        else if(piece == 'Q' || piece == 'q') {pNum = QUEEN; id = 1;}
+        else if (piece == 'K' || piece == 'k') {pNum = KING; id = 0;}
 
-        Move t = moveAr[moveCount];
+        if(captured == 'P' || captured == 'p') cNum = PAWN;
+        else if(captured == 'N' || captured == 'n') cNum = KNIGHT;
+        else if(captured == 'B' || captured == 'b') cNum = BISHOP;
+        else if(captured == 'R' || captured == 'r') cNum = ROOK;
+        else if(captured == 'Q' || captured == 'q') cNum = QUEEN;//values at and above are actual values
+        else if(captured == 'K' || captured == 'k') cNum = KING; //value 0
 
-        if(blind(t, SORT_VALUE[pNum], SORT_VALUE[cNum])) moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + from;
-        else moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + from;
+        //Good captures are scored higher, based on BLIND better lower if not defended
+        //need to add Static Exchange at somepoint
+        if(blind(moveAr[moveCount], SORT_VALUE[pNum], SORT_VALUE[cNum])) moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + id;
+
+        //captures of defended pieces or pieces we know nothing about
+        else moveAr[moveCount].score = SORT_VALUE[cNum] + id; // + SORT_CAPT/4 ???
 
     }
 

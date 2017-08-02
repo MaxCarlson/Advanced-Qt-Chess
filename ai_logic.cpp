@@ -211,7 +211,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     //create unqiue hash from zobrist key
     int hash = (int)(zobrist.zobristKey % 15485843);
     HashEntry entry = transpositionT[hash];
-/*
+
     //if the depth of the stored evaluation is greater and the zobrist key matches
     //don't return eval on root node
     if(entry.depth >= depth && entry.zobrist == zobrist.zobristKey){
@@ -235,7 +235,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
 
     }
-*/
+
     //if the time limmit has been exceded set stop search flag
     if(elapsedTime >= timeLimmit){
         searchCutoff = true;
@@ -268,7 +268,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
     }
 */
-/*
+
 //Null move heuristics, disabled if in check
     if(allowNull && !is_pv && depth > depthR && !FlagInCheck){
         if(depth > 6) depthR = 3;
@@ -292,7 +292,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
             if(score < threshold) return alpha;
         }
     }
-*/
+
 /*
 //do we want to futility prune?
     int fmargin[4] = { 0, 200, 300, 500 };
@@ -323,8 +323,8 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         //is move legal? if not skip it
         if(gen_moves.isAttacked(king, isWhite)){ ///IS ATTACKED DOESN"T HAVE UP TO DATE BOARDS FROM BITBOARDS OBJ CAUSES EVERY MOVE WHEN IN CHECK TO BE INVALID
             //newBoard.drawBBA();                  ///ALSO, DOESNT CHECK NON-CHECK MOVES AGAINST NEW MOVES ONLY OLD BOARDS AL
-
             newBoard.unmakeMove(newMove, zobrist, isWhite);
+            gen_moves.grab_boards(newBoard, isWhite);
             //newBoard.drawBBA();
             //int a = 5;
             continue;
@@ -455,6 +455,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
         //is move legal? if not skip it ~~~~~~~~ possibly remove check later?
         if(gen_moves.isAttacked(king, isWhite)){
             newBoard.unmakeMove(newMove, zobrist, isWhite);
+            gen_moves.grab_boards(newBoard, isWhite);
             continue;
         }
 
