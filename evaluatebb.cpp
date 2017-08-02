@@ -118,7 +118,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
     //and proceed with eval, we still might get a pawn hash-table hit later
     evalMoveGen.grab_boards(BBBoard, isWhite);
 
-//reset values
+    //reset values
     int result = 0, midGScore = 0, endGScore = 0;
     ev.gamePhase = 0;
 
@@ -142,12 +142,12 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
 
     }
 
-//generate zones around kings
+    //generate zones around kings
     generateKingZones(true);
     generateKingZones(false);
 
 
-//loop through all pieces and gather numbers, mobility, king attacks..
+    //loop through all pieces and gather numbers, mobility, king attacks..
     //and add piece square table + material value too endGScore and midGScore
     for(U8 i = 0; i < 64; i++){
         getPieceMaterial(i);
@@ -157,7 +157,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
     midGScore = ev.pieceMaterial[WHITE] - ev.pieceMaterial[BLACK];
     endGScore = midGScore;
 
-//gather game phase data based on piece counts of both sides
+    //gather game phase data based on piece counts of both sides
     for(int color = 1; color < 2; color++){
         ev.gamePhase += ev.knightCount[color];
         ev.gamePhase += ev.bishopCount[color];
@@ -165,7 +165,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
         ev.gamePhase += ev.queenCount[color] * 4;
     }
 
-//evaluate king shield and part of blocking later once finished
+    //evaluate king shield and part of blocking later once finished
 
     ev.kingShield[WHITE] = wKingShield();
     ev.kingShield[BLACK] = bKingShield();
@@ -173,7 +173,7 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
     midGScore += (ev.kingShield[WHITE] - ev.kingShield[BLACK]);
 
 
-//adjusting meterial value of pieces bonus for bishop, small penalty for others
+    //adjusting meterial value of pieces bonus for bishop, small penalty for others
     if(ev.bishopCount[WHITE] > 1) ev.adjustMaterial[WHITE] += BISHOP_PAIR;
     if(ev.bishopCount[BLACK] > 1) ev.adjustMaterial[BLACK] -= BISHOP_PAIR;
     if(ev.knightCount[WHITE] > 1) ev.adjustMaterial[WHITE] -= KNIGHT_PAIR;
@@ -209,7 +209,6 @@ int evaluateBB::evalBoard(bool isWhite, const BitBoards& BBBoard, const ZobristH
     //add phase independent scoring
 
     result += (ev.adjustMaterial[WHITE] - ev.adjustMaterial[BLACK]);
-
 
     /********************************************************************
      *  Merge king attack score. We don't apply this value if there are *

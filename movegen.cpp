@@ -616,10 +616,10 @@ bool MoveGen::blind(Move move, int pieceVal, int captureVal)
 
 Move MoveGen::movegen_sort(int ply)
 {
-    int best = -9999999;
+    int best = -INF;
     int high;
     //find best scoring move
-    for(U8 i = 0; i < moveCount; i++){
+    for(U8 i = 0; i < moveCount; ++i){
         if(moveAr[i].score > best && !moveAr[i].tried){
             high = i;
             best = moveAr[i].score;
@@ -629,18 +629,14 @@ Move MoveGen::movegen_sort(int ply)
     //~~~ change later if we don't always try move on return
     moveAr[high].tried = true;
 
-    //if(moveAr[high].score > 0){
-    //    std::cout << moveAr[high].score << std::endl;
-    //}
-
-    best = -9999999;
+    best = -INF;
     return moveAr[high];
 }
 
 void MoveGen::reorderMoves(int ply, const HashEntry &entry)
 {
 
-    for(int i = 0; i < moveCount; i++){
+    for(int i = 0; i < moveCount; ++i){
         //add killer moves score to move if there is a from - to match in killers
         if(moveAr[i].piece == sd.killers[ply][1].piece
         && moveAr[i].from == sd.killers[ply][1].from
@@ -663,20 +659,6 @@ void MoveGen::reorderMoves(int ply, const HashEntry &entry)
 
 
     }
-    /*
-    if(entry.flag != 'X'){
-        moveAr[moveCount] = entry.move;
-        moveAr[moveCount].score = SORT_HASH;
-        moveCount++;
-    }
-    */
-/*
-    if(entry.move.flag != 0x58 && entry.move.flag != 88 && entry.move.flag != 'X'){
-        moveAr[moveCount] = entry.move;
-        moveAr[moveCount].score = SORT_HASH;
-        moveCount ++;
-    }
-*/
 }
 
 char MoveGen::whichPieceCaptured(U64 landing)

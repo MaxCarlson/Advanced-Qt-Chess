@@ -20,7 +20,7 @@ public:
     //builds boards through reading an array
     void constructBoards();
 
-    void makeMove(Move move, ZobristH &zobrist, bool isWhite);
+    void makeMove(const Move &move, ZobristH &zobrist, bool isWhite);
     void unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite);
 
     //helper funtction to draw out bitboards like chess boards

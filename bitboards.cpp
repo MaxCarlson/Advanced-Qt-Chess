@@ -92,7 +92,7 @@ void BitBoards::constructBoards()
 }
 
 //normal move stuff
-void BitBoards::makeMove(Move move, ZobristH &zobrist, bool isWhite)
+void BitBoards::makeMove(const Move &move, ZobristH &zobrist, bool isWhite)
 {
     U8 xyI, xyE;
     //move coordinates, later replace x,y x1,y1 with from/to coordinates to remove math
@@ -285,11 +285,8 @@ void BitBoards::makeMove(Move move, ZobristH &zobrist, bool isWhite)
 
     //Update zobrist hash
     zobrist.UpdateKey(xyI, xyE, move, isWhite);
-
     //change zobrist color after a move
     zobrist.UpdateColor();
-
-
 }
 
 void BitBoards::unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite)

@@ -77,7 +77,7 @@ Move Ai_Logic::iterativeDeep(int depth)
         }
 
         //main search
-        //bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, ply +1, true);
+        //bestScore = alphaBeta(distance, alpha, beta, false, currentTime, timeLimmit, ply +1, true, IS_PV);
         bestScore = searchRoot(distance, alpha, beta, false, currentTime, timeLimmit, ply+1);
 /*
         if(bestScore <= alpha || bestScore >= beta){
@@ -132,9 +132,9 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     gen_moves.generatePsMoves(false);
 
     //who's our king?
-    U64 king, eking;
-    if(isWhite){ king = newBoard.BBWhiteKing; eking = newBoard.BBBlackKing; }
-    else { king = newBoard.BBBlackKing; eking = newBoard.BBWhiteKing; }
+    U64 king;
+    if(isWhite) king = newBoard.BBWhiteKing;
+    else king = newBoard.BBBlackKing;
     //are we in check?
     flagInCheck = gen_moves.isAttacked(king, isWhite);
     U8 moveNum = gen_moves.moveCount;
@@ -160,7 +160,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
             //full window PV search
             score = -alphaBeta(depth-1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
 
-        } else {
+       } else {
             //zero window search
             score = -alphaBeta(depth-1, -alpha -1, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, NO_PV);
 
@@ -181,7 +181,6 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
 
             if(score > beta){
                 addMoveTT(newMove, depth, score, TT_BETA);
-
                 return beta;
             }
 
