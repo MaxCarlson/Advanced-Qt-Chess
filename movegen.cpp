@@ -812,6 +812,11 @@ void MoveGen::grab_boards(const BitBoards &BBBoard, bool wOrB)
     BBBlackKing = BBBoard.BBBlackKing;
 }
 
+void MoveGen::updateBoards(const Move &move, const BitBoards &board)
+{
+
+}
+
 bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
 {
     U64 attacks = 0LL, friends, enemys, pawns, knights, rooks, bishops, queens, king;

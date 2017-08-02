@@ -318,10 +318,15 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
         //make move on BB's store data to string so move can be undone
         newBoard.makeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         //is move legal? if not skip it
-        if(gen_moves.isAttacked(king, isWhite)){
+        if(gen_moves.isAttacked(king, isWhite)){ ///IS ATTACKED DOESN"T HAVE UP TO DATE BOARDS FROM BITBOARDS OBJ CAUSES EVERY MOVE WHEN IN CHECK TO BE INVALID
+            //newBoard.drawBBA();                  ///ALSO, DOESNT CHECK NON-CHECK MOVES AGAINST NEW MOVES ONLY OLD BOARDS AL
+                                                 ///ALSO BISHOPS ARE PUTTING KINGS IN CHECK FROM ROOK MOVES?
             newBoard.unmakeMove(newMove, zobrist, isWhite);
+            //newBoard.drawBBA();
+            //int a = 5;
             continue;
         }
         positionCount ++;
@@ -349,6 +354,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
         //undo move on BB's
         newBoard.unmakeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         if(score > alpha){            
             hashMove = newMove;
@@ -408,7 +414,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
     }
 
     evaluateBB eval;
-    //evaluate board position (if curentDepth is even return -eval)
+    //evaluate board position
     int standingPat = eval.evalBoard(isWhite, newBoard, zobrist);
 
     if(quietDepth <= 0 || searchCutoff){
@@ -444,6 +450,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
         Move newMove = gen_moves.movegen_sort(ply);
 
         newBoard.makeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         //is move legal? if not skip it ~~~~~~~~ possibly remove check later?
         if(gen_moves.isAttacked(king, isWhite)){
@@ -467,6 +474,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
         score = -quiescent(-beta, -alpha, !isWhite, ply+1, quietDepth-1, currentTime, timeLimmit);
 
         newBoard.unmakeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         if(score > alpha){
             if(score >= beta){

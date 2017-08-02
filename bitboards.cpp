@@ -653,4 +653,3 @@ void BitBoards::removeCapturedPiece(char captured, U64 location)
 
 
 
-

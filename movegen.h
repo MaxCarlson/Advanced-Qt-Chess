@@ -20,7 +20,6 @@ public:
 
     //array of move objects by ply then number of moves
     Move moveAr[256];
-    //Historys history;
 
     bool isWhite;
     int moveCount = 0;
@@ -29,15 +28,13 @@ public:
     void clearMove(int ply, int numMoves);
     void constructBoards();
     void grab_boards(const BitBoards &BBBoard, bool wOrB);
+        void updateBoards(const Move &move, const BitBoards &board);
 
     bool isAttacked(U64 pieceLoc, bool wOrB);
 
     Move movegen_sort(int ply);
 
     void reorderMoves(int ply, const HashEntry &entry);
-
-    //void unmakeMove(std::string moveKey, ZobristH *zobrist);
-    //std::string makeMove(Move move, ZobristH *zobrist);
 
     //bitboards
         U64 FullTiles;
@@ -97,7 +94,6 @@ private:
 
 
         //psuedo legal move gen
-
         void possibleWP(const U64 &wpawns, const U64 &blackking, bool capturesOnly);
         void possibleBP(const U64 &bpawns, const U64 &whiteking, bool capturesOnly);
         void possibleN(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);

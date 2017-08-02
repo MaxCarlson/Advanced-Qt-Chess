@@ -9,7 +9,7 @@ typedef unsigned long long  U64; // supported by MSC 13.00+ and C99
 
 class ZobristH;
 class Move;
-
+class MoveGen;
 
 class BitBoards
 {
@@ -97,6 +97,7 @@ public:
     const U64 KING_SPAN=460039L;
 
 
+    bool isAttacked(U64 pieceLoc, bool wOrB, const MoveGen &gen_moves);
 private:
     //removes cacptured piece from BB's
     void removeCapturedPiece(char captured, U64 location);
