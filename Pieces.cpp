@@ -1,5 +1,5 @@
 #include "Pieces.h"
-/*
+
 //array of chess board
 std::string boardArr [8][8]= {
     {"r", "n", "b", "q", "k", "b", "n", "r"},
@@ -12,7 +12,7 @@ std::string boardArr [8][8]= {
     {"R", "N", "B", "Q", "K", "B", "N", "R"},
               };
 //TEST BOARDS
-
+/*
 std::string boardArr [8][8]= {
 { "r", " " , "b", "q", "k", "b", "n", "r"},
 { " " , " " , " " , "n", " " , " " , " " , " "},
@@ -36,7 +36,7 @@ std::string boardArr[8][8] = {
  {"R", "N", " " , "Q", "K", "B", " " , "R",}
 
 };
-*/
+
 
 
 std::string boardArr [8][8]= {
@@ -50,7 +50,7 @@ std::string boardArr [8][8]= {
     {" ", " ", " ", "R", " ", " ", " ", " "},
               };
 
-/*
+
 std::string boardArr[8][8] = {
     {" " , "r", " " , " " , " " , " " , " " , "r" },
     {" ", "p", "p", "q", " " , "p", "p", "p"},

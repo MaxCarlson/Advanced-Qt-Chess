@@ -52,8 +52,9 @@ private:
     //count of quiescnce positions checked
     int qCount = 0;
 
-    //number representing amount to reduce search with Null-Moves
-    int depthR = 2;
+    //principal variation array
+    Move pVArr[29];
+
 
 };
 

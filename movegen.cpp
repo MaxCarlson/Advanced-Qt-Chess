@@ -557,13 +557,13 @@ void MoveGen::movegen_push(char piece, char captured, char flag, U8 from, U8 to)
         //need to add Static Exchange at somepoint
         if(blind(moveAr[moveCount], SORT_VALUE[pNum], SORT_VALUE[cNum])) moveAr[moveCount].score = SORT_CAPT + SORT_VALUE[cNum] + id;
 
-        //captures of defended pieces or pieces we know nothing about
+        //captures of defended pieces or pieces we know nothing about ~~ better if lower still, by id
         else moveAr[moveCount].score = SORT_VALUE[cNum] + id; // + SORT_CAPT/4 ???
 
     }
 
     //pawn promotions
-    if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += 775;
+    if(moveAr[moveCount].flag == 'Q') moveAr[moveCount].score += SORT_PROM;
 
     moveCount ++;
 }
@@ -893,11 +893,8 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB, bool isSearchKingCheck)
 
     //horizontal of rooks and queens attack check
     U64 RQ = rooks | queens;
-    //drawBB(RQ);
-    //drawBB(FullTiles);
-    attacks = slider_attacks.RookAttacks(FullTiles, location);
 
-    //drawBB(attacks);
+    attacks = slider_attacks.RookAttacks(FullTiles, location);
 
     if(attacks & RQ) return true;
 

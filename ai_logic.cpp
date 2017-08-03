@@ -22,9 +22,6 @@
 //holds historys and killers + eventually nodes searched + other data
 searchDriver sd;
 
-//principal variation array
-Move pVArr[29];
-
 //constructed once so as to pass to eval where constructing was slow
 //for quiet search
 MoveGen evalGenMoves;
@@ -91,8 +88,10 @@ Move Ai_Logic::iterativeDeep(int depth)
         //if the search is not cutoff
         if(!searchCutoff){
 
-            //grab best move out of PV array
-            bestMove = pVArr[distance];
+            //grab best move out of PV array ~~ need better method of grabbing best move, not based on "distance"
+            //Maybe if statement is a bad fix? sometimes a max of specified depth is not reached near checkmates/possibly checks
+            //if statement makes sure the move has been tried before storing it
+            if(pVArr[distance].tried) bestMove = pVArr[distance];
 
         }
         //increment distance to travel (same as depth at max depth)
@@ -286,7 +285,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
     }
 
-//razoring if not is close to leaf and has a low score drop directly into quiescence
+//razoring if not PV and is close to leaf and has a low score drop directly into quiescence
     if(!is_pv && !FlagInCheck && allowNull && depth <= 3){
         int threshold = alpha - 300 - (depth - 1) * 60;
         evaluateBB eval;
@@ -310,7 +309,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 //generate psuedo legal moves (not just captures)
     gen_moves.generatePsMoves(false);
 
-    //add killers scores to moves if there are any
+    //add killers scores and hash moves scores to moves if there are any
     gen_moves.reorderMoves(ply, entry);
 
     int hashFlag = TT_ALPHA, movesNum = gen_moves.moveCount, legalMoves = 0;
