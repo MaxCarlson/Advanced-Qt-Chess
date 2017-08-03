@@ -30,7 +30,7 @@ public:
     void grab_boards(const BitBoards &BBBoard, bool wOrB);
         void updateBoards(const Move &move, const BitBoards &board);
 
-    bool isAttacked(U64 pieceLoc, bool wOrB);
+    bool isAttacked(U64 pieceLoc, bool wOrB, bool isSearchKingCheck);
 
     Move movegen_sort(int ply);
 
@@ -88,7 +88,7 @@ private:
 
         //assigns a score to moves and adds them to the move array
         void movegen_push(char piece, char captured, char flag, U8 from, U8 to);
-        bool blind(Move move, int pieceVal, int captureVal);
+        bool blind(const Move &move, int pieceVal, int captureVal);
 
         char whichPieceCaptured(U64 landing);
 
@@ -100,7 +100,7 @@ private:
         void possibleB(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
         void possibleR(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
         void possibleQ(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
-        void possibleK(U8 location, const U64 &friends, const U64 &enemys, const U64 &capturesOnly);
+        void possibleK(U8 location, const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly);
 
 
         //void undoCapture(U64 location, char piece, char whiteOrBlack);

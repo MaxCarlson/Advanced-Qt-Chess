@@ -467,7 +467,7 @@ void BitBoards::undoCapture(U64 location, char piece, bool isNotWhite)
             case 'K':
                 BBWhiteKing |= location;
                 BBWhitePieces |= location;
-                std::cout << "WKING CAPTURES" << std::endl;
+                break;
             default:
 
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
@@ -500,7 +500,7 @@ void BitBoards::undoCapture(U64 location, char piece, bool isNotWhite)
             case 'k':
                 BBBlackKing |= location;
                 BBBlackPieces |= location;
-                std::cout << "BKING CAPTURES" << std::endl;
+                break;
             default:
                 drawBBA();
                 std::cout << "UNDO CAPTURE ERROR" << std::endl;
@@ -614,6 +614,10 @@ void BitBoards::removeCapturedPiece(char captured, U64 location)
         BBWhiteQueens &= ~location;
         BBWhitePieces &= ~location;
         break;
+    case 'K':
+        BBWhiteKing &= ~location;
+        BBWhitePieces &= ~location;
+        break;
     case 'p':
         BBBlackPawns &= ~location;
         BBBlackPieces &= ~location;
@@ -632,6 +636,10 @@ void BitBoards::removeCapturedPiece(char captured, U64 location)
         break;
     case 'q':
         BBBlackQueens &= ~location;
+        BBBlackPieces &= ~location;
+        break;
+    case 'k':
+        BBBlackKing &= ~location;
         BBBlackPieces &= ~location;
         break;
     default:

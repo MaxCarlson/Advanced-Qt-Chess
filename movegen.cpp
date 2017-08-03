@@ -95,7 +95,7 @@ void MoveGen::generatePsMoves(bool capturesOnly)
         else if(bishops & piece) possibleB(i, friends, enemys, eking, capsOnly);
         else if(rooks & piece) possibleR(i, friends, enemys, eking, capsOnly);
         else if(queens & piece) possibleQ(i, friends, enemys, eking, capsOnly);
-        else if(king & piece) possibleK(i, friends, enemys, capsOnly);
+        else if(king & piece) possibleK(i, friends, enemys, eking, capsOnly);
     }
     return;
 }
@@ -391,7 +391,6 @@ void MoveGen::possibleB(U8 location,  const U64 &friends, const U64 &enemys, con
     if(isWhite) piece = 'B';
     else piece = 'b';
 
-
     U64 moves = slider_attacks.BishopAttacks(FullTiles, location);
     moves &= ~friends & capturesOnly & ~oppositeking;
 
@@ -451,6 +450,7 @@ void MoveGen::possibleQ(U8 location,  const U64 &friends, const U64 &enemys, con
 
     //grab moves from magic bitboards
     U64 moves = slider_attacks.QueenAttacks(FullTiles, location);
+
     //and against friends and a full board if normal move gen, or enemy board if captures only
     moves &= ~friends & capturesOnly & ~oppositeking;
 
@@ -476,7 +476,7 @@ void MoveGen::possibleQ(U8 location,  const U64 &friends, const U64 &enemys, con
 
 }
 
-void MoveGen::possibleK(U8 location,  const U64 &friends, const U64 &enemys, const U64 &capturesOnly)
+void MoveGen::possibleK(U8 location,  const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     U64 moves;
     char piece;
@@ -492,10 +492,10 @@ void MoveGen::possibleK(U8 location,  const U64 &friends, const U64 &enemys, con
     }
 
     if(location % 8 < 4){
-        moves &= ~FILE_GH & ~friends & capturesOnly;
+        moves &= ~FILE_GH & ~friends & capturesOnly & ~oppositeking;
 
     } else {
-        moves &= ~FILE_AB & ~friends & capturesOnly;
+        moves &= ~FILE_AB & ~friends & capturesOnly& ~oppositeking;
     }
 
     U64 j = moves &~(moves-1);
@@ -568,14 +568,13 @@ void MoveGen::movegen_push(char piece, char captured, char flag, U8 from, U8 to)
     moveCount ++;
 }
 
-bool MoveGen::blind(Move move, int pieceVal, int captureVal)
+bool MoveGen::blind(const Move &move, int pieceVal, int captureVal)
 {
     //approx static eval, Better Lower if not Defended
     char piece = move.piece;
-    int slocation = move.from;
-    int elocation = move.to;
-    U64 sLoc = 1LL << slocation;
-    U64 eLoc = 1LL << elocation;
+    //get bitboards containing start and landing spot
+    U64 sLoc = 1LL << move.from;
+    U64 eLoc = 1LL << move.to;
 
     //captures from pawns don't lose material
     if(piece == 'P' || piece == 'p') return true;
@@ -587,9 +586,11 @@ bool MoveGen::blind(Move move, int pieceVal, int captureVal)
     if(isWhite){
         BBWhitePieces &= ~sLoc;
         BBWhitePieces |= eLoc;
+        BBBlackPieces &= ~eLoc;
     } else {
         BBBlackPieces &= ~sLoc;
         BBBlackPieces |= eLoc;
+        BBWhitePieces &= ~eLoc;
     }
     FullTiles &= ~ sLoc;
     FullTiles |= eLoc;
@@ -598,19 +599,20 @@ bool MoveGen::blind(Move move, int pieceVal, int captureVal)
     bool defended = false;
 
     //in order to test if capture location is attacked
-    if(isAttacked(eLoc, isWhite)){
+    if(isAttacked(eLoc, isWhite, false)){
         defended = true;
     }
     //correct BB's
     if(isWhite){
         BBWhitePieces |= sLoc;
         BBWhitePieces &= ~ eLoc;
+        BBBlackPieces |= eLoc;
     } else {
         BBBlackPieces |= sLoc;
         BBBlackPieces &= ~eLoc;
+        BBWhitePieces |= eLoc;
     }
     FullTiles |= sLoc;
-    FullTiles &= ~eLoc;
     EmptyTiles = ~FullTiles;
 
     if(!defended) return true;
@@ -633,7 +635,6 @@ Move MoveGen::movegen_sort(int ply)
     //~~~ change later if we don't always try move on return
     moveAr[high].tried = true;
 
-    best = -INF;
     return moveAr[high];
 }
 
@@ -821,9 +822,9 @@ void MoveGen::updateBoards(const Move &move, const BitBoards &board)
 
 }
 
-bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
+bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB, bool isSearchKingCheck)
 {
-    U64 attacks = 0LL, friends, enemys, pawns, knights, rooks, bishops, queens, king;
+    U64 attacks = 0LL, friends, enemys, pawns, knights, rooks, bishops, queens, king, ourking;
     //int x, y, x1, y1;
 
     if(wOrB){
@@ -835,6 +836,7 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
         rooks = BBBlackRooks;
         queens = BBBlackQueens;
         king = BBBlackKing;
+        ourking = BBWhiteKing;
 
         //pawns
         //capture right
@@ -851,12 +853,15 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
         rooks = BBWhiteRooks;
         queens = BBWhiteQueens;
         king = BBWhiteKing;
+        ourking = BBBlackKing;
 
         //capture right
         attacks = noEaOne(pawns);
         //capture left
         attacks |= noWeOne(pawns);
     }
+
+    if(isSearchKingCheck) pieceLoc = ourking; //used for search king in check checking, so kings pos is not out of date
 
     if(attacks & pieceLoc) return true;
 
@@ -880,18 +885,21 @@ bool MoveGen::isAttacked(U64 pieceLoc, bool wOrB)
     if(attacks & knights) return true;
 
     //diagonal of bishops and queens attack check
-    U64 BQ = bishops | queens;
+    U64 BQ = bishops | queens;    
 
-    attacks = slider_attacks.BishopAttacks(FullTiles, location) & BQ;
+    attacks = slider_attacks.BishopAttacks(FullTiles, location);
 
     if(attacks & BQ) return true;
 
     //horizontal of rooks and queens attack check
-    U64 BR = rooks | queens;
+    U64 RQ = rooks | queens;
+    //drawBB(RQ);
+    //drawBB(FullTiles);
+    attacks = slider_attacks.RookAttacks(FullTiles, location);
 
-    attacks = slider_attacks.RookAttacks(FullTiles, location) & BR;
+    //drawBB(attacks);
 
-    if(attacks & BR) return true;
+    if(attacks & RQ) return true;
 
     //king attack checks
     attacks = northOne(pieceLoc);

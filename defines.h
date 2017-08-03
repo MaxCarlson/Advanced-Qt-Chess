@@ -1,6 +1,5 @@
 #ifndef DEFINES_H
 #define DEFINES_H
-//#pragma once;
 
 
 enum esqare {

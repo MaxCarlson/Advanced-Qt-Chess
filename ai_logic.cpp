@@ -136,8 +136,9 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     if(isWhite) king = newBoard.BBWhiteKing;
     else king = newBoard.BBBlackKing;
     //are we in check?
-    flagInCheck = gen_moves.isAttacked(king, isWhite);
+    flagInCheck = gen_moves.isAttacked(king, isWhite, true);
     U8 moveNum = gen_moves.moveCount;
+
 
     if(flagInCheck) ++depth;
 
@@ -146,10 +147,12 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
         //find best move generated
         Move newMove = gen_moves.movegen_sort(ply);
         newBoard.makeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         //is move legal? if not skip it
-        if(gen_moves.isAttacked(king, isWhite)){
+        if(gen_moves.isAttacked(king, isWhite, true)){
             newBoard.unmakeMove(newMove, zobrist, isWhite);
+            gen_moves.grab_boards(newBoard, isWhite);
             continue;
         }
         positionCount ++;
@@ -172,6 +175,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
 
         //undo move on BB's
         newBoard.unmakeMove(newMove, zobrist, isWhite);
+        gen_moves.grab_boards(newBoard, isWhite);
 
         if(score > best) best = score;
 
@@ -194,7 +198,6 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     return alpha;
 }
 
-
 int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long currentTime, long timeLimmit, U8 ply, bool allowNull, bool is_pv)
 {
 
@@ -203,6 +206,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     long elapsedTime = time - currentTime;
     bool FlagInCheck = false;
     bool raisedAlpha = false;
+    int depthR = 2;
     //U8 newDepth; //use with futility + other pruning later
     int queitSD = 13, f_prune = 0;
     //int  mateValue = INF - ply; // used for mate distance pruning
@@ -257,7 +261,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     if(isWhite){ king = newBoard.BBWhiteKing; eking = newBoard.BBBlackKing; }
     else { king = newBoard.BBBlackKing; eking = newBoard.BBWhiteKing; }
     //are we in check?
-    FlagInCheck = gen_moves.isAttacked(king, isWhite);
+    FlagInCheck = gen_moves.isAttacked(king, isWhite, true);
 /*
 //eval pruning / static null move
     if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
@@ -321,8 +325,8 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         gen_moves.grab_boards(newBoard, isWhite);
 
         //is move legal? if not skip it
-        if(gen_moves.isAttacked(king, isWhite)){ ///IS ATTACKED DOESN"T HAVE UP TO DATE BOARDS FROM BITBOARDS OBJ CAUSES EVERY MOVE WHEN IN CHECK TO BE INVALID
-            //newBoard.drawBBA();                  ///ALSO, DOESNT CHECK NON-CHECK MOVES AGAINST NEW MOVES ONLY OLD BOARDS AL
+        if(gen_moves.isAttacked(king, isWhite, true)){ ///CHANGE METHOD OF UPDATING BOARDS, TOO INEFFICIENT
+            //newBoard.drawBBA();
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             gen_moves.grab_boards(newBoard, isWhite);
             //newBoard.drawBBA();
@@ -453,7 +457,7 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
         gen_moves.grab_boards(newBoard, isWhite);
 
         //is move legal? if not skip it ~~~~~~~~ possibly remove check later?
-        if(gen_moves.isAttacked(king, isWhite)){
+        if(gen_moves.isAttacked(king, isWhite, true)){
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             gen_moves.grab_boards(newBoard, isWhite);
             continue;

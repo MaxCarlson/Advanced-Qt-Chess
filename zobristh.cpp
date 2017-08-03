@@ -86,6 +86,8 @@ void ZobristH::UpdateKey(int start, int end, Move moveKey, bool isWhite)
             zobristKey ^= zArray[1][3][end];
         } else if(captured == 'q'){
             zobristKey ^= zArray[1][4][end];
+        } else if(captured == 'k'){
+            zobristKey ^= zArray[1][5][end];
         }
     } else if (!isWhite && captured != '0') {
         if(captured == 'P'){
@@ -98,6 +100,8 @@ void ZobristH::UpdateKey(int start, int end, Move moveKey, bool isWhite)
             zobristKey ^= zArray[0][3][end];
         } else if(captured == 'Q'){
             zobristKey ^= zArray[0][4][end];
+        } else if(captured == 'K'){
+            zobristKey ^= zArray[0][5][end];
         }
     }
 
