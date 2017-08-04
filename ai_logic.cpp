@@ -145,10 +145,10 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
     for(U8 i = 0; i < moveNum; ++i){
         //find best move generated
         Move newMove = gen_moves.movegen_sort(ply);
-        newBoard.makeMove(newMove, zobrist, isWhite);
-        gen_moves.grab_boards(newBoard, isWhite);
-
-        //is move legal? if not skip it
+        newBoard.makeMove(newMove, zobrist, isWhite);  /// !~!~!~!~!~!~!~!~!~! try SWITCHing from a move gen object haveing a local array to the psuedo movegen funcion
+        gen_moves.grab_boards(newBoard, isWhite);      /// returning a vector or a pointer to an array that's stored in the search, so we can stop constructing movegen
+                                                       /// objects and instead just have a local global for the duration of the search. sort could return the index of the best move
+        //is move legal? if not skip it                ///and take the array or vector as a const refrence argument
         if(gen_moves.isAttacked(king, isWhite, true)){
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             gen_moves.grab_boards(newBoard, isWhite);
