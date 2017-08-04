@@ -325,11 +325,8 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
         //is move legal? if not skip it
         if(gen_moves.isAttacked(king, isWhite, true)){ ///CHANGE METHOD OF UPDATING BOARDS, TOO INEFFICIENT
-            //newBoard.drawBBA();
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             gen_moves.grab_boards(newBoard, isWhite);
-            //newBoard.drawBBA();
-            //int a = 5;
             continue;
         }
         positionCount ++;

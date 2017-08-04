@@ -15,7 +15,7 @@ const U64 FileMasks8[8] =/*from fileA to FileH*/
     0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
     0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
 };
-
+//for flipping squares in blockers if black
 const int bSQ[64] = {
     56,57,58,59,60,61,62,63,
     48,49,50,51,52,53,54,55,
@@ -40,7 +40,7 @@ const int rook_adj[9] =   {  15,  12,   9,  6,  3,  0, -3, -6, -9};
 const int rookOpenFile = 10;
 const int rookHalfOpenFile = 5;
 
-//posative value
+//positive value
 const int BISHOP_PAIR = 30;
 //used as negatives to incourage bishop pair
 const int KNIGHT_PAIR = 8;
@@ -82,11 +82,11 @@ struct evalVect{
     int endGMobility[2];
     int attCount[2];
     int attWeight[2];
-    int mgTropism[2];
-    int egTropism[2];
+    int mgTropism[2]; // still need to add
+    int egTropism[2]; // still need to add
     int kingShield[2];
     int adjustMaterial[2];
-    int blockages[2];
+    int blockages[2]; // still need to add
     int pawnCount[2];
     int pawnMaterial[2];
     int knightCount[2];
@@ -620,6 +620,7 @@ int evaluateBB::getPawnScore()
         return transpositionPawn[hash].eval;
     }
 
+    //if we don't get a hash hit, search through all pawns on board and return score
     int score = 0;
     U64 pieceLocation;
     for(int i = 0; i < 64; i++){
@@ -1023,7 +1024,7 @@ bool evaluateBB::isPiece(const U64 &piece, U8 sq)
 
 int evaluateBB::flip(int side, S8 sq)
 {
-    if(side == 0) return sq;
+    if(side == WHITE) return sq;
     return bSQ[sq];
 }
 
