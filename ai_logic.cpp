@@ -205,7 +205,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     long elapsedTime = time - currentTime;
     bool FlagInCheck = false;
     bool raisedAlpha = false;
-    int depthR = 2;
+    char R = 2;
     //U8 newDepth; //use with futility + other pruning later
     int queitSD = 13, f_prune = 0;
     //int  mateValue = INF - ply; // used for mate distance pruning
@@ -261,23 +261,24 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     else { king = newBoard.BBBlackKing; eking = newBoard.BBWhiteKing; }
     //are we in check?
     FlagInCheck = gen_moves.isAttacked(king, isWhite, true);
-/*
+
 //eval pruning / static null move
-    if(depth < 3 && !FlagInCheck && abs(beta - 1) > -100000 + 100){
-        int static_eval = eval->evalBoard(isWhite, newBoard, zobrist);
+    if(depth < 3 && !is_pv && !FlagInCheck && abs(beta - 1) > -INF + 100){
+        evaluateBB eval;
+        int static_eval = eval.evalBoard(isWhite, newBoard, zobrist);
         int eval_margin = 120 * depth;
         if(static_eval - eval_margin >= beta){
             return static_eval - eval_margin;
         }
     }
-*/
 
-//Null move heuristics, disabled if in check
-    if(allowNull && !is_pv && depth > depthR && !FlagInCheck){
-        if(depth > 6) depthR = 3;
+
+//Null move heuristics, disabled if in PV, check, or depth is too low
+    if(allowNull && !is_pv && depth > R && !FlagInCheck){
+        if(depth > 6) R = 3;
         zobrist.UpdateColor();
 
-        score = -alphaBeta(depth-depthR -1, -beta, -beta +1, !isWhite, currentTime, timeLimmit, ply +1, NO_NULL, NO_PV);
+        score = -alphaBeta(depth -R -1, -beta, -beta +1, !isWhite, currentTime, timeLimmit, ply +1, NO_NULL, NO_PV);
         zobrist.UpdateColor();
         //if after getting a free move the score is too good, prune this branch
         if(score >= beta){
@@ -301,7 +302,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     int fmargin[4] = { 0, 200, 300, 500 };
     if(depth <= 3 && !is_pv
     && !FlagInCheck && abs(alpha) < 9000
-    && eval->evalBoard(isWhite, newBoard, zobrist) + fmargin[depth] <= alpha){
+    && eval.evalBoard(isWhite, newBoard, zobrist) + fmargin[depth] <= alpha){
         f_prune = 1;
     }
 */
