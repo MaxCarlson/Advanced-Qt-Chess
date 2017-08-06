@@ -58,6 +58,7 @@ extern HashEntry transpositionPawn[400000];
 struct searchDriver{
     //color, piece loc from, piece loc to
     int history[2][64][64] = {{{0}}};
+    int cutoffs[2][64][64] = {{{0}}};
     Move killers[35][2];
 };
 extern searchDriver sd;

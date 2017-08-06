@@ -156,6 +156,7 @@ int Ai_Logic::searchRoot(U8 depth, int alpha, int beta, bool isWhite, long curre
         }
         positionCount ++;
         legalMoves ++;
+        sd.cutoffs[isWhite][newMove.from][newMove.to] -= 1;
 
         //PV search at root
         if(best == -INF){
@@ -206,8 +207,10 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     bool FlagInCheck = false;
     bool raisedAlpha = false;
     char R = 2;
+    U8 reductionDepth;
+    U8 newDepth;
     //U8 newDepth; //use with futility + other pruning later
-    int queitSD = 13, f_prune = 0;
+    int queitSD = 25, f_prune = 0;
     //int  mateValue = INF - ply; // used for mate distance pruning
 
 
@@ -262,8 +265,10 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     //are we in check?
     FlagInCheck = gen_moves.isAttacked(king, isWhite, true);
 
+    if(FlagInCheck) goto moves_loop; //if in check, skip nulls, statics evals, razoring, etc
+
 //eval pruning / static null move
-    if(depth < 3 && !is_pv && !FlagInCheck && abs(beta - 1) > -INF + 100){
+    if(depth < 3 && !is_pv && abs(beta - 1) > -INF + 100){
         evaluateBB eval;
         int static_eval = eval.evalBoard(isWhite, newBoard, zobrist);
         int eval_margin = 120 * depth;
@@ -274,7 +279,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
 
 //Null move heuristics, disabled if in PV, check, or depth is too low
-    if(allowNull && !is_pv && depth > R && !FlagInCheck){
+    if(allowNull && !is_pv && depth > R){
         if(depth > 6) R = 3;
         zobrist.UpdateColor();
 
@@ -286,10 +291,11 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
     }
 
+
 //razoring if not PV and is close to leaf and has a low score drop directly into quiescence
-    if(!is_pv && !FlagInCheck && allowNull && depth <= 3){
-        int threshold = alpha - 300 - (depth - 1) * 60;
+    if(!is_pv && allowNull && depth <= 3){
         evaluateBB eval;
+        int threshold = alpha - 300 - (depth - 1) * 60;        
         if(eval.evalBoard(isWhite, newBoard, zobrist) < threshold){
             score = quiescent(alpha, beta, isWhite, ply, queitSD, currentTime, timeLimmit);
 
@@ -307,6 +313,8 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
     }
 */
 
+//jump to here if in check
+moves_loop:
 //generate psuedo legal moves (not just captures)
     gen_moves.generatePsMoves(false);
 
@@ -332,24 +340,57 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
         }
         positionCount ++;
         legalMoves ++;
-        /*
-        //futility pruning ~~ is not a promotion, is not a capture, and does not give check
-        if(f_prune && i > 0 && newMove.flag != 'Q' && newMove.captured == '0'){ //&& !gen_moves.isAttacked(eking, !isWhite)){
+        reductionDepth = 0;
+        newDepth = depth - 1;
+        sd.cutoffs[isWhite][newMove.from][newMove.to] -= 1;
+
+        /* STILL TOO SLOW
+        //futility pruning ~~ is not a promotion, is not a capture, and does not give check, and we've tried one move already
+        if(f_prune && i > 0 && newMove.flag != 'Q'
+            && newMove.captured == '0' && legalMoves
+            && gen_moves.isAttacked(eking, !isWhite, false)){
             newBoard.unmakeMove(newMove, zobrist, isWhite);
             continue;
-        }*/
+        }
+        */
+
+        //late move reduction, still in TESTING
+        if(!is_pv && depth > 4
+                && legalMoves > 3
+                && !gen_moves.isAttacked(eking, !isWhite, false)
+                && !FlagInCheck
+                && sd.cutoffs[isWhite][newMove.from][newMove.to] < 50
+                && (newMove.from != sd.killers[0][ply].from || newMove.to != sd.killers[0][ply].to)
+                && (newMove.from != sd.killers[1][ply].from || newMove.to != sd.killers[1][ply].to)
+                && newMove.captured == '0' && newMove.flag != 'Q'){
+
+
+            sd.cutoffs[isWhite][newMove.from][newMove.to] = 50;
+            reductionDepth = 1;
+            if(legalMoves > 6) reductionDepth += 1;
+            newDepth -= reductionDepth;
+        }
+
+re_search:
 
         if(!raisedAlpha){
-            //we're in princiapl variation search or full window search depending on root
-            score = -alphaBeta(depth -1, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, is_pv);
+            //we're in princiapl variation search or full window search
+            score = -alphaBeta(newDepth, -beta, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, is_pv);
         } else {
             //zero window search
-            score = -alphaBeta(depth -1, -alpha -1, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, NO_PV);
+            score = -alphaBeta(newDepth, -alpha -1, -alpha, !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, NO_PV);
             //if our zero window search failed, do a full window search
             if(score > alpha){
                 //PV search after failed zero window
-                score = -alphaBeta(depth -1, -beta, -alpha,  !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
+                score = -alphaBeta(newDepth, -beta, -alpha,  !isWhite, currentTime, timeLimmit, ply +1, DO_NULL, IS_PV);
             }
+        }
+
+        //if a reduced search brings us above alpha, do a full non-reduced search
+        if(reductionDepth && score > alpha){
+            newDepth += reductionDepth;
+            reductionDepth = 0;
+            goto re_search;
         }
 
 
@@ -359,6 +400,7 @@ int Ai_Logic::alphaBeta(U8 depth, int alpha, int beta, bool isWhite, long curren
 
         if(score > alpha){            
             hashMove = newMove;
+            sd.cutoffs[isWhite][newMove.from][newMove.to] += 6;
 
             //if move causes a beta cutoff stop searching current branch
             if(score >= beta){
@@ -520,7 +562,7 @@ void Ai_Logic::ageHistorys()
         for (int i = 0; i < 64; i++)
             for (int j = 0; j < 64; j++) {
                 sd.history[cl][i][j] = sd.history[cl][i][j] / 8;
-
+                sd.cutoffs[cl][i][j] = 100;
             }
 }
 
