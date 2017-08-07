@@ -104,7 +104,6 @@ void Tile::moveChecking(Tile *temp, int countC){
 
 void Tile::aiTurn(){
 
-
     Ai_Logic newMove;
 
     //generate best move (number represents max search depth)

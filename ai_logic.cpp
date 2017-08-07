@@ -62,7 +62,7 @@ Move Ai_Logic::iterativeDeep(int depth)
     //search has not run out of time
     searchCutoff = false;
 
-    std::cout << zobrist.zobristKey << std::endl;
+    //std::cout << zobrist.zobristKey << std::endl;
 
     //iterative deepening loop starts at depth 1, iterates up till max depth or time cutoff
     while(distance <= depth && IDTimeS < endTime){
@@ -99,18 +99,18 @@ Move Ai_Logic::iterativeDeep(int depth)
     }
 
 
-    std::cout << std::endl;
-
     //make final move on bitboards + draw
     newBoard.makeMove(bestMove, zobrist, false);
     newBoard.drawBBA();
 
+    evaluateBB ev; //used for prininting eval after move
     clock_t IDTimeE = clock();
     //postion count and time it took to find move
     std::cout << positionCount << " positions searched." << std::endl;
     std::cout << (double) (IDTimeE - IDTimeS) / CLOCKS_PER_SEC << " seconds" << std::endl;
     std::cout << "Depth of " << distance-1 << " reached."<<std::endl;
     std::cout << qCount << " non-quiet positions searched."<< std::endl;
+    std::cout << "Board evalutes to: " << ev.evalBoard(true, newBoard, zobrist) << " for white." << std::endl;
 
     //decrease history values after a search
     ageHistorys();
@@ -355,7 +355,7 @@ moves_loop:
         */
 
         //late move reduction, still in TESTING
-        if(!is_pv && depth > 4
+        if(!is_pv && newDepth > 3
                 && legalMoves > 3
                 && !gen_moves.isAttacked(eking, !isWhite, false)
                 && !FlagInCheck
@@ -433,6 +433,11 @@ re_search:
             hashFlag = TT_EXACT;
 
         }
+    }
+
+    if(!legalMoves){
+        if(FlagInCheck) alpha = -INF + ply;
+        //else alpha = contempt(); //NEED to add contempt, make program favor not draws
     }
 
     //add alpha eval to hash table don't save a real move
@@ -538,6 +543,11 @@ int Ai_Logic::quiescent(int alpha, int beta, bool isWhite, int ply, int quietDep
     //add alpha eval to hash table
     //addTTQuiet(hashMove, ply, alpha, hashFlag, zobrist);
     return alpha;
+}
+
+int Ai_Logic::contempt()
+{
+    //need some way to check board material before implementing
 }
 
 void Ai_Logic::addKiller(Move move, int ply)

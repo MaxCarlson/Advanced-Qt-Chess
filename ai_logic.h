@@ -35,6 +35,9 @@ private:
     bool deltaPruning(std::string move, int eval, bool isWhite, int alpha, bool isEndGame, BitBoards *BBBoard);
     */
 
+    //make ai prefer checkmate over stalemate
+    int contempt(); //need some way to check board material before implementing
+
 //heuristics
 
     void addKiller(Move move, int ply);
