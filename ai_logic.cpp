@@ -103,7 +103,7 @@ Move Ai_Logic::iterativeDeep(int depth)
     newBoard.makeMove(bestMove, zobrist, false);
     newBoard.drawBBA();
 
-    evaluateBB ev; //used for prininting eval after move
+    evaluateBB ev; //used for prininting static eval after move
     clock_t IDTimeE = clock();
     //postion count and time it took to find move
     std::cout << positionCount << " positions searched." << std::endl;

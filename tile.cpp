@@ -137,6 +137,9 @@ void Tile::aiTurn(){
         }
         boardArr[tempy][tempx] = " ";
 
+    } else {
+        boardArr[tempy2][tempx2] = boardArr[tempy][tempx];
+        boardArr[tempy][tempx] = " ";
     }
 
 
