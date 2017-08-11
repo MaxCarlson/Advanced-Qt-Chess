@@ -7,6 +7,7 @@ typedef uint64_t U64;
 
 static const int kSquares = 64;
 
+//paths to magics file locations
 static const char kRookMagics[] = "C:/Users/C-60/Desktop/QtPrograms/Advanced-Qt-Chess/Magics/rook_magics.magic";
 static const char kRookMasks[] = "C:/Users/C-60/Desktop/QtPrograms/Advanced-Qt-Chess/Magics/rook_masks.magic";
 static const char kRookShifts[] = "C:/Users/C-60/Desktop/QtPrograms/Advanced-Qt-Chess/Magics/rook_shifts.magic";

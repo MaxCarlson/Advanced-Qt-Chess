@@ -47,14 +47,16 @@ void ZobristH::zobristFill()
     {
         zEnPassant[column] = random64();
     }
+    */
+
     for (int i = 0; i < 4; i++)
     {
-        zCastle[i] = random64();
+        zCastle[i] = random64(); //white queen side, white king side, black qs, bks
     }
-    */
+
     //random is it blacks turn or not
     zBlackMove = random64();
-    zNullMove = random64();
+    zNullMove = random64(); //not needed?
 }
 
 void ZobristH::UpdateColor()

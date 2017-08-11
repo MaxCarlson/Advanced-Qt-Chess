@@ -53,7 +53,7 @@ Move Ai_Logic::iterativeDeep(int depth)
     clock_t IDTimeS = clock();
 
     //time limit in miliseconds
-    int timeLimmit = 100009999, ply = 0;
+    int timeLimmit = 1000099, ply = 0;
     long endTime = IDTimeS + timeLimmit;
 
     //best overall move as calced

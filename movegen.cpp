@@ -416,8 +416,19 @@ void MoveGen::possibleB(U8 location,  const U64 &friends, const U64 &enemys, con
 void MoveGen::possibleR(U8 location,  const U64 &friends, const U64 &enemys, const U64 &oppositeking, const U64 &capturesOnly)
 {
     char piece;
-    if(isWhite) piece = 'R';
-    else piece = 'r';
+    char flag = '0';
+    if(isWhite){
+        piece = 'R';
+        //has rook moved flags
+        //is rook on initial location and rook hasn't moved yet
+        if(location == A1 && !rookMoved[0]) flag = A1+1;
+        else if (location == H1 && !rookMoved[1]) flag = H1+1;
+    }
+    else {
+        if(location == A8 && !rookMoved[2]) flag = A8+1;
+        else if (location == H8 && !rookMoved[3]) flag = H8+1;
+        piece = 'r';
+    }
 
     U64 moves = slider_attacks.RookAttacks(FullTiles, location);
     moves &= ~friends & capturesOnly & ~oppositeking;
@@ -434,7 +445,7 @@ void MoveGen::possibleR(U8 location,  const U64 &friends, const U64 &enemys, con
             captured = whichPieceCaptured(landing);
         }
 
-        movegen_push(piece,captured, '0', location, index);
+        movegen_push(piece,captured, flag, location, index);
 
         moves &= ~j;
         j = moves & ~(moves-1);

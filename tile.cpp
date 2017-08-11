@@ -73,6 +73,11 @@ void Tile::moveChecking(Tile *temp, int countC){
                     click1->pieceName = "q";
                     boardArr[tempy2][tempx2] = "q";
                 }
+                //rook movements
+                if(click1->pieceName == "R" && tempx == 0) rookMoved[0] = true;
+                if(click1->pieceName == "R" && tempx == 7) rookMoved[1] = true;
+                if(click1->pieceName == "r" && tempx == 0) rookMoved[2] = true;
+                if(click1->pieceName == "r" && tempx == 7) rookMoved[3] = true;
 
                 //give moved piece same attributes
                 temp->pieceColor=click1->pieceColor;
@@ -103,7 +108,6 @@ void Tile::moveChecking(Tile *temp, int countC){
 }
 
 void Tile::aiTurn(){
-
 
     Ai_Logic newMove;
 

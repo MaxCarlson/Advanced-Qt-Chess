@@ -143,6 +143,8 @@ void BitBoards::makeMove(const Move &move, ZobristH &zobrist, bool isWhite)
             //add to color pieces then full tiles
             BBWhitePieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            if(move.flag == A1+1) rookMoved[0] = true;
+            else if(move.flag == H1+1) rookMoved[1] = true;
             break;
 
         case 'N':
@@ -220,6 +222,9 @@ void BitBoards::makeMove(const Move &move, ZobristH &zobrist, bool isWhite)
             //add to color pieces then full tiles
             BBBlackPieces |= pieceMaskE;
             FullTiles |= pieceMaskE;
+            if(move.flag == A8+1) rookMoved[2] = true;
+            else if(move.flag == H8+1) rookMoved[3] = true;
+
             break;
 
         case 'n':
@@ -321,6 +326,8 @@ void BitBoards::unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite)
             BBWhiteRooks |= pieceMaskI;
             BBWhitePieces &= ~pieceMaskE;
             BBWhitePieces |= pieceMaskI;
+            if(moveKey.flag == A1+1) rookMoved[0] = false;
+            else if(moveKey.flag == H1+1) rookMoved[1] = false;
             break;
 
             case 'N':
@@ -373,6 +380,8 @@ void BitBoards::unmakeMove(const Move &moveKey, ZobristH &zobrist, bool isWhite)
             BBBlackRooks |= pieceMaskI;
             BBBlackPieces &= ~pieceMaskE;
             BBBlackPieces |= pieceMaskI;
+            if(moveKey.flag == A8+1) rookMoved[2] = false;
+            else if(moveKey.flag == H8+1) rookMoved[3] = false;
             break;
 
             case 'n':

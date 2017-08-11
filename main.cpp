@@ -31,6 +31,11 @@ int aiOn = 1;
 
 //array for random numbers used to gen zobrist key
 U64 zArray[2][6][64];
+//denotes a castling has taken place for zobrist key
+U64 zCastle[4];
+//denotes if castling has occured
+bool castled[4] = {false};
+bool rookMoved[4] = {false};
 //used to change color of move
 U64 zBlackMove;
 //test ~~ used to indicate a NULL move state
